@@ -18,3 +18,12 @@ $ source projectname/bin/activate
 (venv) $ pip install ipykernel
 (venv) $ ipython kernel install --user --name=projectname
 ```
+
+
+### To consider
+
+- There can exist multiple possible pronunciations -> split for multiple nodes in the graph, e.g. "est (1)" and "est (2)"
+- Omit the "ː" for lengthening of a sound
+- Some characters are encoded as two Unicode characters, e.g. ɛ̃
+- "d" needs lookahead since "dʒ" also exists
+- "t" needs lookahead since "tʃ" also exists
