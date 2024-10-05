@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
+use rayon::prelude::*;
 
 mod needleman_wunsch;
 
@@ -28,11 +29,14 @@ fn main() {
     }
 
     // Calculate score for every pair of words
-    for i in 0..words.len() {
+   
+
+    // Calculate score for every pair of words in parallel
+    (0..words.len()).into_par_iter().for_each(|i| {
         let word1 = &words[i];
         println!("Word {i}: {word1:?}");
         for j in i + 1..words.len() {
             needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
         }
-    }
+    });
 }
