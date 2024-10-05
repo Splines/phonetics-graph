@@ -1,6 +1,7 @@
+use rayon::prelude::*;
+use rayon_progress::ProgressAdaptor;
 use std::fs::File;
 use std::io::{self, BufRead};
-use rayon::prelude::*;
 
 mod needleman_wunsch;
 
@@ -29,14 +30,27 @@ fn main() {
     }
 
     // Calculate score for every pair of words
-   
 
     // Calculate score for every pair of words in parallel
-    (0..words.len()).into_par_iter().for_each(|i| {
-        let word1 = &words[i];
-        println!("Word {i}: {word1:?}");
-        for j in i + 1..words.len() {
-            needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
+    let it = ProgressAdaptor::new(0..words.len());
+    let progress = it.items_processed();
+    let total = it.len();
+
+    rayon::spawn({
+        move || {
+            it.for_each(|i| {
+                let word1 = &words[i];
+                // println!("▶ Word {i}: {word1:?}");
+                for j in i..words.len() {
+                    needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
+                }
+            });
         }
     });
+
+    loop {
+        let percent = (progress.get() * 100) / total;
+        println!("🕖 Processing... {}% complete", percent);
+        std::thread::sleep(std::time::Duration::from_secs(3));
+    }
 }
