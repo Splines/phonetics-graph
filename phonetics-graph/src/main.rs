@@ -1,10 +1,8 @@
 use rayon::prelude::*;
 use rayon_progress::ProgressAdaptor;
-use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
-use rmp_serde::encode;
 
 mod needleman_wunsch;
 
@@ -22,13 +20,6 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     Ok(words)
 }
 
-#[derive(Serialize, Deserialize)]
-struct Edge {
-    source: usize,
-    target: usize,
-    weight: i8,
-}
-
 fn main() {
     let words = read_words_from_csv("../data/ipa/fr_FR_words_symbols.csv")
         .expect("Failed to read words from CSV");
@@ -42,7 +33,7 @@ fn main() {
     let result = Arc::new(Mutex::new(Vec::new()));
 
     // Calculate score for every pair of words in parallel
-    let it = ProgressAdaptor::new(0..200);
+    let it = ProgressAdaptor::new(0..2000);
     let progress = it.items_processed();
     let total = it.len();
 
@@ -55,7 +46,7 @@ fn main() {
                     let score =
                         needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
                     let mut result_write = result_clone.lock().unwrap();
-                    result_write.push(Edge { source: i, target: j, weight: score });
+                    result_write.push((i, j, score));
                 }
             });
         }
@@ -67,17 +58,34 @@ fn main() {
         std::thread::sleep(std::time::Duration::from_secs(3));
 
         if progress.get() == total {
-            println!("✅ Calculations done");
+            println!("💻 Calculations done");
             break;
         }
     }
 
-    // Write results to edges.msgpack
-    let num_entries = result.lock().unwrap().len();
-    println!("📝 Writing results to edges.msgpack (number of entries: {num_entries})");
-    let output = result.lock().unwrap();
-    let mut file = File::create("../data/ipa/graph-rust/edges.msgpack").expect("Failed to create edges.msgpack");
-    let buf = encode::to_vec(&*output).expect("Failed to serialize data");
-    file.write_all(&buf).expect("Failed to write to edges.msgpack");
-    println!("✅ Done! Results written to edges.msgpack");
+    // Sort the results
+    println!("🔍 Sorting results");
+    let mut output = result.lock().unwrap();
+    // Due to the parallel processing, the results are not sorted, e.g.
+    // 0,1,score -> 0,3,score -> 0,2,score -> 1,3,score -> 1,1,score -> 1,2,score
+    // We want to sort it like this:
+    // 0,1,score -> 0,2,score -> 0,3,score -> 1,1,score -> 1,2,score -> 1,3,score
+    output.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+    println!("🔍 Results sorted");
+
+    // Print highest and lowest score
+    let highest_score = output.iter().max_by_key(|(_, _, score)| *score).unwrap();
+    let lowest_score = output.iter().min_by_key(|(_, _, score)| *score).unwrap();
+    println!("💠 Highest score: {highest_score:?}");
+    println!("💠 Lowest score: {lowest_score:?}");
+
+    // Extract weights and write to edges.bin
+    let weights: Vec<u8> = output.iter().map(|&(_, _, weight)| weight as u8).collect();
+    let num_entries = weights.len();
+    println!("📝 Writing results to edges.bin (number of entries: {num_entries})");
+    let mut file =
+        File::create("../data/ipa/graph-rust/edges.bin").expect("Failed to create edges.bin");
+    file.write_all(&weights)
+        .expect("Failed to write to edges.bin");
+    println!("✅ Done! Results written to edges.bin");
 }
