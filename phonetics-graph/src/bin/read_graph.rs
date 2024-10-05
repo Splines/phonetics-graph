@@ -1,0 +1,58 @@
+use std::{fs::File, io::Read};
+
+const MAX_NODE_ID: u32 = 245645;
+
+struct Edge {
+    source: u32,
+    target: u32,
+    weight: i8,
+}
+
+// Read the edge binary file and convert to a list of edges
+fn main() {
+    let mut file =
+        File::open("../data/ipa/graph-rust/edges.bin").expect("Failed to open edges.bin");
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)
+        .expect("Failed to read edges.bin");
+
+    // The graph.edges file is a binary file that holds weights for edges of a graph.
+    // The file itself just contains a list of bytes, where each byte represents the weight of an edge.
+    // The node ids are implicit in the order of the edges:
+    // 0,1,score -> 0,2,score -> 0,3,score -> 1,1,score -> 1,2,score -> 1,3,score
+    // here 3 is the maximum node id, which should be a parameter of the program.
+    // Also take into account that the graph is fully-connected and the edges
+    // are undirected, i.e. we only calculated scores for the cases i <= j.
+
+    let mut edges = Vec::new();
+    let mut index = 0;
+
+    for i in 0..=MAX_NODE_ID {
+        for j in i..=MAX_NODE_ID {
+            if index >= buffer.len() {
+                break;
+            }
+
+            let weight = buffer[index] as i8;
+            edges.push(Edge {
+                source: i as u32,
+                target: j as u32,
+                weight,
+            });
+            // also add the reverse edge (edges are undirected)
+            // if i != j {
+            //     edges.push(Edge {
+            //         source: j as u32,
+            //         target: i as u32,
+            //         weight,
+            //     });
+            // }
+            index += 1;
+        }
+    }
+
+    // Print first 10 edges (with source, target, weight)
+    for edge in edges.iter().take(100) {
+        println!("{},{},{}", edge.source, edge.target, edge.weight);
+    }
+}
