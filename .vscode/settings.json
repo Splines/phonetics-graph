@@ -2,6 +2,8 @@
     "cSpell.language": "en,de-DE,fr",
     "cSpell.words": [
         "dtype",
+        "msgpack",
+        "needleman",
         "Needleman",
         "wunsch"
     ],

@@ -1,9 +1,10 @@
-use csv::Writer;
 use rayon::prelude::*;
 use rayon_progress::ProgressAdaptor;
+use serde::{Serialize, Deserialize};
 use std::fs::File;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
+use rmp_serde::encode;
 
 mod needleman_wunsch;
 
@@ -21,6 +22,13 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     Ok(words)
 }
 
+#[derive(Serialize, Deserialize)]
+struct Edge {
+    source: usize,
+    target: usize,
+    weight: i8,
+}
+
 fn main() {
     let words = read_words_from_csv("../data/ipa/fr_FR_words_symbols.csv")
         .expect("Failed to read words from CSV");
@@ -34,7 +42,7 @@ fn main() {
     let result = Arc::new(Mutex::new(Vec::new()));
 
     // Calculate score for every pair of words in parallel
-    let it = ProgressAdaptor::new(0..100);
+    let it = ProgressAdaptor::new(0..200);
     let progress = it.items_processed();
     let total = it.len();
 
@@ -43,12 +51,11 @@ fn main() {
         move || {
             it.for_each(|i| {
                 let word1 = &words[i];
-                // println!("▶ Word {i}: {word1:?}");
                 for j in i..words.len() {
                     let score =
                         needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
                     let mut result_write = result_clone.lock().unwrap();
-                    result_write.push((i, j, score));
+                    result_write.push(Edge { source: i, target: j, weight: score });
                 }
             });
         }
@@ -65,18 +72,12 @@ fn main() {
         }
     }
 
-    // Write results to edges.csv
+    // Write results to edges.msgpack
     let num_entries = result.lock().unwrap().len();
-    println!("📝 Writing results to edges.csv (number of entries: {num_entries})");
+    println!("📝 Writing results to edges.msgpack (number of entries: {num_entries})");
     let output = result.lock().unwrap();
-    let mut wtr =
-        Writer::from_path("../data/ipa/graph-rust/edges.csv").expect("Failed to create edges.csv");
-    wtr.write_record(&["source", "target", "weight"])
-        .expect("Failed to write header to edges.csv");
-    for (i, j, score) in output.iter() {
-        wtr.write_record(&[i.to_string(), j.to_string(), score.to_string()])
-            .expect("Failed to write to edges.csv");
-    }
-    wtr.flush().expect("Failed to flush writer");
-    println!("✅ Done! Results written to edges.csv");
+    let mut file = File::create("../data/ipa/graph-rust/edges.msgpack").expect("Failed to create edges.msgpack");
+    let buf = encode::to_vec(&*output).expect("Failed to serialize data");
+    file.write_all(&buf).expect("Failed to write to edges.msgpack");
+    println!("✅ Done! Results written to edges.msgpack");
 }
