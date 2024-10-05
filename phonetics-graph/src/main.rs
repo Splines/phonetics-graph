@@ -1,7 +1,8 @@
+use csv::Writer;
 use rayon::prelude::*;
 use rayon_progress::ProgressAdaptor;
 use std::fs::File;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead};
 use std::sync::{Arc, Mutex};
 
 mod needleman_wunsch;
@@ -33,7 +34,7 @@ fn main() {
     let result = Arc::new(Mutex::new(Vec::new()));
 
     // Calculate score for every pair of words in parallel
-    let it = ProgressAdaptor::new(0..1);
+    let it = ProgressAdaptor::new(0..100);
     let progress = it.items_processed();
     let total = it.len();
 
@@ -68,10 +69,14 @@ fn main() {
     let num_entries = result.lock().unwrap().len();
     println!("📝 Writing results to edges.csv (number of entries: {num_entries})");
     let output = result.lock().unwrap();
-    let mut file = File::create("../data/ipa/graph-rust/edges.csv").expect("Failed to create edges.csv");
-    writeln!(file, "source,target,weight").expect("Failed to write header to edges.csv");
+    let mut wtr =
+        Writer::from_path("../data/ipa/graph-rust/edges.csv").expect("Failed to create edges.csv");
+    wtr.write_record(&["source", "target", "weight"])
+        .expect("Failed to write header to edges.csv");
     for (i, j, score) in output.iter() {
-        writeln!(file, "{},{},{}", i, j, score).expect("Failed to write to edges.csv");
+        wtr.write_record(&[i.to_string(), j.to_string(), score.to_string()])
+            .expect("Failed to write to edges.csv");
     }
+    wtr.flush().expect("Failed to flush writer");
     println!("✅ Done! Results written to edges.csv");
 }
