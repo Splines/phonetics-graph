@@ -36,9 +36,7 @@ def generate_and_save_nodes(words):
 
 
 def process_pair(args):
-    i, j, word_chars, word2_chars, source_id, target_id = args
-    if j < i:  # Edges are undirected
-        return None
+    word_chars, word2_chars, source_id, target_id = args
     score = calculate_score(word_chars, word2_chars, similarity_matrix, -1)
     return (source_id, target_id, score)
 
@@ -67,18 +65,17 @@ def calculate_graph():
         # Prepare arguments for multiprocessing
         args = [
             (
-                i,
-                j,
                 word.ipa_chars,
                 word2.ipa_chars,
                 node_to_id[word.word],
                 node_to_id[word2.word],
             )
             for j, word2 in enumerate(words)
+            if j >= i
         ]
         with Pool() as pool:
             results = pool.map(process_pair, args)
-        edges.extend([result for result in results if result is not None])
+        edges.extend(results)
 
         end_time = time.time()
         elapsed_time_ms = (end_time - start_time) * 1000
