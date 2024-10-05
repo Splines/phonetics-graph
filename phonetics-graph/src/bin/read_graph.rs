@@ -8,14 +8,10 @@ struct Edge {
     weight: i8,
 }
 
-// Read the edge binary file and convert to a list of edges
-fn main() {
-    let mut file =
-        File::open("../data/ipa/graph-rust/edges.bin").expect("Failed to open edges.bin");
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)
-        .expect("Failed to read edges.bin");
-
+/**
+ * Read the edge binary file and convert to a list of edges.
+ */
+fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
     // The graph.edges file is a binary file that holds weights for edges of a graph.
     // The file itself just contains a list of bytes, where each byte represents the weight of an edge.
     // The node ids are implicit in the order of the edges:
@@ -23,7 +19,6 @@ fn main() {
     // here 3 is the maximum node id, which should be a parameter of the program.
     // Also take into account that the graph is fully-connected and the edges
     // are undirected, i.e. we only calculated scores for the cases i <= j.
-
     let mut edges = Vec::new();
     let mut index = 0;
 
@@ -39,17 +34,22 @@ fn main() {
                 target: j as u32,
                 weight,
             });
-            // also add the reverse edge (edges are undirected)
-            // if i != j {
-            //     edges.push(Edge {
-            //         source: j as u32,
-            //         target: i as u32,
-            //         weight,
-            //     });
-            // }
             index += 1;
         }
     }
+
+    edges
+}
+
+// Read the edge binary file and convert to a list of edges
+fn main() {
+    let mut file =
+        File::open("../data/ipa/graph-rust/edges.bin").expect("Failed to open edges.bin");
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)
+        .expect("Failed to read edges.bin");
+
+    let edges = read_edges(&buffer);
 
     // Print first 10 edges (with source, target, weight)
     for edge in edges.iter().take(100) {
