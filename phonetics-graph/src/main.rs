@@ -20,11 +20,6 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
 fn main() {
     let words = read_words_from_csv("../data/ipa/fr_FR_words_symbols.csv")
         .expect("Failed to read words from CSV");
-    let a = &words[58320];
-    let b = &words[3634];
-
-    println!("Word 1: {:?}", a);
-    println!("Word 2: {:?}", b);
 
     // Create a dummy similarity matrix with 1 on the diagonal and -1 elsewhere
     let mut similarity_matrix = vec![vec![-1; 39]; 39];
@@ -32,6 +27,12 @@ fn main() {
         similarity_matrix[i][i] = 1;
     }
 
-    let score = needleman_wunsch::calculate_score(a, b, &similarity_matrix, -1);
-    println!("Score: {}", score);
+    // Calculate score for every pair of words
+    for i in 0..words.len() {
+        let word1 = &words[i];
+        println!("Word {i}: {word1:?}");
+        for j in i + 1..words.len() {
+            needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
+        }
+    }
 }
