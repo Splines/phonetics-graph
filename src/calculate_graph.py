@@ -3,6 +3,7 @@ import time
 from needleman_wunsch import NeedlemanWunsch, SimilarityMatrix
 from data_model import WordIpaChars
 import csv
+from multiprocessing import Pool
 
 WORDS_PICKLE_PATH = "./data/ipa/fr_FR.pkl"
 SIMILARITY_COSTS_PICKLE_PATH = "./data/ipa/fr_FR_similarity_costs.pkl"
@@ -32,10 +33,23 @@ def generate_nodes(words):
     return node_to_id
 
 
+def process_pair(args):
+    i, j, word_chars, word2_chars, source_id, target_id = args
+    if j < i:  # Edges are undirected
+        return None
+    score = algorithm.calculate_score(word_chars, word2_chars)
+    return (source_id, target_id, score)
+
+
+algorithm: any = None
+
+
 def calculate_graph():
+    global algorithm
+
     # Words as nodes
     with open(WORDS_PICKLE_PATH, "rb") as f:
-        words = pickle.load(f)
+        words: list[WordIpaChars] = pickle.load(f)
         node_to_id = generate_nodes(words)
         print(f"🌟 Nodes generated in {NODES_CSV_PATH} ({len(words)} nodes)")
 
@@ -52,13 +66,21 @@ def calculate_graph():
         print(f"▶ Word: {word}")
         start_time = time.time()
 
-        for j, word2 in enumerate(words):
-            if j < i:  # Edges are undirected
-                continue
-            score = algorithm.calculate_score(word.ipa_chars, word2.ipa_chars)
-
-            node_source, node_target = node_to_id[word.word], node_to_id[word2.word]
-            edges.append((node_source, node_target, score))
+        # Prepare arguments for multiprocessing
+        args = [
+            (
+                i,
+                j,
+                word.ipa_chars,
+                word2.ipa_chars,
+                node_to_id[word.word],
+                node_to_id[word2.word],
+            )
+            for j, word2 in enumerate(words)
+        ]
+        with Pool() as pool:
+            results = pool.map(process_pair, args)
+        edges.extend([result for result in results if result is not None])
 
         end_time = time.time()
         elapsed_time_ms = (end_time - start_time) * 1000

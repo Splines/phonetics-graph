@@ -11,18 +11,12 @@ class SimilarityMatrix:
         all_symbols = list(self._data_to_symbols(similarity_data))
         self.symbol_to_index = {symbol: idx for idx, symbol in enumerate(all_symbols)}
         size = len(all_symbols)
-        self.matrix = np.full((size, size), np.nan)
+        self.matrix = np.full((size, size), 0, dtype=np.int8)
 
         for (symbol1, symbol2), score in similarity_data.items():
             i, j = self.symbol_to_index[symbol1], self.symbol_to_index[symbol2]
-            self.matrix[i, j] = score
-            self.matrix[j, i] = score  # symmetric
-
-        if np.isnan(self.matrix).any():
-            raise ValueError(
-                "Similarity matrix contains NaN values."
-                + " Make sure to fill out all values."
-            )
+            self.matrix[i, j] = int(score)
+            self.matrix[j, i] = int(score)  # symmetric
 
     def _data_to_symbols(self, data) -> set[str]:
         symbols = set()
@@ -49,11 +43,11 @@ class NeedlemanWunsch:
         self.similarity_matrix = similarity_matrix
         self.gap_penalty = gap_penalty
 
-    def calculate_score(self, a: list[str], b: list[str]):
+    def calculate_score(self, a: list[str], b: list[str]) -> int:
         """
         Calculates the alignment score between two sequences a and b.
         """
-        matrix = np.zeros((len(a) + 1, len(b) + 1))
+        matrix = np.zeros((len(a) + 1, len(b) + 1), dtype=np.int8)
         for i in range(len(a) + 1):
             matrix[i, 0] = self.gap_penalty * i
         for j in range(len(b) + 1):
