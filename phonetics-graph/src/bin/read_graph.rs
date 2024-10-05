@@ -34,11 +34,32 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
                 target: j as u32,
                 weight,
             });
+            // also add the reverse edge (edges are undirected)
+            if i != j {
+                edges.push(Edge {
+                    source: j as u32,
+                    target: i as u32,
+                    weight,
+                });
+            }
             index += 1;
         }
     }
 
     edges
+}
+
+fn read_node_labels() -> Vec<String> {
+    // csv file has data: id,label
+    let file = File::open("../data/ipa/graph-rust/nodes.csv").expect("Failed to open nodes.csv");
+    let mut labels = Vec::new();
+    let mut rdr = csv::Reader::from_reader(file);
+    for result in rdr.records() {
+        let record = result.expect("Failed to read record");
+        let label = record.get(1).expect("Failed to get node label");
+        labels.push(label.to_string());
+    }
+    labels
 }
 
 // Read the edge binary file and convert to a list of edges
@@ -48,11 +69,25 @@ fn main() {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .expect("Failed to read edges.bin");
-
     let edges = read_edges(&buffer);
+    let node_labels = read_node_labels();
+    println!("✅ Done reading edges.bin and nodes.csv");
 
-    // Print first 10 edges (with source, target, weight)
-    for edge in edges.iter().take(100) {
-        println!("{},{},{}", edge.source, edge.target, edge.weight);
+    // For the node with id 8, find the nodes with the highest edge weights
+    // Note that this a fully-connected graph.
+    let node_id = 1423;
+    let mut top_edges = edges
+        .iter()
+        .filter(|edge| edge.source == node_id)
+        .collect::<Vec<&Edge>>();
+    top_edges.sort_by(|a, b| b.weight.cmp(&a.weight));
+
+    println!("Top edges for node {}: ", node_id);
+    for edge in top_edges.iter().take(100) {
+        let target_label = &node_labels[edge.target as usize];
+        println!(
+            "{},{},{}: {}",
+            edge.source, edge.target, edge.weight, target_label
+        );
     }
 }
