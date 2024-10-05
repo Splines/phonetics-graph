@@ -37,6 +37,8 @@ fn main() {
     let progress = it.items_processed();
     let total = it.len();
 
+    let start = std::time::Instant::now();
+
     rayon::spawn({
         let result_clone = Arc::clone(&result);
         move || {
@@ -63,8 +65,11 @@ fn main() {
         }
     }
 
+    let duration = start.elapsed();
+    println!("⏱️  Time for calculations: {}s", duration.as_secs());
+
     // Sort the results
-    println!("🔍 Sorting results");
+    println!("🔍 Sorting results...");
     let mut output = result.lock().unwrap();
     // Due to the parallel processing, the results are not sorted, e.g.
     // 0,1,score -> 0,3,score -> 0,2,score -> 1,3,score -> 1,1,score -> 1,2,score
@@ -82,7 +87,7 @@ fn main() {
     // Extract weights and write to edges.bin
     let weights: Vec<u8> = output.iter().map(|&(_, _, weight)| weight as u8).collect();
     let num_entries = weights.len();
-    println!("📝 Writing results to edges.bin (number of entries: {num_entries})");
+    println!("📝 Writing results to edges.bin (#entries: {num_entries})");
     let mut file =
         File::create("../data/ipa/graph-rust/edges.bin").expect("Failed to create edges.bin");
     file.write_all(&weights)
