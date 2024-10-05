@@ -1,6 +1,6 @@
 import pickle
 import time
-from needleman_wunsch import NeedlemanWunsch, SimilarityMatrix
+from needleman_wunsch import SimilarityMatrix, calculate_score
 from data_model import WordIpaChars
 import csv
 from multiprocessing import Pool
@@ -10,8 +10,10 @@ SIMILARITY_COSTS_PICKLE_PATH = "./data/ipa/fr_FR_similarity_costs.pkl"
 NODES_CSV_PATH = "./data/ipa/graph/nodes.csv"
 EDGES_CSV_PATH = "./data/ipa/graph/edges.csv"
 
+similarity_matrix: any = None
 
-def generate_nodes(words):
+
+def generate_and_save_nodes(words):
     # Go once through all nodes to initialize the set of nodes
     # and the lookup table for node ids. For words that have the same word.word,
     # treat them as different nodes (they can have different ipa values).
@@ -37,27 +39,23 @@ def process_pair(args):
     i, j, word_chars, word2_chars, source_id, target_id = args
     if j < i:  # Edges are undirected
         return None
-    score = algorithm.calculate_score(word_chars, word2_chars)
+    score = calculate_score(word_chars, word2_chars, similarity_matrix, -1)
     return (source_id, target_id, score)
 
 
-algorithm: any = None
-
-
 def calculate_graph():
-    global algorithm
+    global similarity_matrix  # pylint: disable=global-statement
 
     # Words as nodes
     with open(WORDS_PICKLE_PATH, "rb") as f:
         words: list[WordIpaChars] = pickle.load(f)
-        node_to_id = generate_nodes(words)
+        node_to_id = generate_and_save_nodes(words)
         print(f"🌟 Nodes generated in {NODES_CSV_PATH} ({len(words)} nodes)")
 
     # Init algorithm with similarity matrix
     with open(SIMILARITY_COSTS_PICKLE_PATH, "rb") as f:
         french_similarity_costs = pickle.load(f)
     similarity_matrix = SimilarityMatrix(french_similarity_costs)
-    algorithm = NeedlemanWunsch(similarity_matrix, -1)
 
     # Calculate the score for every possible combination of two words.
     # Take into account the symmetry, i.e. don't calculate the score for the same pair twice.
@@ -86,7 +84,6 @@ def calculate_graph():
         elapsed_time_ms = (end_time - start_time) * 1000
         print(f"Time taken for word {i}: {elapsed_time_ms:.2f} ms")
 
-    # Save edges
     # Normalize edges such that the most negative value is at 0
     print(f"🌟 Edges calculated ({len(edges)} edges)")
     min_score = min(edge[2] for edge in edges)
@@ -95,6 +92,7 @@ def calculate_graph():
     ]
     print("🌟 Edges normalized")
 
+    # Save edges to CSV
     with open(EDGES_CSV_PATH, "w", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["source", "target", "weight"])
