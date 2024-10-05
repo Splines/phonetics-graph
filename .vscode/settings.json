@@ -2,6 +2,11 @@
     "cSpell.language": "en,de-DE,fr",
     "cSpell.words": [
         "dtype",
-        "Needleman"
-    ]
+        "Needleman",
+        "wunsch"
+    ],
+    "files.readonlyInclude": {
+        "/.cargo/registry/src//*.rs": true,
+        "/lib/rustlib/src/rust/library//*.rs": true,
+    }
 }
