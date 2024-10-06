@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-const MAX_NODE_ID: u32 = 245645;
+const NUM_NODES: u32 = 2000;
 
 struct Edge {
     source: u32,
@@ -22,8 +22,8 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
     let mut edges = Vec::new();
     let mut index = 0;
 
-    for i in 0..=MAX_NODE_ID {
-        for j in i..=MAX_NODE_ID {
+    for i in 0..NUM_NODES {
+        for j in i..NUM_NODES {
             if index >= buffer.len() {
                 break;
             }
@@ -35,13 +35,13 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
                 weight,
             });
             // also add the reverse edge (edges are undirected)
-            if i != j {
-                edges.push(Edge {
-                    source: j as u32,
-                    target: i as u32,
-                    weight,
-                });
-            }
+            // if i != j {
+            //     edges.push(Edge {
+            //         source: j as u32,
+            //         target: i as u32,
+            //         weight,
+            //     });
+            // }
             index += 1;
         }
     }
@@ -49,9 +49,10 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
     edges
 }
 
+#[allow(dead_code)]
 fn read_node_labels() -> Vec<String> {
     // csv file has data: id,label
-    let file = File::open("../data/ipa/graph-rust/nodes.csv").expect("Failed to open nodes.csv");
+    let file = File::open("../data/graph/nodes.csv").expect("Failed to open nodes.csv");
     let mut labels = Vec::new();
     let mut rdr = csv::Reader::from_reader(file);
     for result in rdr.records() {
@@ -65,29 +66,23 @@ fn read_node_labels() -> Vec<String> {
 // Read the edge binary file and convert to a list of edges
 fn main() {
     let mut file =
-        File::open("../data/ipa/graph-rust/edges.bin").expect("Failed to open edges.bin");
+        File::open("../data/graph/edges.bin").expect("Failed to open edges.bin");
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .expect("Failed to read edges.bin");
     let edges = read_edges(&buffer);
-    let node_labels = read_node_labels();
+    // let node_labels = read_node_labels();
     println!("✅ Done reading edges.bin and nodes.csv");
 
-    // For the node with id 8, find the nodes with the highest edge weights
-    // Note that this a fully-connected graph.
-    let node_id = 1423;
-    let mut top_edges = edges
-        .iter()
-        .filter(|edge| edge.source == node_id)
-        .collect::<Vec<&Edge>>();
-    top_edges.sort_by(|a, b| b.weight.cmp(&a.weight));
-
-    println!("Top edges for node {}: ", node_id);
-    for edge in top_edges.iter().take(100) {
-        let target_label = &node_labels[edge.target as usize];
-        println!(
-            "{},{},{}: {}",
-            edge.source, edge.target, edge.weight, target_label
-        );
+    // Store the edges in a csv file source,target,weight
+    let mut wtr =
+        csv::Writer::from_path("../data/graph/edges.csv").expect("Failed to create edges.csv");
+    for edge in edges {
+        wtr.write_record(&[
+            edge.source.to_string(),
+            edge.target.to_string(),
+            edge.weight.to_string(),
+        ])
+        .expect("Failed to write record");
     }
 }

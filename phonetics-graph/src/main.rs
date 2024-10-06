@@ -21,7 +21,7 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
 }
 
 fn main() {
-    let words = read_words_from_csv("../data/ipa/fr_FR_words_symbols.csv")
+    let words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
 
     // Create a dummy similarity matrix with 1 on the diagonal and -1 elsewhere
@@ -33,7 +33,9 @@ fn main() {
     let result = Arc::new(Mutex::new(Vec::new()));
 
     // Calculate score for every pair of words in parallel
-    let it = ProgressAdaptor::new(0..2000);
+    let max_words = 2000;
+
+    let it = ProgressAdaptor::new(0..max_words);
     let progress = it.items_processed();
     let total = it.len();
 
@@ -44,7 +46,7 @@ fn main() {
         move || {
             it.for_each(|i| {
                 let word1 = &words[i];
-                for j in i..words.len() {
+                for j in i..max_words {
                     let score =
                         needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
                     let mut result_write = result_clone.lock().unwrap();
@@ -89,7 +91,7 @@ fn main() {
     let num_entries = weights.len();
     println!("📝 Writing results to edges.bin (#entries: {num_entries})");
     let mut file =
-        File::create("../data/ipa/graph-rust/edges.bin").expect("Failed to create edges.bin");
+        File::create("../data/graph/edges.bin").expect("Failed to create edges.bin");
     file.write_all(&weights)
         .expect("Failed to write to edges.bin");
     println!("✅ Done! Results written to edges.bin");
