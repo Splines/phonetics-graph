@@ -18,6 +18,9 @@ def process_phonetics(phonetics: str) -> list[str]:
 
     Note that d followed by ʒ will be aggregated into dʒ.
     Likewise for t followed by ʃ, which will be aggregated into tʃ.
+
+    Symbols like ɔ̃ that consist of multiple Unicode chars are not a problem here
+    since we split at whitespaces.
     """
     symbols = phonetics.strip().split(" ")
     res = []
