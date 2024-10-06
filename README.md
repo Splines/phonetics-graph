@@ -8,6 +8,21 @@ This projects aims at defining a metric to measure the similarity between two wo
 - https://archive.phonetics.ucla.edu/
 - https://archive.phonetics.ucla.edu/Language/ipa-pop-up-2.html
 - [CMU Pronouncing Dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
+- https://mlcommons.org/datasets/multilingual-spoken-words/
+
+### French list
+- https://github.com/hbenbel/French-Dictionary
+- https://openlexicon.fr/datasets-info/
+- **https://github.com/frodonh/french-words**
+- https://github.com/DanielSWolf/wiki-pronunciation-dict
+
+
+### Community detection in large networks
+
+Problem: edges file will be > 30GB (just the weights), so it doesn't fit in the RAM.
+
+- https://github.com/Sotera/spark-distributed-louvain-modularity
+- https://github.com/GraphChi/graphchi-cpp
 
 
 ### Python virtual env
