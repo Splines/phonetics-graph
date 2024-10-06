@@ -31,7 +31,7 @@ def process_phonetics(phonetics: str) -> list[str]:
             res.append("tʃ")
         else:
             res.append(symbol)
-    return symbols
+    return res
 
 
 def convert_line_to_word_data(line: list[str], word_pos_tags_dict) -> WordData:
