@@ -25,20 +25,23 @@ e.g. "tondeuse": ["t ɔ̃ d ø z"]
 import json
 
 with open("./data/lists/french-words.txt", "r", encoding="utf-8") as f:
-    word_lines = f.readlines()
-    word_lines = [line.strip().split("\t") for line in word_lines]
+    lines = f.readlines()
+    lines = [line.strip().split("\t") for line in lines]
 
 with open("./data/lists/french-phonetics.json", "r", encoding="utf-8") as f:
     phonetics = json.load(f)
 
 output = []
+word_with_alternative_phonetics = []
 
 with open("./data/lists/missing-phonetics.txt", "w", encoding="utf-8") as log_file:
-    for line in word_lines:
+    for line in lines:
         word = line[0]
         if word in phonetics:
-            phonetic = phonetics[word][0]
-            line.append(phonetic)
+            phonetic_options = phonetics[word]
+            if len(phonetic_options) > 1:
+                word_with_alternative_phonetics.append((word, phonetic_options))
+            line.append(phonetic_options[0])
             output.append(line)
         else:
             log_file.write(f"{word}\n")
@@ -47,7 +50,16 @@ with open("./data/lists/french.txt", "w", encoding="utf-8") as out_file:
     for line in output:
         out_file.write("\t".join(line) + "\n")
 
-percentage = len(output) / len(word_lines) * 100
+with open(
+    "./data/lists/french-alternative-phonetics.txt", "w", encoding="utf-8"
+) as out_file:
+    for word, phonetic_options in word_with_alternative_phonetics:
+        out_file.write(f"{word}\t{phonetic_options}\n")
+
+percentage = len(output) / len(lines) * 100
 print(
-    f"Phonetic transcriptions found for {len(output)}/{len(word_lines)} words ({percentage:.2f}%)"
+    f"Phonetic transcriptions found for {len(output)}/{len(lines)} words ({percentage:.2f}%)"
+)
+print(
+    f"Words with alternative phonetic transcriptions: {len(word_with_alternative_phonetics)}"
 )
