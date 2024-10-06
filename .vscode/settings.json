@@ -5,6 +5,7 @@
         "msgpack",
         "needleman",
         "Needleman",
+        "ngrams",
         "wunsch"
     ],
     "files.readonlyInclude": {
