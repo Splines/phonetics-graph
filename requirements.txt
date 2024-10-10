@@ -1,0 +1,5 @@
+jupyter==1.1.1
+pandas==2.2.3
+pip==24.2
+tqdm==4.66.5
+numpy==2.1.1
