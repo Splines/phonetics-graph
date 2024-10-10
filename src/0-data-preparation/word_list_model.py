@@ -7,7 +7,7 @@ class WordData:
     Data class for a word from the French language.
 
     For more information on the fields, see:
-    https://github.com/frodonh/french-words?tab=readme-ov-file#structure-of-the-file
+    https://github.com/frodonh/french-words#structure-of-the-file
 
     - The POS-tagging is using the Lexique.org nomenclature.
     - The frequencies are measured in number of occurrences per million of words.

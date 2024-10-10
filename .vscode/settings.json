@@ -56,6 +56,7 @@
         "needleman",
         "Needleman",
         "ngrams",
+        "tqdm",
         "wunsch"
     ],
     //////////////////////////////////////
