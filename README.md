@@ -42,3 +42,13 @@ $ source projectname/bin/activate
 - Some characters are encoded as two Unicode characters, e.g. ɛ̃
 - "d" needs lookahead since "dʒ" also exists
 - "t" needs lookahead since "tʃ" also exists
+
+
+### Similarity matrix construction (manually)
+
+- 10,000: Found combinations: 670 / 741 (90.42%)
+- 10,000: Found combinations: 476 / 741 (64.24%) (exact length match)
+- 30,000: Found combinations: 1062 / 741 (143.32%)
+
+-> higher than 100% due to not taking ordering into account, i.e.
+b,d and d,b both exist in the resulting file, so divide percentage by 2

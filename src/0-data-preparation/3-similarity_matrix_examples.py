@@ -1,9 +1,8 @@
-import random
 import pickle
 from word_list_model import WordData
 from tqdm import tqdm
 
-NUM_WORDS = 20000
+NUM_WORDS = 30000
 
 
 def used_phonetic_symbols() -> set[str]:
@@ -56,8 +55,8 @@ def main():
     # symbols that were changed.
     pairs_by_phonetic_change = {}
 
-    for word1 in tqdm(random.sample(words, len(words))):
-        for word2 in random.sample(words, len(words)):
+    for word1 in tqdm(words):
+        for word2 in words:
             if word1 == word2:
                 continue
 
@@ -85,7 +84,11 @@ def main():
     )
 
     # Save the pairs as CSV file
-    with open(f"./data/graph/phonetic-change-pairs-{NUM_WORDS}.csv", "w", encoding="utf-8") as f:
+    with open(
+        f"./data/graph/phonetic-change-pairs-sorted-{NUM_WORDS}.csv",
+        "w",
+        encoding="utf-8",
+    ) as f:
         f.write("phonetic1,phonetic2,word1,word2\n")
         for phonetic_change, pairs in pairs_by_phonetic_change.items():
             for word1, word2 in pairs:
