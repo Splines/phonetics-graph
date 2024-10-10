@@ -47,11 +47,15 @@ def main():
     for word, freq in words_sorted[:10]:
         print(f"{word.word} ({word.lemma}) - {freq:.2f}")
 
+    # Which phonetic symbols are used
     phonetic_symbols = used_phonetic_symbols(words)
     print()
     print(f"Number of phonetic symbols: {len(phonetic_symbols)}")
     print("Phonetic symbols:")
     print(phonetic_symbols)
+    with open("./data/graph/french-phonetics-list.txt", "w", encoding="utf-8") as f:
+        for symbol in phonetic_symbols:
+            f.write(f"{symbol}\n")
 
     # Construct node csv file with id,label
     with open("./data/graph/nodes.csv", "w", encoding="utf-8") as f:
