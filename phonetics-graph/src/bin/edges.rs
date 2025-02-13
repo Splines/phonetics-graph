@@ -32,12 +32,18 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("num_adjacency_matrix_elements: {num_adjacency_matrix_elements}");
 
     let words_flat: Vec<u8> = words.iter().flat_map(|w| w.iter()).copied().collect();
-    let words_lengths: Vec<usize> = words.iter().map(|w| w.len()).collect();
+    let words_offsets: Vec<usize> = words
+        .iter()
+        .scan(0, |acc, w| {
+            let start = *acc;
+            *acc += w.len();
+            Some(start)
+        })
+        .collect();
+    println!("{:?}", words_offsets);
 
-    // copy that data to the global memory of the GPU
     let words_flat_device = dev.htod_copy(words_flat)?;
-    let words_lengths_device = dev.htod_copy(words_lengths)?;
-
+    let words_offsets_device = dev.htod_copy(words_offsets)?;
 
     println!("Allocating buffers");
     let mut out = dev.alloc_zeros::<f32>(num_adjacency_matrix_elements)?;
@@ -52,8 +58,17 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let cfg = LaunchConfig::for_num_elems(num_adjacency_matrix_elements as u32);
 
     println!("Launching kernel");
-    unsafe { kernel.launch(cfg, (&mut out, &words_flat_device, &words_lengths_device,
-        words.len() as u32)) }?;
+    unsafe {
+        kernel.launch(
+            cfg,
+            (
+                &mut out,
+                &words_flat_device,
+                &words_offsets_device,
+                words.len() as u32,
+            ),
+        )
+    }?;
 
     let out_host: Vec<f32> = dev.dtoh_sync_copy(&out)?;
     assert_eq!(out_host.len(), num_adjacency_matrix_elements);
