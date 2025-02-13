@@ -52,7 +52,7 @@ __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
 }
 
 extern "C" __global__ void needleman_wunsch(
-    float *out, uint8_t *words_flat, uint8_t *words_offsets, const uint32_t num_nodes)
+    float *out, uint8_t *words_flat, uint32_t *words_offsets, const uint32_t num_nodes)
 {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -68,5 +68,5 @@ extern "C" __global__ void needleman_wunsch(
     uint8_t word2_length = words_offsets[col + 1] - words_offsets[col];
 
     int8_t distance = calculateDistance(word1, word1_length, word2, word2_length);
-    out[idx] = static_cast<float>(distance);
+    out[idx] = distance;
 }

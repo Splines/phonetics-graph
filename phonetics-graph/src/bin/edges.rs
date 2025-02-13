@@ -32,15 +32,15 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("num_adjacency_matrix_elements: {num_adjacency_matrix_elements}");
 
     let words_flat: Vec<u8> = words.iter().flat_map(|w| w.iter()).copied().collect();
-    let mut words_offsets: Vec<usize> = words
+    let mut words_offsets: Vec<u32> = words
         .iter()
         .scan(0, |acc, w| {
             let start = *acc;
             *acc += w.len();
-            Some(start)
+            Some(start as u32)
         })
         .collect();
-    words_offsets.push(words_flat.len()); // add the last offset
+    words_offsets.push(words_flat.len() as u32); // add the last offset
     println!("{:?}", words_offsets);
 
     let words_flat_device = dev.htod_copy(words_flat)?;
