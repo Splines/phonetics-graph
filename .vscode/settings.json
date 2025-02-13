@@ -16,6 +16,12 @@
         "reportOptionalMemberAccess": "warning"
     },
     //////////////////////////////////////
+    // Rust
+    //////////////////////////////////////
+    "[rust]": {
+        "editor.formatOnSave": true
+    },
+    //////////////////////////////////////
     // Files
     //////////////////////////////////////
     "files.exclude": {
@@ -51,7 +57,9 @@
     //////////////////////////////////////
     "cSpell.language": "en,de-DE,fr",
     "cSpell.words": [
+        "cudarc",
         "dtype",
+        "htod",
         "msgpack",
         "needleman",
         "Needleman",
