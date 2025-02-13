@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u8 = 10;
+static THRESHOLD: u16 = 1000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -27,8 +27,8 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let dev = cudarc::driver::CudaDevice::new(0)?;
     println!("Device name: {}", dev.name()?);
 
-    let num_nodes: usize = 5;
-    let num_adjacency_matrix_elements: usize = (num_nodes * (num_nodes + 1)) / 2;
+    let num_nodes: u32 = words.len().try_into().unwrap();
+    let num_adjacency_matrix_elements: u32 = (num_nodes * (num_nodes + 1)) / 2;
     println!("num_adjacency_matrix_elements: {num_adjacency_matrix_elements}");
 
     let words_flat: Vec<u8> = words.iter().flat_map(|w| w.iter()).copied().collect();
@@ -41,13 +41,14 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         })
         .collect();
     words_offsets.push(words_flat.len() as u32); // add the last offset
-    println!("{:?}", words_offsets);
 
     let words_flat_device = dev.htod_copy(words_flat)?;
     let words_offsets_device = dev.htod_copy(words_offsets)?;
 
     println!("Allocating buffers");
-    let mut out = dev.alloc_zeros::<f32>(num_adjacency_matrix_elements)?;
+    let estimate = 0.01 * num_adjacency_matrix_elements as f64;
+    println!("Estimated output size: {}", estimate);
+    let mut out = dev.alloc_zeros::<i8>(estimate as usize)?;
 
     let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
     kernel_code = format!("static const float z = {num_nodes}.5;\n") + &kernel_code;
@@ -71,9 +72,9 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         )
     }?;
 
-    let out_host: Vec<f32> = dev.dtoh_sync_copy(&out)?;
-    assert_eq!(out_host.len(), num_adjacency_matrix_elements);
-    println!("{:?}", out_host);
+    let out_host: Vec<i8> = dev.dtoh_sync_copy(&out)?;
+    assert_eq!(out_host.len(), estimate as usize);
+    println!("{:?}", &out_host[..20]);
 
     println!("Done");
     Ok(())
