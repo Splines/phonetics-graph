@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u8 = 100;
+static THRESHOLD: u8 = 10;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -32,7 +32,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("num_adjacency_matrix_elements: {num_adjacency_matrix_elements}");
 
     let words_flat: Vec<u8> = words.iter().flat_map(|w| w.iter()).copied().collect();
-    let words_offsets: Vec<usize> = words
+    let mut words_offsets: Vec<usize> = words
         .iter()
         .scan(0, |acc, w| {
             let start = *acc;
@@ -40,6 +40,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
             Some(start)
         })
         .collect();
+    words_offsets.push(words_flat.len()); // add the last offset
     println!("{:?}", words_offsets);
 
     let words_flat_device = dev.htod_copy(words_flat)?;
