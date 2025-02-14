@@ -52,12 +52,17 @@ __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
 }
 
 extern "C" __global__ void needleman_wunsch(
-    float *out, uint8_t *words_flat, uint32_t *words_offsets, const uint32_t num_nodes)
+    int8_t *out, uint8_t *words_flat, uint32_t *words_offsets, const uint32_t out_size)
 {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= out_size)
+    {
+        return;
+    }
 
     // Row & column (both range from 0 to n-1)
     // (the variable "z" is injected as a constant by the Rust code)
+    // row and column both refer to an actual word in the words_flat array
     unsigned int row = floor(z - sqrtf(z * z - 2 * idx));
     unsigned int s = row * (z - row / 2);
     unsigned int col = row + idx - s;

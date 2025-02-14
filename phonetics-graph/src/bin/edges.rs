@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u16 = 1000;
+static THRESHOLD: u16 = 6000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -46,9 +46,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let words_offsets_device = dev.htod_copy(words_offsets)?;
 
     println!("Allocating buffers");
-    let estimate = 0.01 * num_adjacency_matrix_elements as f64;
-    println!("Estimated output size: {}", estimate);
-    let mut out = dev.alloc_zeros::<i8>(estimate as usize)?;
+    let mut out = dev.alloc_zeros::<i8>(num_adjacency_matrix_elements.try_into().unwrap())?;
 
     let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
     kernel_code = format!("static const float z = {num_nodes}.5;\n") + &kernel_code;
@@ -57,9 +55,10 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Loading PTX");
     dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
     let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
-    let cfg = LaunchConfig::for_num_elems(num_adjacency_matrix_elements as u32);
+    let cfg = LaunchConfig::for_num_elems(num_adjacency_matrix_elements.try_into().unwrap());
 
     println!("Launching kernel");
+    let start = std::time::Instant::now();
     unsafe {
         kernel.launch(
             cfg,
@@ -67,13 +66,18 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
                 &mut out,
                 &words_flat_device,
                 &words_offsets_device,
-                words.len() as u32,
+                num_adjacency_matrix_elements,
             ),
         )
     }?;
+    let duration = start.elapsed();
+    println!("Kernel execution time: {:?}", duration);
 
     let out_host: Vec<i8> = dev.dtoh_sync_copy(&out)?;
-    assert_eq!(out_host.len(), estimate as usize);
+    assert_eq!(
+        out_host.len(),
+        num_adjacency_matrix_elements.try_into().unwrap()
+    );
     println!("{:?}", &out_host[..20]);
 
     println!("Done");
@@ -88,6 +92,7 @@ fn main() {
     // only consider the first THRESHOLD words
     let words_shortened: Vec<Vec<u8>> = words.into_iter().take(THRESHOLD as usize).collect();
     assert_eq!(words_shortened.len(), THRESHOLD as usize);
+    println!("Threshold: {}", THRESHOLD);
 
     if let Err(e) = compute(words_shortened) {
         eprintln!("Error: {}", e);
