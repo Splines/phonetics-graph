@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u16 = 6000;
+static THRESHOLD: u16 = 3000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -55,7 +55,18 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Loading PTX");
     dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
     let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
-    let cfg = LaunchConfig::for_num_elems(num_adjacency_matrix_elements.try_into().unwrap());
+
+    let block_size = 1024;
+    println!("Block size: {}", block_size);
+    let cfg = LaunchConfig {
+        grid_dim: (
+            (num_adjacency_matrix_elements + block_size - 1) / block_size,
+            1,
+            1,
+        ),
+        block_dim: (block_size, 1, 1),
+        shared_mem_bytes: 0,
+    };
 
     println!("Launching kernel");
     let start = std::time::Instant::now();
@@ -70,6 +81,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
             ),
         )
     }?;
+    dev.synchronize()?;
     let duration = start.elapsed();
     println!("Kernel execution time: {:?}", duration);
 
