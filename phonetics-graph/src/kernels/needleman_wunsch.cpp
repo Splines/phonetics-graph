@@ -32,7 +32,7 @@ __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
     {
         for (int j = 1; j <= b_length; ++j)
         {
-            int cost = (a[i - 1] == b[j - 1]) ? 1 : -1;
+            int cost = (a[i - 1] == b[j - 1]) ? 1 : -1; // default metric
             int match_score = score_matrix[i - 1][j - 1] + cost;
             int delete_score = score_matrix[i - 1][j] + GAP_PENALTY;
             int insert_score = score_matrix[i][j - 1] + GAP_PENALTY;

@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u16 = 3000;
+static THRESHOLD: u16 = 6000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -56,8 +56,13 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
     let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
 
+    // Launch config
     let block_size = 1024;
     println!("Block size: {}", block_size);
+
+    let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
+    println!("Max word length: {}", max_word_length);
+
     let cfg = LaunchConfig {
         grid_dim: (
             (num_adjacency_matrix_elements + block_size - 1) / block_size,
