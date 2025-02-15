@@ -1,6 +1,7 @@
 typedef char i8;
 typedef unsigned char u8;
 typedef unsigned int u32;
+typedef unsigned long long u64;
 
 static const i8 GAP_PENALTY = -1;
 
@@ -36,7 +37,7 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
 }
 
 extern "C" __global__ void needleman_wunsch(
-    i8 *out, u8 *words_flat, u32 *words_offsets,
+    i8 *out, u8 *words_flat, u64 *words_offsets,
     const u32 num_words, const u32 out_size, const u32 max_word_length)
 {
     extern __shared__ i8 shared_score_matrix[];
