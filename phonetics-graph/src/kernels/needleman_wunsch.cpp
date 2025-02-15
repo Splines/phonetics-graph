@@ -7,9 +7,7 @@ static const i8 GAP_PENALTY = -1;
 /**
  * Calculates the distance between two words using the Needleman-Wunsch algorithm.
  */
-__device__ i8 calculateDistance(u8 *a, u8 a_length,
-                                    u8 *b, u8 b_length,
-                                    i8 *score_matrix)
+__device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_matrix)
 {
     // Populate matrix
     for (int i = 0; i <= a_length; ++i)
@@ -38,11 +36,8 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length,
 }
 
 extern "C" __global__ void needleman_wunsch(
-    i8 *out, u8 *words_flat,
-    u32 *words_offsets,
-    const u32 num_words,
-    const u32 out_size,
-    const u32 max_word_length)
+    i8 *out, u8 *words_flat, u32 *words_offsets,
+    const u32 num_words, const u32 out_size, const u32 max_word_length)
 {
     extern __shared__ i8 shared_score_matrix[];
 
@@ -61,7 +56,7 @@ extern "C" __global__ void needleman_wunsch(
 
     // __syncthreads();
     // printf("idx=%u, row=%u, col=%u, blockIdx.x=%u, threadIdx.x=%u, z=%f, s=%u\n",
-        //    idx, row, col, blockIdx.x, threadIdx.x, z, s);
+    //    idx, row, col, blockIdx.x, threadIdx.x, z, s);
     // __syncthreads();
 
     // if (row >= num_words || col >= num_words)
