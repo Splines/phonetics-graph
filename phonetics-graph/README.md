@@ -15,7 +15,9 @@ RUST_BACKTRACE=full cargo run --bin edges --profile release
 
 ## Expected results
 
-```
+```bash
 first 20: [2, 0, -2, -2, -2, -2, 0, -2, -2, -2, 2, -2, -2, 0, -2, -2, -2, 1, 0, -3]
+
+# for 6000 elements total:
 last 20: [5, -5, -4, -5, -5, -2, -6, -4, -4, -4, 8, -8, -5, -8, -4, -4, -4, -6, -19, -24]
 ```

@@ -56,36 +56,23 @@ extern "C" __global__ void needleman_wunsch(
     // (the variable "z" is injected as a constant by the Rust code)
     // row and column both refer to an actual word in the words_flat array
     unsigned int row = floor(z - sqrtf(z * z - 2 * idx));
-    unsigned int s = row * (z - row / 2.0); // don't change to 2 instead of 2.0 (!)
+    unsigned int s = row * (z - row / 2);
     unsigned int col = row + idx - s;
 
-    if (row >= num_words || col >= num_words)
-    {
-        if (idx != 28043258)
-        {
-            return;
-        }
-        printf("Value of z: %f\n", z);
-        printf("Invalid row or col index: row=%u, col=%u, idx=%u, s=%u, z=%u\n", row, col, idx, s, z);
-        return;
-    }
+    // if (row >= num_words || col >= num_words)
+    // {
+    //     printf("Invalid row or col index: row=%u, col=%u\n", row, col);
+    //     return;
+    // }
 
     uint8_t *word1 = words_flat + words_offsets[row];
     uint8_t word1_length = words_offsets[row + 1] - words_offsets[row];
     uint8_t *word2 = words_flat + words_offsets[col];
     uint8_t word2_length = words_offsets[col + 1] - words_offsets[col];
-    // if (word2_length > 100) {
-    //     printf("word2_length=%u\n", word2_length);
-    //     printf("Col: %u\n", col);
-    //     printf("Word offsets: %u, %u\n", words_offsets[col], words_offsets[col + 1]);
-    // }
-
-    // print last element of words_offsets
-    // printf("Last element of words_offsets: %u\n", words_offsets[7500]);
 
     // if (word1_length > max_word_length || word2_length > max_word_length)
     // {
-    //     // printf("Invalid word length: word1_length=%u, word2_length=%u\n", word1_length, word2_length);
+    //     printf("Invalid word length: word1_length=%u, word2_length=%u\n", word1_length, word2_length);
     //     return;
     // }
 

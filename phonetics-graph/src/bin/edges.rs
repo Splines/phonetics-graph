@@ -61,7 +61,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("max_word_length: {}", max_word_length);
 
     let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
-    kernel_code = format!("static const float z = {num_nodes}.5;\n") + &kernel_code;
+    kernel_code = format!("static const double z = {num_nodes}.5;\n") + &kernel_code;
     let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
 
     println!("Loading PTX");
