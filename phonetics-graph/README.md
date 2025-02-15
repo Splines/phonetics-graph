@@ -48,3 +48,13 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 - 400,000 nodes: 2.64s
 - 500,000 nodes: 2.21s
 - 611,786 nodes: 1.38s
+
+
+## Diff
+
+Command from [here](https://superuser.com/a/968863/):
+
+```bash
+cmp --silent ../data/graph/edges-new.bin ../data/graph/edges-new.bin # check error code (!)
+diff <(xxd ../data/graph/edges-new.bin) <(xxd ../data/graph/edges-new-gpu.bin)
+```
