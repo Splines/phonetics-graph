@@ -51,6 +51,10 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let words_offsets_device = dev.htod_copy(words_offsets)?;
 
     println!("Allocating buffers");
+    println!(
+        "Buffer size (in MB): {}",
+        (num_adjacency_matrix_elements * std::mem::size_of::<i8>() as u64) / (1024 * 1024)
+    );
     let mut out = dev.alloc_zeros::<i8>(num_adjacency_matrix_elements.try_into().unwrap())?;
 
     let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
