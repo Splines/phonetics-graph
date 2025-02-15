@@ -42,7 +42,7 @@ extern "C" __global__ void needleman_wunsch(
 {
     extern __shared__ i8 shared_score_matrix[];
 
-    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    u64 idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= out_size)
     {
         return;
@@ -51,9 +51,15 @@ extern "C" __global__ void needleman_wunsch(
     // Row & column (both range from 0 to n-1)
     // (the variable "z" is injected as a constant by the Rust code)
     // row and column both refer to an actual word in the words_flat array
-    unsigned int row = floor(z - sqrt(z * z - 2 * idx));
-    unsigned int s = row * (z - row / 2.0);
-    unsigned int col = row + idx - s;
+    u64 row = floor(z - sqrt(z * z - 2 * idx));
+    u64 s = row * (z - row / 2.0);
+    u64 col = row + idx - s;
+
+    // if (row >= num_words || col >= num_words)
+    // {
+    //     printf("Invalid row or col index: row=%u, col=%u\n", row, col);
+    //     return;
+    // }
 
     u8 *word1 = words_flat + words_offsets[row];
     u8 word1_length = words_offsets[row + 1] - words_offsets[row];
