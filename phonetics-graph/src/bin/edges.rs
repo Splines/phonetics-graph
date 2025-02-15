@@ -7,8 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 611000;
-// static THRESHOLD: u32 = 611786;
+static THRESHOLD: u32 = 300000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -94,62 +93,57 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Shared memory size (in bytes): {}", shared_mem_size);
     println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
 
-    let mut best_block_size = block_size;
-    let mut best_time = std::time::Duration::MAX;
+    let cfg = LaunchConfig {
+        grid_dim: (
+            (num_adjacency_matrix_elements + block_size - 1) / block_size,
+            1,
+            1,
+        ),
+        block_dim: (block_size, 1, 1),
+        shared_mem_bytes: shared_mem_size,
+    };
 
-    for bs in (1..=1024).rev() {
-        let sm_size = bs
-            * (max_word_length as u32 + 1)
-            * (max_word_length as u32 + 1)
-            * (std::mem::size_of::<i8>() as u32); // 1 byte
-
-        if sm_size > max_shared_mem_bytes {
-            continue;
-        }
-
-        block_size = bs;
-        shared_mem_size = sm_size;
-
-        let cfg = LaunchConfig {
-            grid_dim: (
-                (num_adjacency_matrix_elements + block_size - 1) / block_size,
-                1,
-                1,
+    println!("Launching kernel");
+    let start = std::time::Instant::now();
+    unsafe {
+        kernel.launch(
+            cfg,
+            (
+                &mut out,
+                &words_flat_device,
+                &words_offsets_device,
+                num_nodes,
+                num_adjacency_matrix_elements,
+                max_word_length as u32,
             ),
-            block_dim: (block_size, 1, 1),
-            shared_mem_bytes: shared_mem_size,
-        };
+        )
+    }?;
+    dev.synchronize()?;
+    let duration = start.elapsed();
+    println!("Kernel execution time: {:?}", duration);
 
-        println!("Launching kernel with block size: {}", block_size);
-        let start = std::time::Instant::now();
-        unsafe {
-            kernel.clone().launch(
-                cfg,
-                (
-                    &mut out,
-                    &words_flat_device,
-                    &words_offsets_device,
-                    num_nodes,
-                    num_adjacency_matrix_elements,
-                    max_word_length as u32,
-                ),
-            )
-        }?;
-        dev.synchronize()?;
-        let duration = start.elapsed();
-        println!(
-            "Kernel execution time with block size {}: {:?}",
-            block_size, duration
-        );
+    let out_host: Vec<i8> = dev.dtoh_sync_copy(&out)?;
+    assert_eq!(
+        out_host.len(),
+        num_adjacency_matrix_elements.try_into().unwrap()
+    );
+    println!("{:?}", &out_host[..20]);
+    println!("{:?}", &out_host[out_host.len() - 20..]);
 
-        if duration < best_time {
-            best_time = duration;
-            best_block_size = block_size;
-        }
-    }
+    println!("Done");
 
-    println!("Best block size: {}", best_block_size);
-    println!("Best execution time: {:?}", best_time);
+    // Print highest and lowest score
+    let highest_score = out_host.iter().max_by_key(|score| *score).unwrap();
+    let lowest_score = out_host.iter().min_by_key(|score| *score).unwrap();
+    println!("💠 Highest score: {highest_score:?}");
+    println!("💠 Lowest score: {lowest_score:?}");
+
+    println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
+    let mut file =
+        File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
+    file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
+        .expect("Failed to write to edges.bin");
+    println!("✅ Done! Results written to edges.bin");
 
     Ok(())
 }
