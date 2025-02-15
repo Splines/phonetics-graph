@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u16 = 7500;
+static THRESHOLD: u32 = 611786;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -41,13 +41,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         })
         .collect();
     words_offsets.push(words_flat.len() as u32); // add the last offset
-    println!("words_offsets (1st): {:?}", &words_offsets[..10]);
-    println!(
-        "words_offsets (2nd to last) {:?}",
-        words_offsets[words_offsets.len() - 2]
-    );
-    println!("words_offsets (last): {:?}", words_offsets.last());
-    println!("words_offsets.len(): {}", words_offsets.len());
     println!("Num words: {}", words.len());
     assert!(words_offsets.len() == words.len() + 1);
 
@@ -70,7 +63,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
 
     // Launch config
     // adjust block size such that shared memory size of 48kB is not exceeded
-    let block_size: u32 = 128; // num_threads
+    let block_size: u32 = 128 / 2; // num_threads
     println!("Block size: {}", block_size);
 
     let shared_mem_size = block_size
