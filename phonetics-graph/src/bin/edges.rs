@@ -49,6 +49,8 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let mut out = dev.alloc_zeros::<i8>(num_adjacency_matrix_elements.try_into().unwrap())?;
 
     let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
+    println!("max_word_length: {}", max_word_length);
+
     let score_matrix_size =
         num_adjacency_matrix_elements as usize * (max_word_length + 1) * (max_word_length + 1);
     let score_matrices_device = dev.alloc_zeros::<i8>(score_matrix_size)?;
@@ -100,6 +102,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         num_adjacency_matrix_elements.try_into().unwrap()
     );
     println!("{:?}", &out_host[..20]);
+    println!("{:?}", &out_host[out_host.len() - 20..]);
 
     println!("Done");
     Ok(())
