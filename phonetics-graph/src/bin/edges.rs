@@ -236,8 +236,8 @@ fn analyze(results: &Vec<i8>) {
     println!("{:?}", &results[..20]);
     println!("{:?}", &results[results.len() - 20..]);
 
-    let highest_score = results.iter().max_by_key(|score| *score).unwrap();
-    let lowest_score = results.iter().min_by_key(|score| *score).unwrap();
+    let highest_score = results.iter().max().unwrap();
+    let lowest_score = results.iter().min().unwrap();
     println!("💠 Highest score: {highest_score:?}");
     println!("💠 Lowest score: {lowest_score:?}");
 }
@@ -288,5 +288,7 @@ fn main() {
         analyze(&results);
         println!("\n📝 Saving");
         save(&results);
+
+        break;
     }
 }
