@@ -32,7 +32,9 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 **CPU**:
 
 - 10,000 nodes: 12s
+- 15,000 nodes: 24s
 - 20,000 nodes: 42s
+- 30,000 nodes: 93s
 - 35,000 nodes: 132s
 - 50,000 nodes: couldn't test due to memory constraints (RAM)
 
@@ -40,6 +42,7 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 
 - 10,000 nodes: 173.2ms
 - 20,000 nodes: 438ms
+- 30,000 nodes 1.09s
 - 35,000 nodes: 1.73s
 - 100,000 nodes: 2.57s
 - 200,000 nodes: 3.80s
@@ -55,6 +58,6 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 Command from [here](https://superuser.com/a/968863/):
 
 ```bash
-cmp --silent ../data/graph/edges-new.bin ../data/graph/edges-new.bin # check error code (!)
+cmp --silent ../data/graph/edges-new.bin ../data/graph/edges-new-gpu.bin # check error code (!)
 diff <(xxd ../data/graph/edges-new.bin) <(xxd ../data/graph/edges-new-gpu.bin)
 ```
