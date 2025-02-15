@@ -19,14 +19,6 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
     {
         score_matrix[j] = GAP_PENALTY * j;
     }
-    // Set all other elements to 0
-    for (int i = 1; i <= a_length; ++i)
-    {
-        for (int j = 1; j <= b_length; ++j)
-        {
-            score_matrix[i * (b_length + 1) + j] = 0;
-        }
-    }
 
     // Calculate score using the Needleman-Wunsch algorithm
     for (int i = 1; i <= a_length; ++i)
