@@ -56,8 +56,13 @@ extern "C" __global__ void needleman_wunsch(
     // (the variable "z" is injected as a constant by the Rust code)
     // row and column both refer to an actual word in the words_flat array
     unsigned int row = floor(z - sqrt(z * z - 2 * idx));
-    unsigned int s = row * (z - row / 2);
+    unsigned int s = row * (z - row / 2.0);
     unsigned int col = row + idx - s;
+
+    // __syncthreads();
+    // printf("idx=%u, row=%u, col=%u, blockIdx.x=%u, threadIdx.x=%u, z=%f, s=%u\n",
+        //    idx, row, col, blockIdx.x, threadIdx.x, z, s);
+    // __syncthreads();
 
     // if (row >= num_words || col >= num_words)
     // {
