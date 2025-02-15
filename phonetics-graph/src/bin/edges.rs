@@ -36,7 +36,7 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
 fn initialize_device() -> CudaDeviceArc {
     let dev = cudarc::driver::CudaDevice::new(DEVICE_ID).expect("Failed to initialize device");
     println!(
-        "Device name: {}\n----------------",
+        "Device name: {}",
         dev.name().expect("Failed to get device name")
     );
     dev
@@ -59,7 +59,7 @@ fn total_available_memory() -> usize {
 /// Note that this is just a rough estimate and the actual threshold may be
 /// lower due to other factors. We only take a percentage of the total memory
 /// available on the device, see `total_available_memory`.
-fn calculate_threshold(available_memory: usize) -> u32 {
+fn num_words_in_one_run(available_memory: usize) -> u32 {
     let score_size = std::mem::size_of::<i8>() as f64;
     let max_num_edges = (available_memory as f64 / score_size) as u64;
     let max_num_nodes = -0.5 + f64::sqrt(0.25 + 2.0 * max_num_edges as f64);
@@ -192,12 +192,7 @@ fn num_edges(num_nodes: u32) -> u64 {
     (u64::from(num_nodes) * (u64::from(num_nodes) + 1)) / 2
 }
 
-fn compute(mut words: Vec<Vec<u8>>) -> Vec<i8> {
-    let device = initialize_device();
-    let available_memory = total_available_memory();
-    let threshold = calculate_threshold(available_memory);
-    words.truncate(threshold as usize);
-
+fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
     let num_nodes: u32 = words.len().try_into().unwrap();
     let num_edges = num_edges(num_nodes);
     println!("Num nodes: {num_nodes}");
@@ -255,17 +250,38 @@ fn save(results: &Vec<i8>) {
 }
 
 fn main() {
-    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
+    let words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
-    words.truncate(10000);
-
+    // words.truncate(50000);
     println!("Num total available words: {}", words.len());
-    println!("Num edges: {}", num_edges(words.len().try_into().unwrap()));
-    let results = compute(words);
+    let num_edges = num_edges(words.len().try_into().unwrap());
+    println!(
+        "Storage needed for edges: {} MB",
+        num_edges * std::mem::size_of::<i8>() as u64 / (1024 * 1024)
+    );
+    println!("Num edges: {num_edges}");
 
-    println!("\n🌟 Analyzing");
-    analyze(&results);
+    let mut start_idx = 0;
 
-    println!("\n📝 Saving");
-    save(&results);
+    while start_idx < words.len() {
+        let device = initialize_device();
+        let available_memory = total_available_memory();
+        let num_words_in_one_run = num_words_in_one_run(available_memory);
+
+        let end_idx = (start_idx + num_words_in_one_run as usize).min(words.len());
+        let words_chunk = words[start_idx..end_idx].to_vec();
+        println!();
+        println!("---------------------------------");
+        println!("▶ Processing words in range: [{start_idx}, {end_idx})");
+        println!("---------------------------------");
+
+        let results = compute(&device, words_chunk);
+        drop(device);
+        start_idx = end_idx;
+
+        println!("\n🌟 Analyzing");
+        analyze(&results);
+        // println!("\n📝 Saving");
+        // save(&all_results);
+    }
 }
