@@ -51,10 +51,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
     println!("max_word_length: {}", max_word_length);
 
-    let score_matrix_size =
-        num_adjacency_matrix_elements as usize * (max_word_length + 1) * (max_word_length + 1);
-    let score_matrices_device = dev.alloc_zeros::<i8>(score_matrix_size)?;
-
     let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
     kernel_code = format!("static const float z = {num_nodes}.5;\n") + &kernel_code;
     let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
@@ -64,8 +60,16 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
 
     // Launch config
-    let block_size = 1024;
+    // adjust block size such that shared memory size of 48kB is not exceeded
+    let block_size: u32 = 128; // num_threads
     println!("Block size: {}", block_size);
+
+    let shared_mem_size = block_size
+        * (max_word_length as u32 + 2) // why is +1 sometimes not sufficient?
+        * (max_word_length as u32 + 2)
+        * (std::mem::size_of::<i8>() as u32);
+    println!("Shared memory size (in bytes): {}", shared_mem_size);
+    println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
 
     let cfg = LaunchConfig {
         grid_dim: (
@@ -74,7 +78,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
             1,
         ),
         block_dim: (block_size, 1, 1),
-        shared_mem_bytes: 0,
+        shared_mem_bytes: shared_mem_size,
     };
 
     println!("Launching kernel");
@@ -87,7 +91,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
                 &words_flat_device,
                 &words_offsets_device,
                 num_adjacency_matrix_elements,
-                &score_matrices_device,
                 max_word_length as u32,
             ),
         )
