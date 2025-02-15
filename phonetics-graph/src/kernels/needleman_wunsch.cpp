@@ -19,6 +19,14 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
     {
         score_matrix[j] = GAP_PENALTY * j;
     }
+    // Set all other elements to 0
+    for (int i = 1; i <= a_length; ++i)
+    {
+        for (int j = 1; j <= b_length; ++j)
+        {
+            score_matrix[i * (b_length + 1) + j] = 0;
+        }
+    }
 
     // Calculate score using the Needleman-Wunsch algorithm
     for (int i = 1; i <= a_length; ++i)
@@ -38,13 +46,14 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
 
 extern "C" __global__ void needleman_wunsch(
     i8 *out, u8 *words_flat, u64 *words_offsets,
-    const u32 num_words, const u32 out_size, const u32 max_word_length)
+    const u32 num_words, const u64 out_size, const u32 max_word_length)
 {
     extern __shared__ i8 shared_score_matrix[];
 
     u64 idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= out_size)
     {
+        printf("Index bigger than out size: idx=%u\n", idx);
         return;
     }
 
