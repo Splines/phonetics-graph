@@ -55,7 +55,7 @@ extern "C" __global__ void needleman_wunsch(
     // Row & column (both range from 0 to n-1)
     // (the variable "z" is injected as a constant by the Rust code)
     // row and column both refer to an actual word in the words_flat array
-    unsigned int row = floor(z - sqrtf(z * z - 2 * idx));
+    unsigned int row = floor(z - sqrt(z * z - 2 * idx));
     unsigned int s = row * (z - row / 2);
     unsigned int col = row + idx - s;
 
