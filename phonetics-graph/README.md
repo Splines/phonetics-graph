@@ -21,3 +21,30 @@ first 20: [2, 0, -2, -2, -2, -2, 0, -2, -2, -2, 2, -2, -2, 0, -2, -2, -2, 1, 0, 
 # for 6000 elements total:
 last 20: [-5, -4, -5, -5, -2, -4, -6, -4, -4, -4, 8, -8, -5, -8, -4, -4, -4, 7, -6, -5]
 ```
+
+
+## Timing (Preliminary results)
+
+Fully-connected graphs with undirected edges.
+
+$$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
+
+**CPU**:
+
+- 10,000 nodes: 12s
+- 20,000 nodes: 42s
+- 35,000 nodes: 132s
+- 50,000 nodes: couldn't test due to memory constraints (RAM)
+
+**GPU (CUDA)**:
+
+- 10,000 nodes: 173.2ms
+- 20,000 nodes: 438ms
+- 35,000 nodes: 1.73s
+- 100,000 nodes: 2.57s
+- 200,000 nodes: 3.80s
+- 300,000 nodes: 11.33s
+- 350,000 nodes: 5.88s
+- 400,000 nodes: 2.64s
+- 500,000 nodes: 2.21s
+- 611,786 nodes: 1.38s
