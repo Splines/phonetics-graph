@@ -243,16 +243,21 @@ fn analyze(results: &Vec<i8>) {
 }
 
 fn save(results: &Vec<i8>) {
+    assert!(results[..20].iter().any(|&x| x != 0));
+    assert!(results[results.len() - 20..].iter().any(|&x| x != 0));
+
     let mut file = File::create(OUTPUT_FILE).expect("Failed to create {OUTPUT_FILE}");
-    file.write_all(&results.iter().map(|&x| x as u8).collect::<Vec<u8>>())
-        .expect("Failed to write to edges.bin");
-    println!("✅ Done! Results written to edges.bin");
+    // weights are actually i8, but we convert them to u8 for writing
+    let weights: Vec<u8> = results.iter().map(|&x| x as u8).collect();
+    file.write_all(&weights)
+        .expect("Failed to write to {OUTPUT_FILE}");
+    println!("✅ Done! Results written to {OUTPUT_FILE}");
 }
 
 fn main() {
-    let words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
+    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
-    // words.truncate(50000);
+    words.truncate(100000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
     println!(
@@ -281,7 +286,7 @@ fn main() {
 
         println!("\n🌟 Analyzing");
         analyze(&results);
-        // println!("\n📝 Saving");
-        // save(&all_results);
+        println!("\n📝 Saving");
+        save(&results);
     }
 }
