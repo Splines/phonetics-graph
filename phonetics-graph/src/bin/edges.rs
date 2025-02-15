@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 100000;
+static THRESHOLD: u32 = 80000;
 // static THRESHOLD: u32 = 611000;
 // static THRESHOLD: u32 = 611786;
 
@@ -60,14 +60,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
     println!("max_word_length: {}", max_word_length);
 
-    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
-    kernel_code = format!("static const double z = {num_nodes}.5;\n") + &kernel_code;
-    let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
-
-    println!("Loading PTX");
-    dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
-    let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
-
     // Launch config
     let max_shared_mem_bytes: u32 = dev
         .attribute(
@@ -111,6 +103,13 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         shared_mem_bytes: shared_mem_size,
     };
 
+    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
+    kernel_code = format!("static const double z = {num_nodes}.5;\n") + &kernel_code;
+    let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
+
+    println!("Loading PTX");
+    dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
+    let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
     println!("Launching kernel");
     let start = std::time::Instant::now();
     unsafe {
