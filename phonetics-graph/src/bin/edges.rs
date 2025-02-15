@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 10000;
+static THRESHOLD: u32 = 300000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -62,14 +62,34 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
 
     // Launch config
-    // adjust block size such that shared memory size of 48kB is not exceeded
-    let block_size: u32 = 128 / 2; // num_threads
-    println!("Block size: {}", block_size);
+    let max_shared_mem_bytes: u32 = dev
+        .attribute(
+            cudarc::driver::sys::CUdevice_attribute::CU_DEVICE_ATTRIBUTE_SHARED_MEMORY_PER_BLOCK,
+        )?
+        .try_into()
+        .unwrap();
+    println!(
+        "Max shared memory per block (in kB): {}",
+        max_shared_mem_bytes / 1024
+    );
+    let mut block_size: u32 = 1;
+    let mut shared_mem_size: u32 = 0;
 
-    let shared_mem_size = block_size
-        * (max_word_length as u32 + 1) // why is +1 sometimes not sufficient?
-        * (max_word_length as u32 + 1)
-        * (std::mem::size_of::<i8>() as u32); // 1 byte
+    // adjust block size such that shared memory size of 48kB is not exceeded
+    for bs in (1..=1024).rev() {
+        let sm_size = bs
+            * (max_word_length as u32 + 1)
+            * (max_word_length as u32 + 1)
+            * (std::mem::size_of::<i8>() as u32); // 1 byte
+
+        if sm_size <= max_shared_mem_bytes {
+            block_size = bs;
+            shared_mem_size = sm_size;
+            break;
+        }
+    }
+
+    println!("Block size: {}", block_size);
     println!("Shared memory size (in bytes): {}", shared_mem_size);
     println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
 
