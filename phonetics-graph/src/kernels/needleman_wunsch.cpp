@@ -1,7 +1,7 @@
 typedef char i8;
 typedef unsigned char u8;
 typedef unsigned int u32;
-typedef unsigned long long u64;
+typedef unsigned long long int u64;
 
 static const i8 GAP_PENALTY = -1;
 
@@ -50,10 +50,9 @@ extern "C" __global__ void needleman_wunsch(
 {
     extern __shared__ i8 shared_score_matrix[];
 
-    u64 idx = blockIdx.x * blockDim.x + threadIdx.x;
+    u64 idx = static_cast<u64>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (idx >= out_size)
     {
-        printf("Index bigger than out size: idx=%u\n", idx);
         return;
     }
 

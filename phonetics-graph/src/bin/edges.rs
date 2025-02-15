@@ -7,9 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-// static THRESHOLD: u32 = 100000;
-// static THRESHOLD: u32 = 100001;
-static THRESHOLD: u32 = 90000;
+static THRESHOLD: u32 = 100000;
 // static THRESHOLD: u32 = 611000;
 // static THRESHOLD: u32 = 611786;
 
@@ -100,6 +98,14 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Max grid size: {max_grid_size}");
     if grid_size > max_grid_size.try_into().unwrap() {
         panic!("Grid size exceeds maximum grid size");
+    }
+
+    // assert that grid size and block size calculation are correct
+    if (grid_size as u64 * block_size as u64) < num_adjacency_matrix_elements {
+        panic!(
+            "Grid size ({}) * block size ({}) is less than the number of adjacency matrix elements ({})",
+            grid_size, block_size, num_adjacency_matrix_elements
+        );
     }
 
     println!("Grid size: {grid_size}");
