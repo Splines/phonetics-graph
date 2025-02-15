@@ -5,7 +5,7 @@
 // - Host to Device (htd) = CPU to GPU
 
 use std::fs::{self, File};
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 type CudaDeviceArc = std::sync::Arc<cudarc::driver::CudaDevice>;
 use cudarc::driver::{CudaSlice, LaunchAsync, LaunchConfig};
 
@@ -14,6 +14,7 @@ static DEVICE_ID: usize = 0;
 static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
+static OUTPUT_FILE: &str = "../data/graph/edges-new-gpu.bin";
 
 /// Reads words from a CSV file and returns a vector of vectors of u8.
 /// Each inner vector represents a word.
@@ -191,7 +192,7 @@ fn num_edges(num_nodes: u32) -> u64 {
     (u64::from(num_nodes) * (u64::from(num_nodes) + 1)) / 2
 }
 
-fn compute(mut words: Vec<Vec<u8>>) {
+fn compute(mut words: Vec<Vec<u8>>) -> Vec<i8> {
     let device = initialize_device();
     let available_memory = total_available_memory();
     let threshold = calculate_threshold(available_memory);
@@ -232,20 +233,39 @@ fn compute(mut words: Vec<Vec<u8>>) {
     let out_host: Vec<i8> = device
         .dtoh_sync_copy(&out)
         .expect("Failed to copy buffer back from device to host");
-    assert_eq!(out_host.len(), num_edges.try_into().unwrap());
-    println!("{:?}", &out_host[..20]);
-    println!("{:?}", &out_host[out_host.len() - 20..]);
 
-    let highest_score = out_host.iter().max_by_key(|score| *score).unwrap();
-    let lowest_score = out_host.iter().min_by_key(|score| *score).unwrap();
+    out_host
+}
+
+fn analyze(results: &Vec<i8>) {
+    println!("{:?}", &results[..20]);
+    println!("{:?}", &results[results.len() - 20..]);
+
+    let highest_score = results.iter().max_by_key(|score| *score).unwrap();
+    let lowest_score = results.iter().min_by_key(|score| *score).unwrap();
     println!("💠 Highest score: {highest_score:?}");
     println!("💠 Lowest score: {lowest_score:?}");
 }
 
+fn save(results: &Vec<i8>) {
+    let mut file = File::create(OUTPUT_FILE).expect("Failed to create {OUTPUT_FILE}");
+    file.write_all(&results.iter().map(|&x| x as u8).collect::<Vec<u8>>())
+        .expect("Failed to write to edges.bin");
+    println!("✅ Done! Results written to edges.bin");
+}
+
 fn main() {
-    let words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
+    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
+    words.truncate(10000);
+
     println!("Num total available words: {}", words.len());
     println!("Num edges: {}", num_edges(words.len().try_into().unwrap()));
-    compute(words);
+    let results = compute(words);
+
+    println!("\n🌟 Analyzing");
+    analyze(&results);
+
+    println!("\n📝 Saving");
+    save(&results);
 }
