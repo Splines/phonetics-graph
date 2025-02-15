@@ -7,10 +7,6 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 100000;
-// static THRESHOLD: u32 = 611000;
-// static THRESHOLD: u32 = 611786;
-
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
     let file = File::open(file_path)?;
@@ -25,9 +21,23 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     Ok(words)
 }
 
-fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
+fn compute(mut words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let dev = cudarc::driver::CudaDevice::new(0)?;
     println!("Device name: {}", dev.name()?);
+
+    // Available memory
+    let dev_unsafe: cudarc::driver::sys::CUdevice = cudarc::driver::result::device::get(0)?;
+    let total_memory = unsafe { cudarc::driver::result::device::total_mem(dev_unsafe) }?;
+    println!("Total global memory: {} MB", total_memory / (1024 * 1024));
+
+    // Max number of nodes to not exceed available memory
+    let available_memory = 0.7 * total_memory as f64; // a bit less than total memory
+    let score_size = std::mem::size_of::<i8>() as f64;
+    let max_num_edges = (available_memory / score_size) as u64;
+    let max_num_nodes = -0.5 + f64::sqrt(0.25 + 2.0 * max_num_edges as f64);
+    let threshold: u32 = max_num_nodes as u32;
+    words = words.into_iter().take(threshold as usize).collect();
+    println!("Threshold (num words): {}", threshold);
 
     let num_nodes: u32 = words.len().try_into().unwrap();
     let num_adjacency_matrix_elements: u64 =
@@ -175,12 +185,7 @@ fn main() {
         .expect("Failed to read words from CSV");
     println!("Num words: {}", words.len());
 
-    // only consider the first THRESHOLD words
-    let words_shortened: Vec<Vec<u8>> = words.into_iter().take(THRESHOLD as usize).collect();
-    assert_eq!(words_shortened.len(), THRESHOLD as usize);
-    println!("Threshold: {}", THRESHOLD);
-
-    if let Err(e) = compute(words_shortened) {
+    if let Err(e) = compute(words) {
         eprintln!("Error: {}", e);
     }
 }
