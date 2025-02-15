@@ -7,7 +7,8 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 300000;
+static THRESHOLD: u32 = 611000;
+// static THRESHOLD: u32 = 611786;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -53,14 +54,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
     println!("max_word_length: {}", max_word_length);
 
-    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
-    kernel_code = format!("static const double z = {num_nodes}.5;\n") + &kernel_code;
-    let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
-
-    println!("Loading PTX");
-    dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
-    let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
-
     // Launch config
     let max_shared_mem_bytes: u32 = dev
         .attribute(
@@ -100,8 +93,18 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
             1,
         ),
         block_dim: (block_size, 1, 1),
-        shared_mem_bytes: shared_mem_size,
+        shared_mem_bytes: 0, // this is only dynamic shared memory size
     };
+
+    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
+    let z_assignment = format!("static const double z = {num_nodes}.5;\n");
+    let shared_mem_assignment = format!("static const int shared_mem_size = {shared_mem_size};\n");
+    kernel_code = z_assignment + &shared_mem_assignment + &kernel_code;
+    let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
+
+    println!("Loading PTX");
+    dev.load_ptx(ptx, MODULE_NAME, &[KERNEL_NAME])?;
+    let kernel = dev.get_func(MODULE_NAME, KERNEL_NAME).unwrap();
 
     println!("Launching kernel");
     let start = std::time::Instant::now();
@@ -138,12 +141,12 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("💠 Highest score: {highest_score:?}");
     println!("💠 Lowest score: {lowest_score:?}");
 
-    println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
-    let mut file =
-        File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
-    file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
-        .expect("Failed to write to edges.bin");
-    println!("✅ Done! Results written to edges.bin");
+    // println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
+    // let mut file =
+    //     File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
+    // file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
+    //     .expect("Failed to write to edges.bin");
+    // println!("✅ Done! Results written to edges.bin");
 
     Ok(())
 }
