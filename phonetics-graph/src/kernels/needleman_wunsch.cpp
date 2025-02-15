@@ -54,27 +54,10 @@ extern "C" __global__ void needleman_wunsch(
     unsigned int s = row * (z - row / 2.0);
     unsigned int col = row + idx - s;
 
-    // __syncthreads();
-    // printf("idx=%u, row=%u, col=%u, blockIdx.x=%u, threadIdx.x=%u, z=%f, s=%u\n",
-    //    idx, row, col, blockIdx.x, threadIdx.x, z, s);
-    // __syncthreads();
-
-    // if (row >= num_words || col >= num_words)
-    // {
-    //     printf("Invalid row or col index: row=%u, col=%u\n", row, col);
-    //     return;
-    // }
-
     u8 *word1 = words_flat + words_offsets[row];
     u8 word1_length = words_offsets[row + 1] - words_offsets[row];
     u8 *word2 = words_flat + words_offsets[col];
     u8 word2_length = words_offsets[col + 1] - words_offsets[col];
-
-    // if (word1_length > max_word_length || word2_length > max_word_length)
-    // {
-    //     printf("Invalid word length: word1_length=%u, word2_length=%u\n", word1_length, word2_length);
-    //     return;
-    // }
 
     i8 *score_matrix = shared_score_matrix + threadIdx.x * (max_word_length + 1) * (max_word_length + 1);
     i8 distance = calculateDistance(word1, word1_length, word2, word2_length, score_matrix);
