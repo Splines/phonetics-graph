@@ -48,6 +48,11 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Allocating buffers");
     let mut out = dev.alloc_zeros::<i8>(num_adjacency_matrix_elements.try_into().unwrap())?;
 
+    let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
+    let score_matrix_size =
+        num_adjacency_matrix_elements as usize * (max_word_length + 1) * (max_word_length + 1);
+    let score_matrices_device = dev.alloc_zeros::<i8>(score_matrix_size)?;
+
     let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
     kernel_code = format!("static const float z = {num_nodes}.5;\n") + &kernel_code;
     let ptx = cudarc::nvrtc::compile_ptx(kernel_code)?;
@@ -59,9 +64,6 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     // Launch config
     let block_size = 1024;
     println!("Block size: {}", block_size);
-
-    let max_word_length = words.iter().map(|w| w.len()).max().unwrap();
-    println!("Max word length: {}", max_word_length);
 
     let cfg = LaunchConfig {
         grid_dim: (
@@ -83,6 +85,8 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
                 &words_flat_device,
                 &words_offsets_device,
                 num_adjacency_matrix_elements,
+                &score_matrices_device,
+                max_word_length as u32,
             ),
         )
     }?;

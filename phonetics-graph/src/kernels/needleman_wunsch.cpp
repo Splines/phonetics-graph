@@ -8,23 +8,17 @@ static const int8_t GAP_PENALTY = -1;
  * Calculates the distance between two words using the Needleman-Wunsch algorithm.
  */
 __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
-                                    uint8_t *b, uint8_t b_length)
+                                    uint8_t *b, uint8_t b_length,
+                                    int8_t *score_matrix)
 {
-    // Init matrix
-    int **score_matrix = new int *[a_length + 1];
-    for (int i = 0; i <= a_length; ++i)
-    {
-        score_matrix[i] = new int[b_length + 1];
-    }
-
     // Populate matrix
     for (int i = 0; i <= a_length; ++i)
     {
-        score_matrix[i][0] = GAP_PENALTY * i;
+        score_matrix[i * (b_length + 1)] = GAP_PENALTY * i;
     }
     for (int j = 0; j <= b_length; ++j)
     {
-        score_matrix[0][j] = GAP_PENALTY * j;
+        score_matrix[j] = GAP_PENALTY * j;
     }
 
     // Calculate score using the Needleman-Wunsch algorithm
@@ -32,27 +26,19 @@ __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
     {
         for (int j = 1; j <= b_length; ++j)
         {
-            int cost = (a[i - 1] == b[j - 1]) ? 1 : -1; // default metric
-            int match_score = score_matrix[i - 1][j - 1] + cost;
-            int delete_score = score_matrix[i - 1][j] + GAP_PENALTY;
-            int insert_score = score_matrix[i][j - 1] + GAP_PENALTY;
-            score_matrix[i][j] = max(max(match_score, delete_score), insert_score);
+            int8_t cost = (a[i - 1] == b[j - 1]) ? 1 : -1; // default metric
+            int8_t match_score = score_matrix[(i - 1) * (b_length + 1) + (j - 1)] + cost;
+            int8_t delete_score = score_matrix[(i - 1) * (b_length + 1) + j] + GAP_PENALTY;
+            int8_t insert_score = score_matrix[i * (b_length + 1) + (j - 1)] + GAP_PENALTY;
+            score_matrix[i * (b_length + 1) + j] = max(max(match_score, delete_score), insert_score);
         }
     }
-    int distance = score_matrix[a_length][b_length];
-
-    // Free memory
-    for (int i = 0; i <= a_length; ++i)
-    {
-        delete[] score_matrix[i];
-    }
-    delete[] score_matrix;
-
-    return distance;
+    return score_matrix[a_length * (b_length + 1) + b_length];
 }
 
 extern "C" __global__ void needleman_wunsch(
-    int8_t *out, uint8_t *words_flat, uint32_t *words_offsets, const uint32_t out_size)
+    int8_t *out, uint8_t *words_flat, uint32_t *words_offsets, const uint32_t out_size,
+    int8_t *score_matrices, const uint32_t max_word_length)
 {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= out_size)
@@ -72,6 +58,7 @@ extern "C" __global__ void needleman_wunsch(
     uint8_t *word2 = words_flat + words_offsets[col];
     uint8_t word2_length = words_offsets[col + 1] - words_offsets[col];
 
-    int8_t distance = calculateDistance(word1, word1_length, word2, word2_length);
+    int8_t *score_matrix = score_matrices + idx * (max_word_length + 1) * (max_word_length + 1);
+    int8_t distance = calculateDistance(word1, word1_length, word2, word2_length, score_matrix);
     out[idx] = distance;
 }
