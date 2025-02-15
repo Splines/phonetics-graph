@@ -38,8 +38,11 @@ __device__ int8_t calculateDistance(uint8_t *a, uint8_t a_length,
 }
 
 extern "C" __global__ void needleman_wunsch(
-    int8_t *out, uint8_t *words_flat, uint32_t *words_offsets,
-    const uint32_t out_size, const uint32_t max_word_length)
+    int8_t *out, uint8_t *words_flat,
+    uint32_t *words_offsets,
+    const uint32_t num_words,
+    const uint32_t out_size,
+    const uint32_t max_word_length)
 {
     extern __shared__ int8_t shared_score_matrix[];
 
@@ -53,13 +56,38 @@ extern "C" __global__ void needleman_wunsch(
     // (the variable "z" is injected as a constant by the Rust code)
     // row and column both refer to an actual word in the words_flat array
     unsigned int row = floor(z - sqrtf(z * z - 2 * idx));
-    unsigned int s = row * (z - row / 2);
+    unsigned int s = row * (z - row / 2.0); // don't change to 2 instead of 2.0 (!)
     unsigned int col = row + idx - s;
+
+    if (row >= num_words || col >= num_words)
+    {
+        if (idx != 28043258)
+        {
+            return;
+        }
+        printf("Value of z: %f\n", z);
+        printf("Invalid row or col index: row=%u, col=%u, idx=%u, s=%u, z=%u\n", row, col, idx, s, z);
+        return;
+    }
 
     uint8_t *word1 = words_flat + words_offsets[row];
     uint8_t word1_length = words_offsets[row + 1] - words_offsets[row];
     uint8_t *word2 = words_flat + words_offsets[col];
     uint8_t word2_length = words_offsets[col + 1] - words_offsets[col];
+    // if (word2_length > 100) {
+    //     printf("word2_length=%u\n", word2_length);
+    //     printf("Col: %u\n", col);
+    //     printf("Word offsets: %u, %u\n", words_offsets[col], words_offsets[col + 1]);
+    // }
+
+    // print last element of words_offsets
+    // printf("Last element of words_offsets: %u\n", words_offsets[7500]);
+
+    // if (word1_length > max_word_length || word2_length > max_word_length)
+    // {
+    //     // printf("Invalid word length: word1_length=%u, word2_length=%u\n", word1_length, word2_length);
+    //     return;
+    // }
 
     int8_t *score_matrix = shared_score_matrix + threadIdx.x * (max_word_length + 1) * (max_word_length + 1);
     int8_t distance = calculateDistance(word1, word1_length, word2, word2_length, score_matrix);

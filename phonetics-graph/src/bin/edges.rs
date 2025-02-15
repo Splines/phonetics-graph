@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u16 = 6000;
+static THRESHOLD: u16 = 7500;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -41,6 +41,15 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         })
         .collect();
     words_offsets.push(words_flat.len() as u32); // add the last offset
+    println!("words_offsets (1st): {:?}", &words_offsets[..10]);
+    println!(
+        "words_offsets (2nd to last) {:?}",
+        words_offsets[words_offsets.len() - 2]
+    );
+    println!("words_offsets (last): {:?}", words_offsets.last());
+    println!("words_offsets.len(): {}", words_offsets.len());
+    println!("Num words: {}", words.len());
+    assert!(words_offsets.len() == words.len() + 1);
 
     let words_flat_device = dev.htod_copy(words_flat)?;
     let words_offsets_device = dev.htod_copy(words_offsets)?;
@@ -65,9 +74,9 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Block size: {}", block_size);
 
     let shared_mem_size = block_size
-        * (max_word_length as u32 + 2) // why is +1 sometimes not sufficient?
-        * (max_word_length as u32 + 2)
-        * (std::mem::size_of::<i8>() as u32);
+        * (max_word_length as u32 + 1) // why is +1 sometimes not sufficient?
+        * (max_word_length as u32 + 1)
+        * (std::mem::size_of::<i8>() as u32); // 1 byte
     println!("Shared memory size (in bytes): {}", shared_mem_size);
     println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
 
@@ -90,6 +99,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
                 &mut out,
                 &words_flat_device,
                 &words_offsets_device,
+                num_nodes,
                 num_adjacency_matrix_elements,
                 max_word_length as u32,
             ),
