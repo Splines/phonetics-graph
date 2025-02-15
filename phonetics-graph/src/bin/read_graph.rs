@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-const NUM_NODES: u32 = 2000;
+const NUM_NODES: u32 = 100000;
 
 struct Edge {
     source: u32,
@@ -29,6 +29,12 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
             }
 
             let weight = buffer[index] as i8;
+
+            if weight < 11 {
+                index += 1;
+                continue;
+            }
+
             edges.push(Edge {
                 source: i as u32,
                 target: j as u32,
@@ -65,18 +71,24 @@ fn read_node_labels() -> Vec<String> {
 
 // Read the edge binary file and convert to a list of edges
 fn main() {
-    let mut file =
-        File::open("../data/graph/edges.bin").expect("Failed to open edges.bin");
+    let mut file = File::open("../data/graph/edges-new-gpu.bin").expect("Failed to open edges.bin");
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .expect("Failed to read edges.bin");
+
+    let first_few_bytes: Vec<i8> = buffer[..20].iter().map(|&x| x as i8).collect();
+    println!("First few bytes of the buffer: {:?}", first_few_bytes);
+    let min_weight = buffer.iter().map(|&x| x as i8).min().unwrap();
+    let max_weight = buffer.iter().map(|&x| x as i8).max().unwrap();
+    println!("Minimum weight: {}", min_weight);
+    println!("Maximum weight: {}", max_weight);
+
     let edges = read_edges(&buffer);
-    // let node_labels = read_node_labels();
     println!("✅ Done reading edges.bin and nodes.csv");
 
     // Store the edges in a csv file source,target,weight
-    let mut wtr =
-        csv::Writer::from_path("../data/graph/edges.csv").expect("Failed to create edges.csv");
+    let mut wtr = csv::Writer::from_path("../data/graph/edges-new-gpu.csv")
+        .expect("Failed to create edges.csv");
     for edge in edges {
         wtr.write_record(&[
             edge.source.to_string(),

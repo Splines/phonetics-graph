@@ -53,11 +53,17 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 - 611,786 nodes: 1.38s
 
 
-## Diff
+## Other useful stuff
 
-Command from [here](https://superuser.com/a/968863/):
+**Diff two binary files.** Command from [here](https://superuser.com/a/968863/):
 
 ```bash
 cmp --silent ../data/graph/edges-new.bin ../data/graph/edges-new-gpu.bin # check error code (!)
 diff <(xxd ../data/graph/edges-new.bin) <(xxd ../data/graph/edges-new-gpu.bin)
+```
+
+**Show head of binary file.**
+
+```bash
+head -c 100 ../data/graph/edges-new-gpu.bin | od -t d1
 ```
