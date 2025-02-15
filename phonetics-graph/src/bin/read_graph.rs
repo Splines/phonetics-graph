@@ -30,7 +30,8 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
 
             let weight = buffer[index] as i8;
 
-            if weight < 11 {
+            let is_interesting_edge = weight > 4 && weight < 10;
+            if !is_interesting_edge {
                 index += 1;
                 continue;
             }
@@ -89,6 +90,8 @@ fn main() {
     // Store the edges in a csv file source,target,weight
     let mut wtr = csv::Writer::from_path("../data/graph/edges-new-gpu.csv")
         .expect("Failed to create edges.csv");
+    wtr.write_record(&["source", "target", "weight"])
+        .expect("Failed to write header");
     for edge in edges {
         wtr.write_record(&[
             edge.source.to_string(),
