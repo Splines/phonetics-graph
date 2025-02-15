@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 
 use cudarc::driver::{LaunchAsync, LaunchConfig};
 
@@ -7,7 +7,7 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 611786;
+static THRESHOLD: u32 = 10000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -111,6 +111,20 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", &out_host[out_host.len() - 20..]);
 
     println!("Done");
+
+    // Print highest and lowest score
+    let highest_score = out_host.iter().max_by_key(|score| *score).unwrap();
+    let lowest_score = out_host.iter().min_by_key(|score| *score).unwrap();
+    println!("💠 Highest score: {highest_score:?}");
+    println!("💠 Lowest score: {lowest_score:?}");
+
+    println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
+    let mut file =
+        File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
+    file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
+        .expect("Failed to write to edges.bin");
+    println!("✅ Done! Results written to edges.bin");
+
     Ok(())
 }
 
