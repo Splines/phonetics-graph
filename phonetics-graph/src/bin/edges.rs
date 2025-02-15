@@ -7,7 +7,9 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 300000;
+static THRESHOLD: u32 = 100000;
+// static THRESHOLD: u32 = 611000;
+// static THRESHOLD: u32 = 611786;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
@@ -28,7 +30,8 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("Device name: {}", dev.name()?);
 
     let num_nodes: u32 = words.len().try_into().unwrap();
-    let num_adjacency_matrix_elements: u32 = (num_nodes * (num_nodes + 1)) / 2;
+    let num_adjacency_matrix_elements: u64 =
+        (u64::from(num_nodes) * (u64::from(num_nodes) + 1)) / 2;
     println!("num_adjacency_matrix_elements: {num_adjacency_matrix_elements}");
 
     let words_flat: Vec<u8> = words.iter().flat_map(|w| w.iter()).copied().collect();
@@ -90,15 +93,16 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("Block size: {}", block_size);
+    let grid_size: u32 = ((num_adjacency_matrix_elements + block_size as u64 - 1)
+        / block_size as u64)
+        .try_into()
+        .expect("Failed to convert grid size to u32");
+    println!("Grid size: {grid_size}");
     println!("Shared memory size (in bytes): {}", shared_mem_size);
     println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
 
     let cfg = LaunchConfig {
-        grid_dim: (
-            (num_adjacency_matrix_elements + block_size - 1) / block_size,
-            1,
-            1,
-        ),
+        grid_dim: (grid_size, 1, 1),
         block_dim: (block_size, 1, 1),
         shared_mem_bytes: shared_mem_size,
     };
@@ -138,12 +142,12 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     println!("💠 Highest score: {highest_score:?}");
     println!("💠 Lowest score: {lowest_score:?}");
 
-    println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
-    let mut file =
-        File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
-    file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
-        .expect("Failed to write to edges.bin");
-    println!("✅ Done! Results written to edges.bin");
+    // println!("📝 Writing results to edges.bin (#entries: {num_nodes})");
+    // let mut file =
+    //     File::create("../data/graph/edges-new-gpu.bin").expect("Failed to create edges.bin");
+    // file.write_all(&out_host.iter().map(|&x| x as u8).collect::<Vec<u8>>())
+    //     .expect("Failed to write to edges.bin");
+    // println!("✅ Done! Results written to edges.bin");
 
     Ok(())
 }
