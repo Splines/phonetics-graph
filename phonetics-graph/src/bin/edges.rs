@@ -7,7 +7,9 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static THRESHOLD: u32 = 80000;
+// static THRESHOLD: u32 = 100000;
+// static THRESHOLD: u32 = 100001;
+static THRESHOLD: u32 = 90000;
 // static THRESHOLD: u32 = 611000;
 // static THRESHOLD: u32 = 611786;
 
@@ -40,7 +42,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         .scan(0, |acc, w| {
             let start = *acc;
             *acc += w.len();
-            Some(start as u64)
+            Some(start.try_into().unwrap())
         })
         .collect();
     words_offsets.push(words_flat.len() as u64); // add the last offset
@@ -50,7 +52,7 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     let words_flat_device = dev.htod_copy(words_flat)?;
     let words_offsets_device = dev.htod_copy(words_offsets)?;
 
-    println!("Allocating buffers");
+    println!("Allocating buffers (for output writing)");
     println!(
         "Buffer size (in MB): {}",
         (num_adjacency_matrix_elements * std::mem::size_of::<i8>() as u64) / (1024 * 1024)
@@ -93,6 +95,13 @@ fn compute(words: Vec<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         / block_size as u64)
         .try_into()
         .expect("Failed to convert grid size to u32");
+    let max_grid_size =
+        dev.attribute(cudarc::driver::sys::CUdevice_attribute::CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X)?;
+    println!("Max grid size: {max_grid_size}");
+    if grid_size > max_grid_size.try_into().unwrap() {
+        panic!("Grid size exceeds maximum grid size");
+    }
+
     println!("Grid size: {grid_size}");
     println!("Shared memory size (in bytes): {}", shared_mem_size);
     println!("Shared memory size (in kB): {}", shared_mem_size / 1024);
