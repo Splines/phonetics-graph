@@ -1,0 +1,98 @@
+% adjust the page sizes to your likings
+\usepackage[left=2.7cm,right=2.7cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[USenglish]{babel}
+\usepackage[T1]{fontenc} % allow west-european symbols (also umlauts: ä, ö, ü)
+\usepackage{csquotes} % for \enquote{}
+\usepackage{float} % for floating images
+\usepackage[bottom]{footmisc} % keep footnotes at the bottom of the page
+\usepackage{setspace} % to have the \setstretch{baselinestrech} command available
+\usepackage{ragged2e} % text alignment
+\usepackage[parfill]{parskip} % no indentation for paragraphs, instead add spacing
+\usepackage{pdfpages} %for including pdf
+
+% Easy tables, e.g. for coloring columns as seen here.
+% https://tex.stackexchange.com/a/613906/
+% \usepackage{tabularray}
+\usepackage{subfigure}
+
+\usepackage{abstract}
+\usepackage{multicol}
+
+% Graphics & Color
+\usepackage{xcolor}
+\definecolor{heidelberg-red}{HTML}{E50A37}
+\usepackage{graphicx}
+\usepackage{caption}
+
+% Math & Physics
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{cancel}
+
+\usepackage{witharrows} % http://mirrors.ibiblio.org/CTAN/macros/generic/witharrows/witharrows.pdf
+\usepackage{nicefrac} % usage: \nicefrac{nominator}{denominator}
+\usepackage{physics}
+\usepackage{siunitx}
+\sisetup{
+	locale=US,
+	group-separator={,},
+	group-digits=integer,
+	quotient-mode=fraction,per-mode=symbol}
+\usepackage{empheq} % boxed equations: https://trucastuces.wordpress.com/2012/10/10/boxed-equations-in-latex/
+
+% Acronyms
+\usepackage[automake]{glossaries}
+\setacronymstyle{long-short}
+
+\usepackage{lmodern}
+\usepackage{fancyhdr}
+\usepackage{enumerate}
+% we use the option hidelinks here to avoid ugly borders around clickable items, e.g. links and cross-references
+\usepackage{hyperref} % clickable links
+\hypersetup{
+	colorlinks = true,
+	linkcolor={red!50!black}, % Color of internal links
+	% citecolor={blue!50!black}, % Color of citations
+	urlcolor={blue!80!black} % Color for external hyperlinks
+}
+\usepackage{todonotes}
+\setlength {\marginparwidth }{2cm}      % margin for todo notes
+\usepackage[nameinlink]{cleveref}
+
+\let\qty\SI % see "bug" (warning) in https://tex.stackexchange.com/a/628184
+
+% Enumerations
+\usepackage{enumitem}
+% Enumerate lists as a) b) instead of 1. 2.
+\setenumerate[0]{label=\textbf{\alph*)}}
+% remove indentation of enumerate environment
+\setlist{leftmargin=*}
+
+% ---- Algorithms ----
+% using algorithm2e, the third algorithm typesetting environment
+%\usepackage{algorithm}                  % Für Algorithmen-Umgebung (ähnlich wie lstlistings Umgebung)
+%\usepackage{algpseudocode}              % Für Pseudocode. Füge "[noend]" hinzu, wenn du kein "endif",
+% etc. haben willst.
+\usepackage{float}
+\usepackage{setspace}
+% http://tug.ctan.org/macros/latex/contrib/algorithm2e/doc/algorithm2e.pdf
+\usepackage[ruled, algosection, lined, scleft, linesnumbered, noend]{algorithm2e}
+\renewcommand{\algorithmautorefname}{Algorithm}
+
+% Algorithm comments
+\newcommand\mycommentsfont[1]{\footnotesize\ttfamily{#1}}
+\SetCommentSty{mycommentsfont} % https://tex.stackexchange.com/a/162208/249769
+\SetKwComment{Comment}{$\triangleright$\ }{} % https://tex.stackexchange.com/a/200736/249769
+\SetKwRepeat{DoWhile}{do}{while}
+
+% Function/Procedure
+\SetKwProg{Fn}{Function}{:}{}
+\SetArgSty{textnormal}
+
+% Keywords
+\SetKw{Continue}{continue} % https://tex.stackexchange.com/a/298503/249769
+\SetKw{Break}{break}

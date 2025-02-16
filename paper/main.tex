@@ -1,0 +1,50 @@
+\documentclass[10pt,a4paper,english]{article}
+\input{preamble}
+\input{defs}
+\input{prettify-math}
+
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape}
+
+\title{Needleman-Wunsch Algorithm on a large phonetic dataset}
+\author{Dominic Plein}
+\date{October 19, 2024}
+
+\newcommand{\abstractText}{\noindent
+	\newline\noindent
+	Empirical data is of paramount importance for physics. In order to evaluate our theoretical models, we need to compare their predictions to real world data. In light of huge amounts of data, statistical methods are indispensable to extract meaningful information. This report provides an introduction to some important principles, including error propagation, linear least squares fit (also simultaneous ones), maximum likelihood estimation, and Bayesian statistics.
+}
+
+% Acronyms
+\makeglossaries
+\newacronym{ipa}{IPA}{International Phonetic Alphabet}
+
+\begin{document}
+
+\setlength{\abovedisplayskip}{0.2em}
+%\setlength{\belowdisplayskip}{0pt}
+%\setlength{\abovedisplayshortskip}{0pt}
+%\setlength{\belowdisplayshortskip}{0pt}
+
+% Title & Abstract
+\maketitle
+% \twocolumn[
+%   \begin{@twocolumnfalse}
+%     \maketitle
+%     % \begin{abstract}
+%     %   \abstractText
+%     %   \newline
+%     %   \newline
+%     % \end{abstract}
+%   \end{@twocolumnfalse}
+% ]
+
+% Content
+% \setcounter{section}{1}
+% \tableofcontents
+% \pagebreak
+
+\input{content/intro.tex}
+% \newpage
+
+\end{document}
