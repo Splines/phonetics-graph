@@ -1,0 +1,75 @@
+\section{Needleman-Wunsch algorithm}
+\label{sec:needleman-wunsch}
+
+which calculates the global alignment of two sequences and was originally used in bio-informatics to compare DNA sequences. Here, the alphabet will instead consist of the phonetic symbols. Out of all possible alignments of two words (including gaps), the Needleman-Wunsch algorithm finds the one with the smallest distance, \ie the alignment with the highest score.
+
+A good introduction to the algorithm can be found on the respective \href{https://en.wikipedia.org/wiki/Needleman%E2%80%93Wunsch_algorithm}{Wikipedia page}.
+
+\end{multicols*}{2}
+
+\begin{algorithm}
+    \DontPrintSemicolon
+    
+    \SetKwFunction{calcScoreFunc}{calculateScore}
+    \SetKwData{WordA}{$A$}
+    \SetKwData{WordB}{$B$}
+    \SetKwData{Sim}{similarity}
+    \SetKwData{GapPenalty}{$p$}
+    \SetKwData{ScoreMatrix}{scoreMatrix}
+    \newcommand{\ScoreMatrixIdx}[2]{{\ScoreMatrix}[{#1}][{#2}]}
+    \SetKwData{Cost}{cost}
+    \SetKwData{MatchScore}{matchScore}
+    \SetKwData{DeleteScore}{deleteScore}
+    \SetKwData{InsertScore}{insertScore}
+    \SetKwData{Score}{score}
+    \SetKwFunction{len}{len}
+
+    \KwIn{
+        $\WordA = \set{A_0, \ldots, A_{\len(A)-1}}$,
+        $\WordB = \set{B_0, \ldots, B_{\len(B)-1}}$,\\
+        \qquad\qquad \Sim: similarityScoreFunc,
+        \GapPenalty: GapPenalty
+    }
+    \KwOut{\Score}
+    \Fn{\calcScoreFunc{}}
+    {
+        Init \ScoreMatrix with dimensions $(\len(\WordA)+1) \times (\len(\WordB)+1)$\;
+
+        \BlankLine
+
+        \For{$i \in \{0, \ldots, \len(\WordA)\}$}
+        {
+            \ScoreMatrixIdx{$i$}{$0$} $\gets \GapPenalty \cdot i$\;
+        }
+        \For{$j \in \{0, \ldots, \len(\WordB)\}$}
+        {
+            \ScoreMatrixIdx{$0$}{$j$} $\gets \GapPenalty \cdot j$\;
+        }
+
+        \BlankLine
+
+        \For{$i \in \{1, \ldots, \len(\WordA)\}$}
+        {
+            \For{$j \in \{1, \ldots, \len(\WordB)\}$}
+            {
+                \Cost $\gets$ $\Sim(\WordA_{i}, \WordB_{j})$\;
+                \MatchScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j-1$} + \Cost\;
+                \DeleteScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j$} + \GapPenalty\;
+                \InsertScore $\gets$ \ScoreMatrixIdx{$i$}{$j-1$} + \GapPenalty\;
+                \ScoreMatrixIdx{$i$}{$j$} $\gets$ $\max(\MatchScore, \DeleteScore, \InsertScore)$\;
+            }
+        }
+
+        \BlankLine
+
+        \Return\! \ScoreMatrixIdx{$\len(\WordA)$}{$\len(\WordB)$}\;
+    }
+    
+    \caption{Needleman-Wunsch}
+    \label{alg:needleman-wunsch}
+\end{algorithm}
+
+
+\begin{multicols*}{2}
+
+And we go on

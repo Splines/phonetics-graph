@@ -1,5 +1,29 @@
 {
     //////////////////////////////////////
+    // LaTeX
+    //////////////////////////////////////
+    "latex-workshop.latex.tools": [
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "--shell-escape",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%"
+            ]
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "pdflatex",
+            "tools": [
+                "pdflatex"
+            ]
+        }
+    ],
+    //////////////////////////////////////
     // Python (linting & formatting)
     //////////////////////////////////////
     "[python]": {
@@ -57,6 +81,7 @@
     //////////////////////////////////////
     "cSpell.language": "en,de-DE,fr",
     "cSpell.words": [
+        "Cuda",
         "cudarc",
         "dtype",
         "htod",

@@ -12,7 +12,8 @@
 
 \newcommand{\abstractText}{\noindent
 	\newline\noindent
-	Empirical data is of paramount importance for physics. In order to evaluate our theoretical models, we need to compare their predictions to real world data. In light of huge amounts of data, statistical methods are indispensable to extract meaningful information. This report provides an introduction to some important principles, including error propagation, linear least squares fit (also simultaneous ones), maximum likelihood estimation, and Bayesian statistics.
+	This project is part of the \href{https://membres-ljk.imag.fr/Christophe.Picard/teaching/gp-gpu}{GP-GPU Computing course} at UGA by Christophe Picard. Here, we present a proposal for the final project.
+    Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.  
 }
 
 % Acronyms
@@ -28,23 +29,33 @@
 
 % Title & Abstract
 \maketitle
+\begin{abstract}
+    \abstractText
+    \newline
+    \newline
+\end{abstract}
 % \twocolumn[
 %   \begin{@twocolumnfalse}
 %     \maketitle
-%     % \begin{abstract}
-%     %   \abstractText
-%     %   \newline
-%     %   \newline
-%     % \end{abstract}
+%     \begin{abstract}
+%       \abstractText
+%       \newline
+%       \newline
+%     \end{abstract}
 %   \end{@twocolumnfalse}
 % ]
 
 % Content
 % \setcounter{section}{1}
-% \tableofcontents
+
 % \pagebreak
 
+\begin{multicols*}{2}
+\tableofcontents
 \input{content/intro.tex}
-% \newpage
+\input{content/needleman-wunsch.tex}
+\end{multicols*}
+
+\printglossary[type=\acronymtype]
 
 \end{document}
