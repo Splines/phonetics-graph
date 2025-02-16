@@ -60,48 +60,61 @@ Having translated the problem into a graph structure also allows us to use graph
 \begin{algorithm}
     \DontPrintSemicolon
     
-    \SetKwFunction{FRandomCommunityMutation}{randomCommunityMutation}
-    \SetKwFunction{FMutateRandomly}{mutateRandomly}
-    \SetKwFunction{FgetRandomVertices}{getRandomVertices}
-    \SetKwFunction{FDrawUniformly}{drawUniformly}
-    
-    \KwIn{$numVertices \!: \text{int}$}
-    \Fn{\FgetRandomVertices{}}
+    \SetKwFunction{calcScoreFunc}{calculateScore}
+    \SetKwData{WordA}{$A$}
+    \SetKwData{WordB}{$B$}
+    \SetKwData{Sim}{similarity}
+    \SetKwData{GapPenalty}{$p$}
+    \SetKwData{ScoreMatrix}{scoreMatrix}
+    \newcommand{\ScoreMatrixIdx}[2]{{\ScoreMatrix}[{#1}][{#2}]}
+    \SetKwData{Cost}{cost}
+    \SetKwData{MatchScore}{matchScore}
+    \SetKwData{DeleteScore}{deleteScore}
+    \SetKwData{InsertScore}{insertScore}
+    \SetKwData{Score}{score}
+    \SetKwFunction{len}{len}
+
+    \KwIn{
+        $\WordA = \set{A_0, \ldots, A_{\len(A)-1}}$,
+        $\WordB = \set{B_0, \ldots, B_{\len(B)-1}}$,\\
+        \qquad\qquad \Sim: similarityScoreFunc,
+        \GapPenalty: GapPenalty
+    }
+    \KwOut{\Score}
+    \Fn{\calcScoreFunc{}}
     {
-        \label{alg:mutate-random:getRandomVertices}
-        $vertices \gets \emptyset$\;
-        \While{$|vertices| \neq numVertices$}
+        Init \ScoreMatrix with dimensions $(\len(\WordA)+1) \times (\len(\WordB)+1)$\;
+
+        \BlankLine
+
+        \For{$i \in \{0, \ldots, \len(\WordA)\}$}
         {
-            \label{alg:mutate-random:fill-vertices-set-in-get-random}
-            $vertices \gets vertices \: \cup $ \FDrawUniformly{$[0,n)$}\;\label{alg:mutate-random:fill-set}
+            \ScoreMatrixIdx{$i$}{$0$} $\gets \GapPenalty \cdot i$\;
         }
-        \Return $vertices$\;
-    }
-
-    \BlankLine
-    \BlankLine
-    \BlankLine
-
-    \Fn{\FRandomCommunityMutation{}}
-    {
-        $numNodesMutate \gets$ \FDrawUniformly{$[1, 0.1n]$}\;\label{alg:mutation-random:numNodesMutate}
-        $randomVertices \gets$ \FgetRandomVertices{$numNodesMutate$}\;
-        \ForEach{Vertices $v \in randomVertices$}
+        \For{$j \in \{0, \ldots, \len(\WordB)\}$}
         {
-            \FMutateRandomly{v}\;	
+            \ScoreMatrixIdx{$0$}{$j$} $\gets \GapPenalty \cdot j$\;
         }
-    }
 
-    \BlankLine
-    \BlankLine
-    \BlankLine
+        \BlankLine
 
-    \KwIn{$v \! : \text{Vertex to mutate}$}
-    \Fn{\FMutateRandomly{}}
-    {
-        $c_v \gets $ \FDrawUniformly{$[0,2\cdot |fittestChromosomeCommunities|]-1$}\;\label{alg:mutation-random:assign-community}
+        \For{$i \in \{1, \ldots, \len(\WordA)\}$}
+        {
+            \For{$j \in \{1, \ldots, \len(\WordB)\}$}
+            {
+                \Cost $\gets$ $\Sim(\WordA_{i}, \WordB_{j})$\;
+                \MatchScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j-1$} + \Cost\;
+                \DeleteScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j$} + \GapPenalty\;
+                \InsertScore $\gets$ \ScoreMatrixIdx{$i$}{$j-1$} + \GapPenalty\;
+                \ScoreMatrixIdx{$i$}{$j$} $\gets$ $\max(\MatchScore, \DeleteScore, \InsertScore)$\;
+            }
+        }
+
+        \BlankLine
+
+        \Return\! \ScoreMatrixIdx{$\len(\WordA)$}{$\len(\WordB)$}\;
     }
     
-    \caption{Random community mutation}
-    \label{alg:mutation-random}
+    \caption{Needleman-Wunsch}
+    \label{alg:needleman-wunsch}
 \end{algorithm}
