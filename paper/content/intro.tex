@@ -7,7 +7,7 @@ Calculating the distance between each pair of words corresponds to a fully-conne
     \text{\#nodes} &= 600,000 \\
     \text{\#edges} &= \frac{600,000 \cdot 600,001}{2} \approx \num{3.60e11}
 \end{align}
-This high number and the independent nature of the distance calculation for each pair of words makes the problem well-suited for parallelization. In \autoref{sec:needleman-wunsch}, we present the Needleman-Wunsch algorithm used to calculate the distance between two words. We then discuss how to parallelize this algorithm on a CPU using the \textit{Rayon} library in Rust and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library. Finally, we provide visualizations of the obtained graphs and discuss future works.
+This high number and the independent nature of the distance calculation for each pair of words makes the problem well-suited for parallelization. In \autoref{sec:needleman-wunsch}, we present the Needleman-Wunsch algorithm used to calculate the distance between two words. In \autoref{sec:impl}, we discuss how to parallelize this algorithm on a CPU using the \textit{Rayon} library in Rust and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library. Finally, we provide visualizations of the obtained graphs in \ref{sec:application} and conclude in \autoref{sec:conclusion}.
 
 In the following, by \textit{word} we always refer to its phonetic transcription. That is, homophones like the French words \textit{vert} \textipa{/vEK/} (green) and \textit{verre} \textipa{/vEK/} (glass) are considered the same word.
 
