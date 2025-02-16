@@ -1,8 +1,19 @@
 \section{Introduction}
 
-The \gls{ipa} uses special symbols\footnote{See for example the French list \href{https://en.wikipedia.org/wiki/Help:IPA/French}{here}.} to represent the sound of a spoken language. This is useful for language learners since the pronunciation of a word can be significantly different from its written form. For example, the French word \textit{renseignement} (information) is pronounced \textipa{/K\~{a}.sE\textltailn.m\~{a}/}. Based on this alphabet, one might wonder if we can construct a metric that quantifies the \textbf{distance between two words based on their phonetic transcription}. This would allow to construct a graph where nodes are words and edges are weighted by the distance between the words. This graph could then be used to find neighbors of a word based on their phonetic similarity. This opens up the possibility to use clustering algorithms and other methods from graph theory to analyze the phonetic structure of a language.
+The \gls{ipa} uses special symbols\footnote{See for example the French list \href{https://en.wikipedia.org/wiki/Help:IPA/French}{here}.} to represent the sound of a spoken language. This is useful for language learners since the pronunciation of a word can be significantly different from its written form. For example, the French word \textit{renseignement} (information) is pronounced \textipa{/K\~{a}.sE\textltailn.m\~{a}/}. Based on this alphabet, one might wonder if we can construct a metric that quantifies the \textbf{distance between two words based on their phonetic transcription}. This would allow to construct a graph where nodes are words and edges are weighted by the distance between the words. This graph could then be used to find neighbors of a word based on their phonetic similarity. This opens up the possibility to apply clustering algorithms and other methods stemming from graph theory in order to analyze the phonetic structure of a language.
 
-In the following, by \textit{word} we always refer to its phonetic transcription. That is, homophones like the French words \textit{vert} \textipa{/vEK/} (green) and \textit{verre} \textipa{/vEK/} (glass) are considered the same word. We employ the Needleman-Wunsch algorithm to calculate the \q{score} (distance) between two words. After an introduction to this algorithm in \autoref{sec:needleman-wunsch}, we present ways to implement this in parallelized ways. First, on the CPU in Rust using the \textit{Rayon} library, and then on a consumer Nvidia GPU in the CUDA framework by means of the \textit{cudarc} Rust library. Finally, we discuss some applications and present excerpts from the obtained graphs that we visualized in Gephi.
+Calculating the distance between each pair of words corresponds to a fully-connected graph. Our dataset consist of around 600,000 French words and their \gls{ipa} transcription, alongside their frequency in the French language. Including self-loops, we find a vast number of edges:
+\begin{align}
+    \text{\#nodes} &= 600,000 \\
+    \text{\#edges} &= \frac{600,000 \cdot 600,001}{2} \approx \num{3.60e11}
+\end{align}
+This high number and the independent nature of the distance calculation for each pair of words makes the problem well-suited for parallelization. In \autoref{sec:needleman-wunsch}, we present the Needleman-Wunsch algorithm used to calculate the distance between two words. We then discuss how to parallelize this algorithm on a CPU using the \textit{Rayon} library in Rust and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library. Finally, we provide visualizations of the obtained graphs and discuss future works.
+
+In the following, by \textit{word} we always refer to its phonetic transcription. That is, homophones like the French words \textit{vert} \textipa{/vEK/} (green) and \textit{verre} \textipa{/vEK/} (glass) are considered the same word.
+
+\vfill\null
+
+
 
 % To evaluate the feasibility of this project, we combined different datasets to create a new one consisting of \textbf{700,000 French words and their phonetic transcription} as well as their frequency in the French language\footnote{In the final report, we will provide more details on the dataset and their sources.}. We implemented a Rust program that calculates the distance of all pairs of words. This corresponds to \textbf{computing the weights for all edges of a fully-connected graph}, where nodes are the words (their phonetic transcriptions) and edges have weights corresponding to the distance between the words. For the full dataset, we thus find:
 
@@ -35,12 +46,3 @@ In the following, by \textit{word} we always refer to its phonetic transcription
 %     \label{fig:neighbors}
 % \end{figure}
 % \begin{multicols*}{2}
-
-% Based on the first 10,000 most frequently used words, we calculated the distance between every pair and visualized the graph using \href{https://gephi.org/}{Gephi's} ForceAtlas2 algorithm. The neighbors of the word \q{glace} and \q{prévoir} are shown in \autoref{fig:neighbors}. For bigger graphs than that, Gephi is not able to handle the amount of data anymore.
-
-% Having translated the problem into a graph structure also allows us to use graph algorithms to discover interesting properties. As an example, Gephi implements the \textit{shortest path algorithm}: users can click on two words and the shortest path between them is calculated and shown in the graph. Beforehand, we filtered the graph to only include the most strong edges. With this, we can find chains like the following (read them aloud to hear the phonetic similarity):
-% \begin{itemize}
-%     \item trottoir $\rightarrow$ entrevoir $\rightarrow$ devoir $\rightarrow$ voire $\rightarrow$ voile $\rightarrow$ val $\rightarrow$ valait $\rightarrow$ fallait $\rightarrow$ falaise
-%     \item falaise $\rightarrow$ fallait $\rightarrow$ palais $\rightarrow$ passais $\rightarrow$ dépassait $\rightarrow$ dépendait $\rightarrow$ répondait $\rightarrow$ répond $\rightarrow$ raison $\rightarrow$ maison
-%     \item confusion $\rightarrow$ conclusion $\rightarrow$ exclusion $\rightarrow$ explosion $\rightarrow$ exposition $\rightarrow$ explications $\rightarrow$ respiration $\rightarrow$ précipitation $\rightarrow$ présentation $\rightarrow$ présenta $\rightarrow$ présente $\rightarrow$ présence $\rightarrow$ présidence $\rightarrow$ résidence $\rightarrow$ résistance $\rightarrow$ existence
-% \end{itemize}
