@@ -90,6 +90,7 @@
         "Needleman",
         "ngrams",
         "tqdm",
+        "unparallelized",
         "wunsch"
     ],
     //////////////////////////////////////
@@ -98,5 +99,6 @@
     "files.readonlyInclude": {
         "/.cargo/registry/src//*.rs": true,
         "/lib/rustlib/src/rust/library//*.rs": true
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

@@ -133,8 +133,8 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{assets/illustrator/matrix-nuance-puissance-non-optimal.pdf}
-    \caption{Needleman-Wunsch score matrix and the path (in red) for a non-optimal alignment. All parameters are the same as in \autoref{fig:matrix-nuance-puissance-optimal}.}
+    \includegraphics[width=0.87\linewidth]{assets/illustrator/matrix-nuance-puissance-non-optimal.pdf}
+    \caption{Needleman-Wunsch score matrix and the path (in red) for a non-optimal alignment. Orange strokes indicate non-optimal steps. Parameters as in \autoref{fig:matrix-nuance-puissance-optimal}.}
     \label{fig:matrix-nuance-puissance-non-optimal}
 \end{figure}
 
@@ -157,7 +157,7 @@ The new value of the current field is assigned the maximum of these values (\aut
 
 By construction, \textbf{the bottom-right field of the score matrix contains the score of the optimal alignment}. This is ensured by the Principle of Optimality (Bellman), which states that an optimal solution to a problem can be constructed from optimal solutions to its subproblems. In the context of the Needleman-Wunsch algorithm, this means that the optimal alignment score for two sequences (words) can be derived by considering the optimal alignment scores of progressively smaller subsequences. Each cell in the score matrix represents the optimal score for the corresponding prefixes of the two words up to that point, since we take the maximum of the three possible steps (match, delete, insert) at each cell. This ensures that the final cell (in the bottom right) contains the optimal score for the entire sequences.
 
-\autoref{tab:nuance-puissance-alignment-non-optimal} shows an example of a non-optimal alignment of the two words, yielding a score of $-15$ (compared to $-2$ for the optimal path). \autoref{fig:matrix-nuance-puissance-non-optimal} depicts the corresponding score matrix. Note how the indicated path includes 4 non-optimal choices (yellow strokes).
+\autoref{tab:nuance-puissance-alignment-non-optimal} shows an example of a non-optimal alignment of the two words, yielding a score of $-15$ (compared to $-2$ for the optimal path). \autoref{fig:matrix-nuance-puissance-non-optimal} depicts the corresponding score matrix. Note how the indicated path includes 4 non-optimal choices (orange strokes).
 
 % \vspace{-0.65em}
 

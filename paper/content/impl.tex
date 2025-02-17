@@ -1,4 +1,8 @@
 \section{Parallelized algorithms}
 \label{sec:impl}
 
+In the following implementations, we use a similarity matrix with $1$ on its diagonal (symbols match) and $-1$ elsewhere (symbols do not match). The gap penalty is set to $p=-1$ (instead of $-2$ beforehand in the examples in \autoref{sec:needleman-wunsch}).
+
+First, we implement the Needleman-Wunsch algorithm in Python using \tcboxverb{numpy}. This implementation serves well to deepen the understanding of the algorithm and to eliminate index errors. However, it is very slow, making it unsuitable for the whole dataset. We then translate the code to an unparallelized Rust version and confirm correct output by direct comparison with the Python implementation. To make use of all CPU cores, we parallelize the Rust implementation using \tcboxverb{rayon} to easily parallelize our outer for-loop (\autoref{algstep:nested1}): for every word $A$, we consider all other words $B$ and calculate the similarity between $A$ and $B$. Since words lengths differ, the core calculation takes different times for different word pairs. Therefore, we append the results to a vector wrapped in a \tcboxverb{Mutex} (avoid data races by mutual exclusion) and an \tcboxverb{Arc} (thread-safe reference pointer to deallocate data at the end). In addition to the score itself, we also store the indices used to locate the words in the dataset. After all word pairs have been looked at, we sort the results according to the red path of \autoref{fig:traverse-schema}.
+
 TODO
