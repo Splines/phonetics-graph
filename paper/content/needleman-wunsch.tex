@@ -44,7 +44,7 @@ To find the score matrix for given input words $A$ and $B$, we follow \autoref{a
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{assets/illustrator/matrix-nuance-puissance-subcalc.pdf}
+    \includegraphics[width=0.55\linewidth]{assets/illustrator/matrix-nuance-puissance-subcalc.pdf}
     \caption{Calculations for one element of the Needleman-Wunsch score matrix.}
     \label{fig:matrix-nuance-puissance-subcalc}
 \end{figure}
@@ -54,7 +54,11 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
 % \vfill\null
 % \columnbreak
 
-\begin{algorithm*}
+\begin{figure*}
+
+\begin{minipage}[t]{0.6\textwidth}
+
+\begin{algorithm}[H]
     \DontPrintSemicolon
     
     \SetKwFunction{calcScoreFunc}{calculateScore}
@@ -72,15 +76,16 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
     \SetKwFunction{len}{len}
 
     \KwIn{
-        $\WordA = \set{A_0, \ldots, A_{\len(A)-1}}$,
-        $\WordB = \set{B_0, \ldots, B_{\len(B)-1}}$,\\
-        \qquad\qquad \Sim: similarityScoreFunc,
+        \small{\!\!\small{$\WordA = \set{A_0, \ldots, A_{\len(A)-1}}$,
+        $\WordB = \set{B_0, \ldots, B_{\len(B)-1}}$}},\\
+        \qquad\qquad \Sim: \small{similarityScoreFunc},
         \GapPenalty: GapPenalty
     }
     \KwOut{\Score}
     \Fn{\calcScoreFunc{}}
     {
-        Init \ScoreMatrix with dimensions $(\len(\WordA)+1) \times (\len(\WordB)+1)$\;
+        \SetInd{0.25em}{0.55em}
+        Init \ScoreMatrix with dimensions $\small{(\len(\WordA)+1) \times (\len(\WordB)+1)}$\;
 
         \BlankLine
 
@@ -107,7 +112,9 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
                 \label{algstep:deletescore}\;
                 \InsertScore $\gets$ \ScoreMatrixIdx{$i$}{$j-1$} + \GapPenalty
                 \label{algstep:insertscore}\;
-                \ScoreMatrixIdx{$i$}{$j$} $\gets$ $\max(\MatchScore, \DeleteScore, \InsertScore)$\;
+                \ScoreMatrixIdx{$i$}{$j$} $\gets$
+                $\max(\MatchScore, \DeleteScore, \InsertScore)$
+                \label{algstep:max}\;
             }
         }
 
@@ -118,9 +125,25 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
     
     \caption{Needleman-Wunsch}
     \label{alg:needleman-wunsch}
-\end{algorithm*}
+\end{algorithm}
 
-\begin{itemize}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.35\textwidth}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{assets/illustrator/matrix-nuance-puissance-non-optimal.pdf}
+    \caption{Needleman-Wunsch score matrix and the path (in red) for a non-optimal alignment. All parameters are the same as in \autoref{fig:matrix-nuance-puissance-optimal}.}
+    \label{fig:matrix-nuance-puissance-non-optimal}
+\end{figure}
+
+\end{minipage}
+\end{figure*}
+
+% \columnbreak
+
+\begin{itemize}[leftmargin=0cm]
 
     \item The \textbf{match score} is calculated by checking the step to the upper left diagonal (\autoref{algstep:matchscore}). In the example of \autoref{fig:matrix-nuance-puissance-subcalc}, this would result in a value $0+(-1) = -1$, where $0$ is the value in the upper left diagonal field and $-1$ is the cost of the mismatch between \textipa{/p/} and \textipa{/n/}. In case of a match, the new value would be $0 + 1 = 1$. In the algorithm, we also consider the case where costs for a match and a mismatch depend on the symbols themselves, which is why we introduce the function \tcboxverb{similarity} that returns the cost of aligning two symbols. This is especially useful when comparing phonetic symbols, as the similarity between two symbols can be defined in a more sophisticated way than just $1$ or $-1$ (\eg replacing a vowel with a consonant might be more costly than replacing a vowel with another vowel).
     
@@ -130,11 +153,13 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
 
 \end{itemize}
 
-The new value of the current field is then the maximum of the three values, such that we locally maximize the score: $\max(-1, -4, -4) = -1$. In \autoref{fig:matrix-nuance-puissance-optimal}, we additionally kept track of the steps that led to the optimal alignment by means of the rose arrows (here only the diagonal step that yields the new maximal score of $-1$). For our purposes, we don't want to reconstruct the exact alignment that led to the optimal score, but only the score itself. Thus, we can omit the backtracking step and don't need to store the rose arrows.
+The new value of the current field is assigned the maximum of these values (\autoref{algstep:max}), such that we locally maximize the score: $\max(-1, -4, -4) = -1$. In \autoref{fig:matrix-nuance-puissance-optimal}, we additionally kept track of the steps that led to the optimal alignment by means of the rose arrows (here only the diagonal step that yields the new maximal score of $-1$). For our purposes, we don't want to reconstruct the exact alignment that led to the optimal score, but only the score itself. Thus, we can omit the backtracking step and don't need to store the rose arrows.
 
-By construction, \textbf{the bottom-right field of the score matrix contains the score of the optimal alignment} (in our case $-2$, see \autoref{tab:nuance-puissance-alignment-optimal}). This is ensured by the Principle of Optimality (Richard Bellman), which states that an optimal solution to a problem can be constructed from optimal solutions to its subproblems. In the context of the Needleman-Wunsch algorithm, this means that the optimal alignment score for two sequences can be derived by considering the optimal alignment scores of progressively smaller subsequences. Each cell in the score matrix represents the optimal alignment score for the corresponding prefixes of the two sequences up to that point, since we take the maximum of the three possible steps (match, delete, insert) at each cell. This ensures that the final cell (in the bottom right) contains the optimal score for the entire sequences.
+By construction, \textbf{the bottom-right field of the score matrix contains the score of the optimal alignment}. This is ensured by the Principle of Optimality (Bellman), which states that an optimal solution to a problem can be constructed from optimal solutions to its subproblems. In the context of the Needleman-Wunsch algorithm, this means that the optimal alignment score for two sequences (words) can be derived by considering the optimal alignment scores of progressively smaller subsequences. Each cell in the score matrix represents the optimal score for the corresponding prefixes of the two words up to that point, since we take the maximum of the three possible steps (match, delete, insert) at each cell. This ensures that the final cell (in the bottom right) contains the optimal score for the entire sequences.
 
 \autoref{tab:nuance-puissance-alignment-non-optimal} shows an example of a non-optimal alignment of the two words, yielding a score of $-15$ (compared to $-2$ for the optimal path). \autoref{fig:matrix-nuance-puissance-non-optimal} depicts the corresponding score matrix. Note how the indicated path includes 4 non-optimal choices (yellow strokes).
+
+% \vspace{-0.65em}
 
 \begin{table}[H]
     \centering
@@ -152,10 +177,3 @@ By construction, \textbf{the bottom-right field of the score matrix contains the
     \caption{This non-optimal alignment yields a score of $-15$. See the path in \autoref{fig:matrix-nuance-puissance-non-optimal}.}
     \label{tab:nuance-puissance-alignment-non-optimal}
 \end{table}
-    
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.77\linewidth]{assets/illustrator/matrix-nuance-puissance-non-optimal.pdf}
-    \caption{Needleman-Wunsch score matrix and the path (in red) for a non-optimal alignment. All parameters are the same as in \autoref{fig:matrix-nuance-puissance-optimal}.}
-    \label{fig:matrix-nuance-puissance-non-optimal}
-\end{figure}
