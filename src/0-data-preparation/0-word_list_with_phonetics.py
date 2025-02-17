@@ -2,7 +2,7 @@
 Enriches a list of French words with their phonetic transcription.
 
 french-words.txt is a high-quality list of French words from
-https://github.com/DanielSWolf/wiki-pronunciation-dict
+https://github.com/frodonh/french-words
 from the documentation:
 # Structure of files
 The list of words is in a tab-separated file with the following fields:
