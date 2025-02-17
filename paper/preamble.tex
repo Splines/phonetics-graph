@@ -17,6 +17,7 @@
 % https://tex.stackexchange.com/a/613906/
 % \usepackage{tabularray}
 \usepackage{subfigure}
+\usepackage{booktabs}
 
 \usepackage{abstract}
 \usepackage{multicol}
@@ -98,3 +99,11 @@
 % Keywords
 \SetKw{Continue}{continue} % https://tex.stackexchange.com/a/298503/249769
 \SetKw{Break}{break}
+
+% Code
+% https://stackoverflow.com/a/79057262/
+\usepackage[most]{tcolorbox}
+\tcbset{
+    frame empty,
+    colback=lightgray!20
+}
