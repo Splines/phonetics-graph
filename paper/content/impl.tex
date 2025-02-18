@@ -12,11 +12,31 @@ Since comparing $A$ to $B$ yields the same score as the comparison of $B$ to $A$
 
 \subsection{On the GPU}
 
-We implement the algorithm in the CUDA framework and deploy it on a consumer Nvidia GeForce GTX 1060 with 6GB GDDR5. We use the Driver Version 572.42 and CUDA Toolkit 12.8 inside WSL2 (Ubuntu 22.04 jammy). We consult the \tcboxverb{cudarc} Rust library, which provides Rust wrappers around the CUDA driver API as well as the NVRTC API (among others). The latter makes available a method to compile our \Cpp~kernel to \gls{ptx} code during runtime and then launch our kernel.
-
-% We configure the launch with a launch configuration, which specifies block, grid and shared memory size. 
+We implement the algorithm in the CUDA framework and deploy it on a consumer Nvidia GeForce GTX 1060 with 6GB GDDR5. We use the Driver Version 572.42 and CUDA Toolkit 12.8 inside WSL2 (Ubuntu 22.04 jammy). We consult the \tcboxverb{cudarc} Rust library, which provides Rust wrappers around the CUDA driver API as well as the NVRTC API (among others). The latter makes available a method to compile our \Cpp~kernel to \gls{ptx} code during runtime and to launch it afterwards.
 
 Foster's methodology can help in designing parallel algorithms. The first step is to partition the problem at hand into small tasks. At the level of the adjacency matrix (\autoref{fig:traverse-schema}), such a task would be to compute the similarity score between two words $A$ and $B$ at the respective row and column. On a finer granularity, we can also refer to \autoref{fig:matrix-nuance-puissance-subcalc} and consider the calculation of one element of the score matrix. However, we realize that calculations of elements in the score matrix are highly dependent on each other since the score of a cell depends on the scores of its up, left and up-left (diagonal) neighbors (example of a \textit{stencil computation}). Additionally, words length differ, so the size of the score matrix varies. Due to the data dependencies and the varying problem size, we decide to focus on parallelizing the for-loops in the Needleman-Wunsch algorithm (lines \ref{algstep:nested1} and \ref{algstep:nested2} in \autoref{alg:needleman-wunsch}) making this a \textit{pleasingly parallel} problem, namely that of parallelizing score calculation for entries in the adjacency matrix.
 
-
-% However, as mentioned, word lengths differ, so the shape of the score matrix will as well. And the problem size itself is very large.
+The maximum number of blocks in a grid (grid size) is limited to $2^{16} - 1 = 65535$ in $y$ and $z$ direction. Starting with CUDA compute capability 3.0, the limit in the $x$ direction is raised to $2^{31} - 1 = 2,147,483,647$ blocks. Furthermore, we only consider the upper triangular part of the adjacency matrix, while a grid is always rectangular. These constraints motivate the choice of using a one-dimensional grid and spawning blocks only in the $x$ direction. Likewise, we only employ one-dimensional blocks, \ie a block is a one-dimensional array of threads. The exact number of threads we use inside a block (block dimension) is discussed later. With this configuration, we calculate (in every thread) an \textit{index} ranging from $0$ to the number of entries in the upper triangular part of the adjacency matrix:
+\begin{align}
+    \text{idx} = \text{blockDim.x} \cdot \text{blockIdx.x} \cdot \text{threadIdx.x}
+\end{align}
+This index needs to be mapped to the corresponding row and column in the adjacency matrix. We again refer to \autoref{fig:traverse-schema} and take advantage of the red row-major traversal path. Let $S_r$ be the number of elements traversed up to the end of row $r$. In \autoref{fig:traverse-schema}, this variable is drawn in blue.
+\begin{align}
+    S_0 &= n-1, \quad S_1 = S_0 + (n-2), \quad\ldots\\
+    S_r &= \sum_{k=0}^{r} (n-k-1)\\
+    &= (n-1) \cdot (r+1) - \sum_{k=0}^{r} k\\
+    &= (n-1) \cdot (r+1) - \frac{r \cdot (r+1)}{2}\\
+    &= -\frac{1}{2}r^2 + r \left(n- \frac{3}{2}\right) + (n-1)
+\end{align}
+For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. We therefore require $S_{r-1} \overset{!}{=} \text{idx}$ and solve for $r$. After some algebraic manipulations, we obtain:
+\begin{align}
+    0 &= -\frac{1}{2} r^2 + r \underbrace{\left(n - \frac{1}{2}\right)}_z - \text{idx}\\
+    \iff 0 &= r^2 + r \underbrace{(-2z)}_p + \underbrace{2 \cdot \text{idx}}_q\\
+    \implies r &= z - \sqrt{z^2 - 2\cdot \text{idx}}
+    \label{eq:row-index}
+\end{align}
+We only use the negative branch of the square root since we want the row to increase with increasing index. Furthermore, we require the row index to be an integer, so we round down $\lfloor r(\text{idx}) \rfloor$ such that the row stays the same for a range of increasing indices. We can now also calculate column $c$:
+\begin{align}
+    c(\text{idx}) &\coloneqq r + 1 + (\text{idx} - S_{r-1})\\
+    &= \frac{1}{2} r^2 + r \left(\frac{3}{2} - n\right) + (\text{idx} + 1)
+\end{align}
