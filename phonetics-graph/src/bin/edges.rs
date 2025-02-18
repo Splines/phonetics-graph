@@ -54,7 +54,7 @@ fn total_available_memory() -> usize {
         cudarc::driver::result::device::get(DEVICE_ID as i32).expect("Failed to get device");
     let total_memory = unsafe { cudarc::driver::result::device::total_mem(dev_unsafe) }
         .expect("Failed to retrieve total memory of device");
-    let available = total_memory as f64 * 0.8;
+    let available = total_memory as f64 * 0.85;
     println!("Available memory: {} MB", available / (1024.0 * 1024.0));
     available as usize
 }
@@ -263,10 +263,10 @@ fn save(results: &Vec<i8>) {
 }
 
 fn main() {
-    return main_time();
+    // return main_time();
 
     let mut words = read_words_from_csv(INPUT_FILE).expect("Failed to read words from CSV");
-    words.truncate(50_000);
+    words.truncate(100_000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
     println!(
@@ -275,31 +275,18 @@ fn main() {
     );
     println!("Num edges: {:}", prettified_int(num_edges));
 
-    let mut start_idx = 0;
+    let device = initialize_device();
+    let available_memory = total_available_memory();
+    let num_words_in_one_run = num_words_in_one_run(available_memory);
+    println!("Num of words that could fit in one run: {num_words_in_one_run}");
 
-    while start_idx < words.len() {
-        let device = initialize_device();
-        let available_memory = total_available_memory();
-        let num_words_in_one_run = num_words_in_one_run(available_memory);
+    let (results, _duration) = compute(&device, words);
+    drop(device);
 
-        let end_idx = (start_idx + num_words_in_one_run as usize).min(words.len());
-        let words_chunk = words[start_idx..end_idx].to_vec();
-        println!();
-        println!("---------------------------------");
-        println!("▶ Processing words in range: [{start_idx}, {end_idx})");
-        println!("---------------------------------");
-
-        let (results, _duration) = compute(&device, words_chunk);
-        drop(device);
-        start_idx = end_idx;
-
-        println!("\n🌟 Analyzing");
-        analyze(&results);
-        println!("\n📝 Saving");
-        save(&results);
-
-        break;
-    }
+    println!("\n🌟 Analyzing");
+    analyze(&results);
+    println!("\n📝 Saving");
+    save(&results);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -307,11 +294,12 @@ fn main() {
 ////////////////////////////////////////////////////////////////////////////////
 
 fn main_time() {
-    let num_words_list = vec![
-        55_000, 60_000, 65_000, 70_000, 75_000, 80_000, 85_000, 90_000, 95_000, 100_000, 105_000,
-        110_000, 115_000, 120_000, 125_000, 130_000,
-    ];
+    // let num_words_list = vec![
+    //     55_000, 60_000, 65_000, 70_000, 75_000, 80_000, 85_000, 90_000, 95_000, 100_000, 105_000,
+    //     110_000, 115_000, 120_000, 125_000, 130_000,
+    // ];
     // let num_words_list = (47..=130).map(|i| i * 1_000).collect::<Vec<_>>();
+    let num_words_list = vec![100_000];
 
     let mut csv_file = File::create(TIMING_FILE).expect("Failed to create CSV file");
     writeln!(csv_file, "num_words,duration_mean,duration_variance")
