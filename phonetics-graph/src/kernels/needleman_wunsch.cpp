@@ -37,8 +37,7 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
 }
 
 extern "C" __global__ void needleman_wunsch(
-    i8 *out, u8 *words_flat, u64 *words_offsets,
-    const u32 num_nodes, const u64 num_edges, const u32 max_word_length)
+    i8 *out, u8 *words_flat, u64 *words_offsets, const u32 max_word_length)
 {
     extern __shared__ i8 shared_score_matrix[];
 
