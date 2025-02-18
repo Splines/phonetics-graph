@@ -7,6 +7,7 @@
 use phonetics_graph::pretty::prettified_int;
 use std::fs::{self, File};
 use std::io::{self, BufRead, Write};
+use std::time::Duration;
 
 type CudaDeviceArc = std::sync::Arc<cudarc::driver::CudaDevice>;
 use cudarc::driver::{CudaSlice, LaunchAsync, LaunchConfig};
@@ -161,7 +162,7 @@ fn compile_and_launch_kernel(
     num_edges: u64,
     max_word_length: u32,
     out: &mut CudaSlice<i8>,
-) {
+) -> Duration {
     let kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
 
     println!("💫 Compile PTX");
@@ -188,11 +189,10 @@ fn compile_and_launch_kernel(
     }
     .expect("Failed to launch kernel");
     device.synchronize().expect("Failed to synchronize device");
-    let duration = start.elapsed();
-    println!("Kernel execution time: {:?}", duration);
+    start.elapsed()
 }
 
-fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
+fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> (Vec<i8>, Duration) {
     let num_nodes: u32 = words.len().try_into().unwrap();
     let num_edges = num_edges(num_nodes);
     println!("Num nodes: {num_nodes}");
@@ -217,7 +217,7 @@ fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
         .expect("Failed to allocate buffer");
 
     let launch_config = configure_kernel(&device, num_edges, max_word_length);
-    compile_and_launch_kernel(
+    let duration = compile_and_launch_kernel(
         &device,
         launch_config,
         words_flat_device,
@@ -227,12 +227,13 @@ fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
         max_word_length,
         &mut out,
     );
+    println!("Kernel execution time: {:?}", duration);
 
     let out_host: Vec<i8> = device
         .dtoh_sync_copy(&out)
         .expect("Failed to copy buffer back from device to host");
 
-    out_host
+    (out_host, duration)
 }
 
 fn analyze(results: &Vec<i8>) {
@@ -258,10 +259,32 @@ fn save(results: &Vec<i8>) {
     println!("✅ Done! Results written to {OUTPUT_FILE}");
 }
 
-fn main() {
+fn main_time() {
     let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
-    words.truncate(10_000);
+    words.truncate(50_000);
+
+    println!("Num total available words: {}", words.len());
+    let num_edges = num_edges(words.len().try_into().unwrap());
+    println!(
+        "Storage needed for edges: {} MB",
+        num_edges * std::mem::size_of::<i8>() as u64 / (1024 * 1024)
+    );
+    println!("Num edges: {:}", prettified_int(num_edges));
+
+    let device = initialize_device();
+    let (_results, duration) = compute(&device, words);
+    drop(device);
+
+    println!("FINALLY Kernel execution time: {:?}", duration);
+}
+
+fn main() {
+    return main_time();
+
+    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
+        .expect("Failed to read words from CSV");
+    words.truncate(50_000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
     println!(
@@ -284,7 +307,7 @@ fn main() {
         println!("▶ Processing words in range: [{start_idx}, {end_idx})");
         println!("---------------------------------");
 
-        let results = compute(&device, words_chunk);
+        let (results, _duration) = compute(&device, words_chunk);
         drop(device);
         start_idx = end_idx;
 
