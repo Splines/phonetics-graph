@@ -272,11 +272,22 @@ fn main_time() {
     );
     println!("Num edges: {:}", prettified_int(num_edges));
 
-    let device = initialize_device();
-    let (_results, duration) = compute(&device, words);
-    drop(device);
+    let num_runs = 10;
+    let durations = (0..num_runs)
+        .map(|i| {
+            println!();
+            println!("---------------------------------");
+            println!("Run: {:}/{num_runs}", i + 1);
+            println!("---------------------------------");
+            let device = initialize_device();
+            let (_results, duration) = compute(&device, words.clone());
+            drop(device);
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            duration
+        })
+        .collect::<Vec<_>>();
 
-    println!("FINALLY Kernel execution time: {:?}", duration);
+    println!("🕑 Durations: {:?}", durations);
 }
 
 fn main() {
