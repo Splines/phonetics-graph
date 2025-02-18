@@ -43,7 +43,7 @@ For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. We therefore requi
 \begin{align}
     0 &= -\frac{1}{2} r^2 + r \underbrace{\left(n - \frac{1}{2}\right)}_z - \text{idx}\\
     \iff 0 &= r^2 + r (-2z) + 2 \cdot \text{idx}\\
-    \implies r &= z - \sqrt{z^2 - 2\cdot \text{idx}}
+    \implies r(\text{idx}) &= z - \sqrt{z^2 - 2\cdot \text{idx}}
     \label{eq:row-index}
 \end{align}
 We only use the negative branch of the square root since we want the row to increase with increasing index. Furthermore, we require the row index to be an integer, so we round down $\lfloor r(\text{idx}) \rfloor$ such that the row stays the same for a range of increasing indices. We can now also calculate column $c$:
@@ -58,3 +58,7 @@ Finally, note that $S_{n-1}$ conveniently also gives us the number of elements i
     = \frac{n(n-1)}{2}
     \label{eq:num-edges}
 \end{align}
+
+\vfill\null
+
+TODO
