@@ -6,6 +6,9 @@ use std::sync::{Arc, Mutex};
 
 mod needleman_wunsch;
 
+static OUTPUT_FILE: &str = "../data/graph/final/edges.cpu.bin";
+static MAX_WORDS: usize = 10_000;
+
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     let mut words = Vec::new();
     let file = File::open(file_path)?;
@@ -32,10 +35,7 @@ fn main() {
 
     let result = Arc::new(Mutex::new(Vec::new()));
 
-    // Calculate score for every pair of words in parallel
-    let max_words = 2000;
-
-    let it = ProgressAdaptor::new(0..max_words);
+    let it = ProgressAdaptor::new(0..MAX_WORDS);
     let progress = it.items_processed();
     let total = it.len();
 
@@ -46,7 +46,7 @@ fn main() {
         move || {
             it.for_each(|i| {
                 let word1 = &words[i];
-                for j in i..max_words {
+                for j in (i + 1)..MAX_WORDS {
                     let score =
                         needleman_wunsch::calculate_score(word1, &words[j], &similarity_matrix, -1);
                     let mut result_write = result_clone.lock().unwrap();
@@ -89,10 +89,9 @@ fn main() {
     // Extract weights and write to edges.bin
     let weights: Vec<u8> = output.iter().map(|&(_, _, weight)| weight as u8).collect();
     let num_entries = weights.len();
-    println!("📝 Writing results to edges.bin (#entries: {num_entries})");
-    let mut file =
-        File::create("../data/graph/edges.bin").expect("Failed to create edges.bin");
+    println!("📝 Writing results to {OUTPUT_FILE} (#entries: {num_entries})");
+    let mut file = File::create(OUTPUT_FILE).expect("Failed to create edges.bin");
     file.write_all(&weights)
-        .expect("Failed to write to edges.bin");
-    println!("✅ Done! Results written to edges.bin");
+        .expect("Failed to write to {OUTPUT_FILE}");
+    println!("✅ Done! Results written to {OUTPUT_FILE}");
 }

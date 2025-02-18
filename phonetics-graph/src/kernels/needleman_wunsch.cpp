@@ -38,28 +38,26 @@ __device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *scor
 
 extern "C" __global__ void needleman_wunsch(
     i8 *out, u8 *words_flat, u64 *words_offsets,
-    const u32 num_words, const u64 out_size, const u32 max_word_length)
+    const u32 num_nodes, const u64 num_edges, const u32 max_word_length)
 {
     extern __shared__ i8 shared_score_matrix[];
 
     u64 idx = static_cast<u64>(blockIdx.x) * blockDim.x + threadIdx.x;
-    if (idx >= out_size)
+    if (idx >= num_edges)
     {
         return;
     }
 
-    // Row & column (both range from 0 to n-1)
-    // (the variable "z" is injected as a constant by the Rust code)
-    // row and column both refer to an actual word in the words_flat array
+    double z = num_nodes - 0.5;
     u64 row = floor(z - sqrt(z * z - 2 * idx));
-    u64 s = row * (z - row / 2.0);
-    u64 col = row + idx - s;
+    u64 col = 0.5 * row * row + row * (1.5 - num_nodes) + idx + 1;
 
-    // if (row >= num_words || col >= num_words)
-    // {
-    //     printf("Invalid row or col index: row=%u, col=%u\n", row, col);
-    //     return;
-    // }
+    // just for debugging
+    if (row >= num_nodes || col >= num_nodes)
+    {
+        printf("Invalid row or col index: row=%u, col=%u\n", row, col);
+        return;
+    }
 
     u8 *word1 = words_flat + words_offsets[row];
     u8 word1_length = words_offsets[row + 1] - words_offsets[row];

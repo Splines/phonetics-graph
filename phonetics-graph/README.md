@@ -58,8 +58,8 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 **Diff two binary files.** Command from [here](https://superuser.com/a/968863/):
 
 ```bash
-cmp --silent ../data/graph/edges-new.bin ../data/graph/edges-new-gpu.bin # check error code (!)
-diff <(xxd ../data/graph/edges-new.bin) <(xxd ../data/graph/edges-new-gpu.bin)
+cmp --silent ../data/graph/final/edges.cpu.bin ../data/graph/final/edges.gpu.bin # check error code (!)
+diff <(xxd ../data/graph/final/edges.cpu.bin) <(xxd ../data/graph/final/edges.gpu.bin)
 ```
 
 **Show head of binary file.**

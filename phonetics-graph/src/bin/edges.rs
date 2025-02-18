@@ -4,8 +4,10 @@
 // - Device = GPU
 // - Host to Device (htd) = CPU to GPU
 
+use phonetics_graph::pretty::prettified_int;
 use std::fs::{self, File};
 use std::io::{self, BufRead, Write};
+
 type CudaDeviceArc = std::sync::Arc<cudarc::driver::CudaDevice>;
 use cudarc::driver::{CudaSlice, LaunchAsync, LaunchConfig};
 
@@ -14,7 +16,7 @@ static DEVICE_ID: usize = 0;
 static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
-static OUTPUT_FILE: &str = "../data/graph/edges-new-gpu.bin";
+static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
 
 /// Reads words from a CSV file and returns a vector of vectors of u8.
 /// Each inner vector represents a word.
@@ -53,6 +55,14 @@ fn total_available_memory() -> usize {
     available as usize
 }
 
+/// Returns the number of undirected edges in a fully connected graph with
+/// `num_nodes` nodes.
+///
+/// The formula is `num_nodes * (num_nodes + 1) / 2`.
+fn num_edges(num_nodes: u32) -> u64 {
+    (u64::from(num_nodes) * (u64::from(num_nodes) - 1)) / 2
+}
+
 /// Calculates the threshold for the maximum number of words that can be
 /// processed given the available memory.
 ///
@@ -62,9 +72,8 @@ fn total_available_memory() -> usize {
 fn num_words_in_one_run(available_memory: usize) -> u32 {
     let score_size = std::mem::size_of::<i8>() as f64;
     let max_num_edges = (available_memory as f64 / score_size) as u64;
-    let max_num_nodes = -0.5 + f64::sqrt(0.25 + 2.0 * max_num_edges as f64);
-    let threshold: u32 = max_num_nodes as u32;
-    threshold
+    let max_num_nodes = 0.5 + f64::sqrt(0.25 + 2.0 * max_num_edges as f64);
+    max_num_nodes as u32
 }
 
 /// Prepares the data to be used in the kernel:
@@ -132,7 +141,7 @@ fn configure_kernel(device: &CudaDeviceArc, num_edges: u64, max_word_length: u32
     println!("🦷 Launch configuration");
     println!("- Block size: {}", block_size);
     println!("- Shared memory size: {} kB", shared_mem_size / 1024);
-    println!("- Grid size: {grid_size}");
+    println!("- Grid size: {:}", prettified_int(grid_size as u64));
 
     LaunchConfig {
         grid_dim: (grid_size, 1, 1),
@@ -153,8 +162,7 @@ fn compile_and_launch_kernel(
     max_word_length: u32,
     out: &mut CudaSlice<i8>,
 ) {
-    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
-    kernel_code = format!("static const double z = {num_nodes}.5;\n") + &kernel_code;
+    let kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
 
     println!("💫 Compile PTX");
     let ptx = cudarc::nvrtc::compile_ptx(kernel_code).expect("Failed to compile PTX");
@@ -184,19 +192,14 @@ fn compile_and_launch_kernel(
     println!("Kernel execution time: {:?}", duration);
 }
 
-/// Returns the number of undirected edges in a fully connected graph with
-/// `num_nodes` nodes.
-///
-/// The formula is `num_nodes * (num_nodes + 1) / 2`.
-fn num_edges(num_nodes: u32) -> u64 {
-    (u64::from(num_nodes) * (u64::from(num_nodes) + 1)) / 2
-}
-
 fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
     let num_nodes: u32 = words.len().try_into().unwrap();
     let num_edges = num_edges(num_nodes);
     println!("Num nodes: {num_nodes}");
-    println!("Num edges: {num_edges} (including self-loops)");
+    println!(
+        "Num edges: {:} (including self-loops)",
+        prettified_int(num_edges)
+    );
 
     let (words_flat, words_offsets, max_word_length) = prepare_data(&words);
     let words_flat_device = device
@@ -233,6 +236,7 @@ fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> Vec<i8> {
 }
 
 fn analyze(results: &Vec<i8>) {
+    // println!("{:?}", &results);
     println!("{:?}", &results[..20]);
     println!("{:?}", &results[results.len() - 20..]);
 
@@ -257,14 +261,14 @@ fn save(results: &Vec<i8>) {
 fn main() {
     let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
-    words.truncate(100000);
+    words.truncate(10_000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
     println!(
         "Storage needed for edges: {} MB",
         num_edges * std::mem::size_of::<i8>() as u64 / (1024 * 1024)
     );
-    println!("Num edges: {num_edges}");
+    println!("Num edges: {:}", prettified_int(num_edges));
 
     let mut start_idx = 0;
 
