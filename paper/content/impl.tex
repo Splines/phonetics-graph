@@ -20,7 +20,17 @@ The maximum number of blocks in a grid (grid size) is limited to $2^{16} - 1 = 6
 \begin{align}
     \text{idx} = \text{blockDim.x} \cdot \text{blockIdx.x} \cdot \text{threadIdx.x}
 \end{align}
-This index needs to be mapped to the corresponding row and column in the adjacency matrix. We again refer to \autoref{fig:traverse-schema} and take advantage of the red row-major traversal path. Let $S_r$ be the number of elements traversed up to the end of row $r$. In \autoref{fig:traverse-schema}, this variable is drawn in blue.
+This index needs to be mapped to the corresponding row and column in the adjacency matrix, such that a thread knows which words to compare. We take advantage of the row-major traversal path. Let $S_r$ be the number of elements traversed up to the end of row $r$. In \autoref{fig:traverse-schema}, this variable is drawn in blue. \autoref{fig:sum-example} provides an example to ease keeping track during following calculations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{assets/illustrator/sum-example.pdf}
+    \caption{Example of \text{idx} (black) for $n=4$. $S_r$ is the number of elements traversed up to the end of row $r$ (blue).}
+    \label{fig:sum-example}
+\end{figure}
+
+\vspace{-3em}
+
 \begin{align}
     S_0 &= n-1, \quad S_1 = S_0 + (n-2), \quad\ldots\\
     S_r &= \sum_{k=0}^{r} (n-k-1)\\
@@ -31,7 +41,7 @@ This index needs to be mapped to the corresponding row and column in the adjacen
 For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. We therefore require $S_{r-1} \overset{!}{=} \text{idx}$ and solve for $r$. After some algebraic manipulations, we obtain:
 \begin{align}
     0 &= -\frac{1}{2} r^2 + r \underbrace{\left(n - \frac{1}{2}\right)}_z - \text{idx}\\
-    \iff 0 &= r^2 + r \underbrace{(-2z)}_p + \underbrace{2 \cdot \text{idx}}_q\\
+    \iff 0 &= r^2 + r (-2z) + 2 \cdot \text{idx}\\
     \implies r &= z - \sqrt{z^2 - 2\cdot \text{idx}}
     \label{eq:row-index}
 \end{align}
