@@ -36,6 +36,7 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 - 20,000 nodes: 42s
 - 30,000 nodes: 93s
 - 35,000 nodes: 132s
+- 40,000 nodes: 159s (cannot sort anymore)
 - 50,000 nodes: couldn't test due to memory constraints (RAM)
 
 **GPU (CUDA)**:
