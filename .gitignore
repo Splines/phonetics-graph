@@ -1,4 +1,5 @@
 data/*
+tmp/*
 !data/similarity_matrix/
 
 # Byte-compiled / optimized / DLL files
