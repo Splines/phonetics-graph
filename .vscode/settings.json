@@ -101,5 +101,8 @@
         "/.cargo/registry/src//*.rs": true,
         "/lib/rustlib/src/rust/library//*.rs": true
     },
-    "C_Cpp.errorSquiggles": "disabled"
+    //////////////////////////////////////
+    // C++
+    //////////////////////////////////////
+    "C_Cpp.errorSquiggles": "disabled",
 }
