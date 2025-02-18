@@ -6,9 +6,9 @@ typedef unsigned long long int u64;
 static const i8 GAP_PENALTY = -1;
 
 /**
- * Calculates the distance between two words using the Needleman-Wunsch algorithm.
+ * Calculates the alignment score between two words using the Needleman-Wunsch algorithm.
  */
-__device__ i8 calculateDistance(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_matrix)
+__device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_matrix)
 {
     // Populate matrix
     for (int i = 0; i <= a_length; ++i)
@@ -53,11 +53,11 @@ extern "C" __global__ void needleman_wunsch(
     u64 col = 0.5 * row * row + row * (1.5 - num_nodes) + idx + 1;
 
     // just for debugging
-    if (row >= num_nodes || col >= num_nodes)
-    {
-        printf("Invalid row or col index: row=%u, col=%u\n", row, col);
-        return;
-    }
+    // if (row >= num_nodes || col >= num_nodes)
+    // {
+    //     printf("Invalid row or col index: row=%u, col=%u\n", row, col);
+    //     return;
+    // }
 
     u8 *word1 = words_flat + words_offsets[row];
     u8 word1_length = words_offsets[row + 1] - words_offsets[row];
@@ -65,6 +65,6 @@ extern "C" __global__ void needleman_wunsch(
     u8 word2_length = words_offsets[col + 1] - words_offsets[col];
 
     i8 *score_matrix = shared_score_matrix + threadIdx.x * (max_word_length + 1) * (max_word_length + 1);
-    i8 distance = calculateDistance(word1, word1_length, word2, word2_length, score_matrix);
+    i8 distance = calculateScore(word1, word1_length, word2, word2_length, score_matrix);
     out[idx] = distance;
 }
