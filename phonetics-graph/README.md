@@ -52,6 +52,8 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 - 500,000 nodes: 2.21s
 - 611,786 nodes: 1.38s
 
+1 to 46: 30 runs each
+47 to 51: 12 runs each
 
 ## Other useful stuff
 

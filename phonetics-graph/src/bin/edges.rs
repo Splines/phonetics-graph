@@ -17,7 +17,10 @@ static DEVICE_ID: usize = 0;
 static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
+
+static INPUT_FILE: &str = "../data/graph/french-phonetics-integers.txt";
 static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
+static TIMING_FILE: &str = "../data/graph/final/timing.csv";
 
 /// Reads words from a CSV file and returns a vector of vectors of u8.
 /// Each inner vector represents a word.
@@ -259,42 +262,10 @@ fn save(results: &Vec<i8>) {
     println!("✅ Done! Results written to {OUTPUT_FILE}");
 }
 
-fn main_time() {
-    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
-        .expect("Failed to read words from CSV");
-    words.truncate(50_000);
-
-    println!("Num total available words: {}", words.len());
-    let num_edges = num_edges(words.len().try_into().unwrap());
-    println!(
-        "Storage needed for edges: {} MB",
-        num_edges * std::mem::size_of::<i8>() as u64 / (1024 * 1024)
-    );
-    println!("Num edges: {:}", prettified_int(num_edges));
-
-    let num_runs = 10;
-    let durations = (0..num_runs)
-        .map(|i| {
-            println!();
-            println!("---------------------------------");
-            println!("Run: {:}/{num_runs}", i + 1);
-            println!("---------------------------------");
-            let device = initialize_device();
-            let (_results, duration) = compute(&device, words.clone());
-            drop(device);
-            std::thread::sleep(std::time::Duration::from_secs(2));
-            duration
-        })
-        .collect::<Vec<_>>();
-
-    println!("🕑 Durations: {:?}", durations);
-}
-
 fn main() {
     return main_time();
 
-    let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
-        .expect("Failed to read words from CSV");
+    let mut words = read_words_from_csv(INPUT_FILE).expect("Failed to read words from CSV");
     words.truncate(50_000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
@@ -328,5 +299,72 @@ fn main() {
         save(&results);
 
         break;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// 🕑 Timing
+////////////////////////////////////////////////////////////////////////////////
+
+fn main_time() {
+    let num_words_list = vec![
+        55_000, 60_000, 65_000, 70_000, 75_000, 80_000, 85_000, 90_000, 95_000, 100_000, 105_000,
+        110_000, 115_000, 120_000, 125_000, 130_000,
+    ];
+    // let num_words_list = (47..=130).map(|i| i * 1_000).collect::<Vec<_>>();
+
+    let mut csv_file = File::create(TIMING_FILE).expect("Failed to create CSV file");
+    writeln!(csv_file, "num_words,duration_mean,duration_variance")
+        .expect("Failed to write header");
+
+    for &num_words in &num_words_list {
+        let mut words = read_words_from_csv(INPUT_FILE).expect("Failed to read words from CSV");
+        words.truncate(num_words);
+
+        println!("Num total available words: {}", words.len());
+        let num_edges = num_edges(words.len().try_into().unwrap());
+        println!(
+            "Storage needed for edges: {} MB",
+            num_edges * std::mem::size_of::<i8>() as u64 / (1024 * 1024)
+        );
+        println!("Num edges: {:}", prettified_int(num_edges));
+
+        let num_runs = 12;
+        let durations = (0..num_runs)
+            .map(|i| {
+                println!();
+                println!("---------------------------------");
+                println!("Run: {:}/{num_runs} (num_words: {num_words})", i + 1);
+                println!("---------------------------------");
+                let device = initialize_device();
+                let (_results, duration) = compute(&device, words.clone());
+                drop(device);
+                std::thread::sleep(std::time::Duration::from_secs(2));
+                duration
+            })
+            .collect::<Vec<_>>();
+
+        let mean_duration: Duration = durations.iter().sum::<Duration>() / num_runs as u32;
+        let variance: f64 = durations
+            .iter()
+            .map(|&d| {
+                let diff = d.as_secs_f64() - mean_duration.as_secs_f64();
+                diff * diff
+            })
+            .sum::<f64>()
+            / (num_runs as f64 - 1.0);
+
+        println!("🕑 Durations for {} words: {:?}", num_words, durations);
+        println!("📊 Mean duration: {:?}", mean_duration);
+        println!("📊 Variance: {:?}", variance);
+
+        writeln!(
+            csv_file,
+            "{},{:.6},{:.6}",
+            num_words,
+            mean_duration.as_secs_f64(),
+            variance
+        )
+        .expect("Failed to write to CSV file");
     }
 }
