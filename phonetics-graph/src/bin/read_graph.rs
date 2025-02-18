@@ -1,11 +1,14 @@
-use std::{fs::File, io::Read};
+use std::{
+    fs::File,
+    io::{self, BufRead, Read},
+};
 
 const NUM_NODES: u32 = 100000;
 
 struct Edge {
     source: u32,
     target: u32,
-    weight: i8,
+    weight: i32,
 }
 
 static INPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
@@ -14,7 +17,7 @@ static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.csv";
 /**
  * Read the edge binary file and convert to a list of edges.
  */
-fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
+fn read_edges(buffer: &Vec<u8>, word_lengths: &Vec<usize>) -> Vec<Edge> {
     // The graph.edges file is a binary file that holds weights for edges of a graph.
     // The file itself just contains a list of bytes, where each byte represents the weight of an edge.
     // The node ids are implicit in the order of the edges:
@@ -26,14 +29,18 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
     let mut index = 0;
 
     for i in 0..NUM_NODES {
-        for j in i..NUM_NODES {
+        for j in (i + 1)..NUM_NODES {
             if index >= buffer.len() {
                 break;
             }
 
+            // Weight & Normalization
             let weight = buffer[index] as i8;
+            let max_length = word_lengths[i as usize].max(word_lengths[j as usize]);
+            let weight_norm = weight as f64 / max_length as f64;
+            let weight_norm_int: i32 = (weight_norm * 100.0) as i32;
 
-            let is_interesting_edge = weight > 1;
+            let is_interesting_edge = weight_norm_int >= 60;
             if !is_interesting_edge {
                 index += 1;
                 continue;
@@ -42,7 +49,7 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
             edges.push(Edge {
                 source: i as u32,
                 target: j as u32,
-                weight,
+                weight: weight_norm_int,
             });
             // also add the reverse edge (edges are undirected)
             // if i != j {
@@ -73,6 +80,18 @@ fn read_node_labels() -> Vec<String> {
     labels
 }
 
+/// Reads word lengths from the CSV file and returns a vector of lengths.
+fn read_word_lengths(file_path: &str) -> io::Result<Vec<usize>> {
+    let mut lengths = Vec::new();
+    let file = File::open(file_path)?;
+    for line in io::BufReader::new(file).lines() {
+        let line = line?;
+        let length = line.split(',').count();
+        lengths.push(length);
+    }
+    Ok(lengths)
+}
+
 // Read the edge binary file and convert to a list of edges
 fn main() {
     let mut file = File::open(INPUT_FILE).expect("Failed to open edges.bin");
@@ -87,11 +106,16 @@ fn main() {
     println!("Minimum weight: {}", min_weight);
     println!("Maximum weight: {}", max_weight);
 
-    // let edges = read_edges(&buffer);
-    println!("✅ Done reading edges.bin and nodes.csv");
+    let word_lengths = read_word_lengths("../data/graph/french-phonetics-integers.txt")
+        .expect("Failed to read word lengths");
 
-    // store_edge_csv(&edges);
-    store_weights_histogram(&buffer);
+    // store csv
+    let edges = read_edges(&buffer, &word_lengths);
+    println!("✅ Done reading edges.bin and nodes.csv");
+    store_edge_csv(&edges);
+
+    // store histogram
+    // store_weights_histogram(&buffer);
 }
 
 fn store_edge_csv(edges: &Vec<Edge>) {
