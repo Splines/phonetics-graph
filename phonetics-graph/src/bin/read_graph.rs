@@ -87,11 +87,11 @@ fn main() {
     println!("Minimum weight: {}", min_weight);
     println!("Maximum weight: {}", max_weight);
 
-    let edges = read_edges(&buffer);
+    // let edges = read_edges(&buffer);
     println!("✅ Done reading edges.bin and nodes.csv");
 
     // store_edge_csv(&edges);
-    store_weights_histogram(&edges);
+    store_weights_histogram(&buffer);
 }
 
 fn store_edge_csv(edges: &Vec<Edge>) {
@@ -108,15 +108,16 @@ fn store_edge_csv(edges: &Vec<Edge>) {
     }
 }
 
-fn store_weights_histogram(edges: &Vec<Edge>) {
+fn store_weights_histogram(buffer: &Vec<u8>) {
     let mut wtr = csv::Writer::from_path("../data/graph/final/edge_weights.csv")
         .expect("Failed to create edge_weights.csv");
     wtr.write_record(&["weight", "count"])
         .expect("Failed to write header");
 
     let mut histogram = std::collections::HashMap::new();
-    for edge in edges {
-        let count = histogram.entry(edge.weight).or_insert(0);
+    for &byte in buffer {
+        let weight = byte as i8;
+        let count = histogram.entry(weight).or_insert(0);
         *count += 1;
     }
 
