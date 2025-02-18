@@ -8,6 +8,9 @@ struct Edge {
     weight: i8,
 }
 
+static INPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
+static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.csv";
+
 /**
  * Read the edge binary file and convert to a list of edges.
  */
@@ -30,7 +33,7 @@ fn read_edges(buffer: &Vec<u8>) -> Vec<Edge> {
 
             let weight = buffer[index] as i8;
 
-            let is_interesting_edge = weight > 4 && weight < 10;
+            let is_interesting_edge = weight > 1;
             if !is_interesting_edge {
                 index += 1;
                 continue;
@@ -72,7 +75,7 @@ fn read_node_labels() -> Vec<String> {
 
 // Read the edge binary file and convert to a list of edges
 fn main() {
-    let mut file = File::open("../data/graph/edges-new-gpu.bin").expect("Failed to open edges.bin");
+    let mut file = File::open(INPUT_FILE).expect("Failed to open edges.bin");
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .expect("Failed to read edges.bin");
@@ -87,9 +90,12 @@ fn main() {
     let edges = read_edges(&buffer);
     println!("✅ Done reading edges.bin and nodes.csv");
 
-    // Store the edges in a csv file source,target,weight
-    let mut wtr = csv::Writer::from_path("../data/graph/edges-new-gpu.csv")
-        .expect("Failed to create edges.csv");
+    // store_edge_csv(&edges);
+    store_weights_histogram(&edges);
+}
+
+fn store_edge_csv(edges: &Vec<Edge>) {
+    let mut wtr = csv::Writer::from_path(OUTPUT_FILE).expect("Failed to create edges CSV");
     wtr.write_record(&["source", "target", "weight"])
         .expect("Failed to write header");
     for edge in edges {
@@ -99,5 +105,26 @@ fn main() {
             edge.weight.to_string(),
         ])
         .expect("Failed to write record");
+    }
+}
+
+fn store_weights_histogram(edges: &Vec<Edge>) {
+    let mut wtr = csv::Writer::from_path("../data/graph/final/edge_weights.csv")
+        .expect("Failed to create edge_weights.csv");
+    wtr.write_record(&["weight", "count"])
+        .expect("Failed to write header");
+
+    let mut histogram = std::collections::HashMap::new();
+    for edge in edges {
+        let count = histogram.entry(edge.weight).or_insert(0);
+        *count += 1;
+    }
+
+    let mut histogram_vec: Vec<_> = histogram.into_iter().collect();
+    histogram_vec.sort_by_key(|&(weight, _)| weight);
+
+    for (weight, count) in histogram_vec {
+        wtr.write_record(&[weight.to_string(), count.to_string()])
+            .expect("Failed to write record");
     }
 }
