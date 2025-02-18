@@ -16,7 +16,7 @@ We implement the algorithm in the CUDA framework and deploy it on a consumer Nvi
 
 Foster's methodology can help in designing parallel algorithms. The first step is to partition the problem at hand into small tasks. At the level of the adjacency matrix (\autoref{fig:traverse-schema}), such a task would be to compute the similarity score between two words $A$ and $B$ at the respective row and column. On a finer granularity, we can also refer to \autoref{fig:matrix-nuance-puissance-subcalc} and consider the calculation of one element of the score matrix. However, we realize that calculations of elements in the score matrix are highly dependent on each other since the score of a cell depends on the scores of its up, left and up-left (diagonal) neighbors (example of a \textit{stencil computation}). Additionally, words length differ, so the size of the score matrix varies. Due to the data dependencies and the varying problem size, we decide to focus on parallelizing the for-loops in the Needleman-Wunsch algorithm (lines \ref{algstep:nested1} and \ref{algstep:nested2} in \autoref{alg:needleman-wunsch}) making this a \textit{pleasingly parallel} problem, namely that of parallelizing score calculation for entries in the adjacency matrix.
 
-The maximum number of blocks in a grid (grid size) is limited to $2^{16} - 1 = 65535$ in $y$ and $z$ direction. Starting with CUDA compute capability 3.0, the limit in the $x$ direction is raised to $2^{31} - 1 = 2,147,483,647$ blocks. Furthermore, we only consider the upper triangular part of the adjacency matrix, while a grid is always rectangular. These constraints motivate the choice of using a one-dimensional grid and spawning blocks only in the $x$ direction. Likewise, we only employ one-dimensional blocks, \ie a block is a one-dimensional array of threads. The exact number of threads we use inside a block (block dimension) is discussed later. With this configuration, we calculate (in every thread) an \textit{index} ranging from $0$ to the number of entries in the upper triangular part of the adjacency matrix:
+The maximum number of blocks in a grid (grid size) is limited to $2^{16} - 1 = 65535$ in $y$ and $z$ direction. Starting with CUDA compute capability 3.0, the limit in the $x$ direction is raised to $2^{31} - 1 = 2,147,483,647$ blocks. Furthermore, we only consider the upper triangular part of the adjacency matrix, while a grid is always rectangular. These constraints motivate the choice of using a one-dimensional grid and spawning blocks only in the $x$ direction. Likewise, we only employ one-dimensional blocks, \ie a block is a one-dimensional array of threads. The exact number of threads we use inside a block (block dimension) is discussed later. With this configuration, we calculate (in every thread) an \textbf{index} ranging from $0$ to a number great than that of entries in the upper triangular part of the adjacency matrix:
 \begin{align}
     \text{idx} = \text{blockDim.x} \cdot \text{blockIdx.x} \cdot \text{threadIdx.x}
 \end{align}
@@ -37,6 +37,7 @@ This index needs to be mapped to the corresponding row and column in the adjacen
     &= (n-1) \cdot (r+1) - \sum_{k=0}^{r} k\\
     &= (n-1) \cdot (r+1) - \frac{r \cdot (r+1)}{2}\\
     &= -\frac{1}{2}r^2 + r \left(n- \frac{3}{2}\right) + (n-1)
+    \label{eq:sum-r}
 \end{align}
 For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. We therefore require $S_{r-1} \overset{!}{=} \text{idx}$ and solve for $r$. After some algebraic manipulations, we obtain:
 \begin{align}
@@ -49,4 +50,11 @@ We only use the negative branch of the square root since we want the row to incr
 \begin{align}
     c(\text{idx}) &\coloneqq r + 1 + (\text{idx} - S_{r-1})\\
     &= \frac{1}{2} r^2 + r \left(\frac{3}{2} - n\right) + (\text{idx} + 1)
+\end{align}
+Finally, note that $S_{n-1}$ conveniently also gives us the number of elements in the upper triangular part of the adjacency matrix, \ie the number of edges in our graph. With \eqref{eq:sum-r}, we find:
+\begin{align}
+    \small{\text{num edges}}
+    &= S_{n-1} = \frac{1}{2} n^2 - \frac{1}{2} n
+    = \frac{n(n-1)}{2}
+    \label{eq:num-edges}
 \end{align}
