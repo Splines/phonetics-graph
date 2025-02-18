@@ -162,10 +162,7 @@ fn compile_and_launch_kernel(
     max_word_length: u32,
     out: &mut CudaSlice<i8>,
 ) {
-    let mut kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
-    kernel_code = format!("static const unsigned int num_nodes = {num_nodes};\n")
-        + &format!("static const unsigned long long int num_edges = {num_edges};\n")
-        + &kernel_code;
+    let kernel_code = fs::read_to_string(KERNEL_FILE).unwrap();
 
     println!("💫 Compile PTX");
     let ptx = cudarc::nvrtc::compile_ptx(kernel_code).expect("Failed to compile PTX");
@@ -183,6 +180,8 @@ fn compile_and_launch_kernel(
                 out,
                 &words_flat_device,
                 &words_offsets_device,
+                num_nodes,
+                num_edges,
                 max_word_length,
             ),
         )
@@ -262,7 +261,7 @@ fn save(results: &Vec<i8>) {
 fn main() {
     let mut words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
         .expect("Failed to read words from CSV");
-    words.truncate(50_000);
+    words.truncate(10_000);
     println!("Num total available words: {}", words.len());
     let num_edges = num_edges(words.len().try_into().unwrap());
     println!(
