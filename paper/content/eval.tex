@@ -75,7 +75,7 @@ Some resulting ego-networks are shown in figures \ref{fig:emporter-ego}, \ref{fi
 \begin{itemize}[leftmargin=0cm]
     \item Words with the same pronunciation are as close as possible to each other and reside in the same community. In \autoref{fig:etirer-ego}, the words \textit{étudier}, \textit{étudient}, \textit{étudié}, \textit{étudiai}, \textit{étudiées} etc. are close to each other. In \autoref{fig:emporter-ego}, inside the red group in the middle-right part, we find different adjective endings for the word \textit{porté} (corresponding to gender and number of the noun it describes, \ie adjective agreement): porté, portée, portés, portées. We also find the words \textit{porter} and \textit{portez} here with the same prononciation as \textit{porté}. Note that it is claimed that \textit{portai} has the exact same prononciation, which is not correct (the last phoneme is different). This also shows that the dataset itself is not perfect and may contain errors. 
     
-    \item Of greater interest are similar sounding words; as hoped for, they are close to each other in the graph. For example, in \autoref{fig:emporter-ego}, we find edges like \textit{emporté} -- \textit{porter}, \textit{emporté} -- \textit{importé}, \textit{importé} -- \textit{impureté} and \textit{impureté -- pureté}. It is also remarkable that words in one group almost exclusively start with the same letter and correspond to the same word root: \textit{sortir} in the green group on the right, \textit{porter} and \textit{poster} in the red group, \textit{emporter} and \textit{importer} in the violet group, \textit{apporter} in the purple group, \textit{rapporter}, \textit{reporter} and \textit{remporter} in the blue group etc.
+    \item Of greater interest are similar sounding words; as hoped for, they are close to each other in the graph. For example, in \autoref{fig:emporter-ego}, we find edges like \textit{emporté} -- \textit{porter}, \textit{emporté} -- \textit{importé}, \textit{importé} -- \textit{impureté} and \textit{impureté -- pureté}. It is also remarkable that words in one group almost exclusively start with the same letter and correspond to the same word root: \textit{sortir} in the green group on the right, \textit{porter} and \textit{poster} in the red group, \textit{emporter} and \textit{importer} in the violet group, \textit{apporter} in the rose group, \textit{rapporter}, \textit{reporter} and \textit{remporter} in the blue group etc.
     
     \item There are stronger and weaker connections between words. In \autoref{fig:puissant-ego}, the edge between \textit{puisant}\footnote{Note that this is not missing an additional \textit{s}. This is the word in a phrase like \q{en \textit{puisant} de l'eau, ...}.} -- \textit{épuisant} has weight $\nicefrac{200}{3}\approx 66.7$ (after normalization), while that of \textit{puisant} -- \textit{paysans} has the smaller weight $\nicefrac{300}{5} = 60$.
     \begin{table}[H]
@@ -100,10 +100,7 @@ Some resulting ego-networks are shown in figures \ref{fig:emporter-ego}, \ref{fi
     \autoref{tab:align-puisant} shows the corresponding optimal alignments. With a match score of $1$, a mismatch score of $-1$ and a gap penalty $p=-1$, we find a score of~3 (\textit{puisant} -- \textit{paysans}) and 4 (\textit{puisant} -- \textit{épuisant}). With the normalization discussed on \autopageref{paragraph:normalization}, we indeed obtain the aforementioned edge weights. This example also illustrates that fine-tuning match/mismatch score and gap penalty is important to obtain meaningful results. One might want a greater distance between \textit{paysans} and \textit{puisant} since the \textipa{/u/} is replaced by the very different sounding \textipa{/a/}. Furthermore, the match/mismatch scores can be adjusted for every pair of phonemes to reflect the subtleties of a language. This can be done by changing the coefficients in the similarity matrix (see \autoref{algstep:sim} of \autoref{alg:needleman-wunsch}). In this document, we limit ourselves to the default scoring matrix ($1$ on the diagonals, $-1$ elsewhere).
 \end{itemize}
 
-Furthermore, we want to broaden the view by considering a bigger graph, see \autoref{fig:big-view} containing 306,473 edges with normalized weights 8, 9 or 10.
-
-
-\vfill\null
+\vspace{-1em}
 
 \begin{figure}[H]
     \centering
@@ -112,14 +109,25 @@ Furthermore, we want to broaden the view by considering a bigger graph, see \aut
     \label{fig:big-view}
 \end{figure}
 
+\vspace{-1.5em}
 
+To broaden the view, we consider a bigger graph in \autoref{fig:big-view}, with normalized edge weights 8, 9 or 10. Communities found with Louvain are again color-coded. This very tiny slice of edge weights (compare \autoref{fig:hist-norm}) can already reveal interesting partitions of a language.
 
+\begin{itemize}
+    \item The red community at the top consists almost exclusively of words ending in \textipa{/j\~O/}, \eg \textit{illustration}, \textit{proportions}, \textit{réalisation}, \textit{fluctuation}, \textit{documentation}, \textit{émancipation}, \textit{articulation} etc.
+    
+    \item Below, the rose group encompasses words that end with \textipa{/\OE K/}, \eg \textit{aspirateur}, \textit{consommateur}, \textit{illustrateur}, \textit{radiateur}. However, this group is less homogeneous and also contains words ending in \textipa{/ktiv/}, \eg \textit{interactives}, \textit{réparatrice}, \textit{instructif}, \textit{instinctives}. 
+    
+    \item The orange group on the bottom mainly comprises words ending in \textit{e}, \eg \textit{personnalité}, \textit{caractérisé}, \textit{centraliser}, \textit{hospitalité}, \textit{réalité}, \textit{vivacité}, \textit{patienter}, \textit{spécialiser}, \textit{sensibiliser}, \textit{modéliser}.
+    
+    \item In the cyan group on the far left, we find many words that end in \textipa{El}, \eg \textit{personnel}, \textit{conventionnel}, \textit{professionnel}, \textit{conditionnelles}, \textit{exceptionnelle}, \textit{émotionnels}, \textit{sensationnels}. However, this group is harder to describe since it also contains different words like \textit{occasionnant}, \textit{collectionneur}, \textit{frictionne}, \textit{crayonné}, \textit{positionnement}.
+    
+    \item The yellow group on the bottom right is easier to classify: it contains words ending in \textipa{Zi} or \textipa{Zik}. Among others: \textit{méthodologique}, \textit{topologique} et \textit{topologie}, \textit{holistique}, \textit{diplomatique}, \textit{dramaturgie}, \textit{gastronomie}, \textit{cytologie}, \textit{phénoménologie}, \textit{biologie}, \textit{écologique}, \textit{synchronique}. 
+\end{itemize}
 
+We also tried to identify common groups of words \textit{between} two communities in the expectation of finding a \q{morphing} behavior between them. However, this could not be observed in the graphs and we were not able to find a meaningful way to group these words.
 
-
-% ForceAtlas2 algorithm. The neighbors of the word \q{glace} and \q{prévoir} are shown in \autoref{fig:neighbors}. For bigger graphs than that, Gephi is not able to handle the amount of data anymore.
-
-Having translated the problem into a graph structure also allows us to use graph algorithms to discover interesting properties. As an example, Gephi implements the \textit{shortest path algorithm}: users can click on two words and the shortest path between them is calculated and shown in the graph. Beforehand, we filtered the graph to only include the most strong edges. With this, we can find chains like the following (read them aloud to hear the phonetic similarity):
+Finally, having translated the problem into a graph structure also allows us to use graph algorithms to discover interesting properties. As an example, Gephi implements the \textit{shortest path algorithm}: users can click on two words and the shortest path between them is calculated and shown in the graph. Beforehand, we filtered the graph to only include the most strong edges. With this, we can find chains like the following (read them aloud to hear the phonetic similarity):
 \begin{itemize}
     \item trottoir $\rightarrow$ entrevoir $\rightarrow$ devoir $\rightarrow$ voire $\rightarrow$ voile $\rightarrow$ val $\rightarrow$ valait $\rightarrow$ fallait $\rightarrow$ falaise
     \item falaise $\rightarrow$ fallait $\rightarrow$ palais $\rightarrow$ passais $\rightarrow$ dépassait $\rightarrow$ dépendait $\rightarrow$ répondait $\rightarrow$ répond $\rightarrow$ raison $\rightarrow$ maison
