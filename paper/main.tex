@@ -6,7 +6,7 @@
 \renewcommand{\abstractnamefont}{\normalfont\bfseries}
 \renewcommand{\abstracttextfont}{\normalfont\small\itshape}
 
-\title{\vspace{-0.0em}Parallel Needleman-Wunsch on CUDA to measure word similarity based on phonetic transcription}
+\title{\vspace{-0.0em}Parallel Needleman-Wunsch on CUDA to measure word similarity based on phonetic transcriptions}
 \author{Dominic Plein}
 \date{February 19, 2025}
 
@@ -62,20 +62,23 @@
 \newcolumn
 \input{content/needleman-wunsch.tex}
 \input{content/data.tex}
+\vfill\null
+\columnbreak
 \input{content/impl.tex}
-% \vfill\null
-% \pagebreak
-% \columnbreak
 \input{content/eval.tex}
 \input{content/conclusion.tex}
 \end{multicols*}
 
 \printglossary[type=\acronymtype]
 
-% \bibliographystyle{plain}
 \printbibliography[
     heading=bibintoc,
-    title={Bibliography}
+    title={Bibliography},
+    keyword={lit}
+]
+\printbibliography[
+    title={Data sources},
+    keyword={data}
 ]
 
 \end{document}
