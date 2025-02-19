@@ -1,9 +1,3 @@
-// Short Glossary:
-// - Word = Node (here for us in our phonetic graph)
-// - Host = CPU
-// - Device = GPU
-// - Host to Device (htd) = CPU to GPU
-
 use phonetics_graph::pretty::prettified_int;
 use std::fs::{self, File};
 use std::io::{self, BufRead, Write};
@@ -18,9 +12,9 @@ static KERNEL_FILE: &str = "./src/kernels/needleman_wunsch.cpp";
 static MODULE_NAME: &str = "phonetics_module";
 static KERNEL_NAME: &str = "needleman_wunsch";
 
-static INPUT_FILE: &str = "../data/graph/french-phonetics-integers.txt";
-static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
-static TIMING_FILE: &str = "../data/graph/final/timing.csv";
+static INPUT_FILE: &str = "data/graph/french-phonetics-integers.txt";
+static OUTPUT_FILE: &str = "data/graph/final/edges.gpu.bin";
+static TIMING_FILE: &str = "data/graph/final/timing.csv";
 
 /// Reads words from a CSV file and returns a vector of vectors of u8.
 /// Each inner vector represents a word.
@@ -38,7 +32,7 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
     Ok(words)
 }
 
-// Initializes the device and prints the device name.
+/// Initializes the device and prints the device name.
 fn initialize_device() -> CudaDeviceArc {
     let dev = cudarc::driver::CudaDevice::new(DEVICE_ID).expect("Failed to initialize device");
     println!(
@@ -240,7 +234,6 @@ fn compute(device: &CudaDeviceArc, words: Vec<Vec<u8>>) -> (Vec<i8>, Duration) {
 }
 
 fn analyze(results: &Vec<i8>) {
-    // println!("{:?}", &results);
     println!("{:?}", &results[..20]);
     println!("{:?}", &results[results.len() - 20..]);
 
@@ -294,12 +287,7 @@ fn main() {
 ////////////////////////////////////////////////////////////////////////////////
 
 fn main_time() {
-    // let num_words_list = vec![
-    //     55_000, 60_000, 65_000, 70_000, 75_000, 80_000, 85_000, 90_000, 95_000, 100_000, 105_000,
-    //     110_000, 115_000, 120_000, 125_000, 130_000,
-    // ];
-    // let num_words_list = (47..=130).map(|i| i * 1_000).collect::<Vec<_>>();
-    let num_words_list = vec![100_000];
+    let num_words_list = vec![10_000, 50_000, 100_000];
 
     let mut csv_file = File::create(TIMING_FILE).expect("Failed to create CSV file");
     writeln!(csv_file, "num_words,duration_mean,duration_variance")

@@ -7,7 +7,6 @@ import matplotlib
 # fig_size = (2.756, 1.703)
 fig_size = (2.756, 1.85)
 plt.style.use(["science", "ieee"])
-# plt.rcParams.update({"text.usetex": True, "font.family": "lmodern"})
 
 
 def calc_num_edges(num_nodes):

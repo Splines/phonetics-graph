@@ -6,7 +6,8 @@ use std::sync::{Arc, Mutex};
 
 mod needleman_wunsch;
 
-static OUTPUT_FILE: &str = "../data/graph/final/edges.cpu.bin";
+static NODES_ENCODED_FILE: &str = "data/graph/french-phonetics-integers.txt";
+static OUTPUT_FILE: &str = "data/graph/final/edges.cpu.bin";
 static MAX_WORDS: usize = 10_000;
 
 fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
@@ -24,8 +25,7 @@ fn read_words_from_csv(file_path: &str) -> io::Result<Vec<Vec<u8>>> {
 }
 
 fn main() {
-    let words = read_words_from_csv("../data/graph/french-phonetics-integers.txt")
-        .expect("Failed to read words from CSV");
+    let words = read_words_from_csv(NODES_ENCODED_FILE).expect("Failed to read words from CSV");
 
     // Create a dummy similarity matrix with 1 on the diagonal and -1 elsewhere
     let mut similarity_matrix = vec![vec![-1; 39]; 39];
@@ -70,8 +70,7 @@ fn main() {
     let duration = start.elapsed();
     println!("⏱️  Time for calculations: {}s", duration.as_secs());
 
-    // Sort the results
-    println!("🔍 Sorting results...");
+    println!("🔍 Bring results to row-major ordering...");
     let mut output = result.lock().unwrap();
     // Due to the parallel processing, the results are not sorted, e.g.
     // 0,1,score -> 0,3,score -> 0,2,score -> 1,3,score -> 1,1,score -> 1,2,score

@@ -3,26 +3,28 @@ use std::{
     io::{self, BufRead, Read},
 };
 
-const NUM_NODES: u32 = 100000;
+const NUM_NODES: u32 = 100_000;
 
 struct Edge {
     source: u32,
     target: u32,
-    weight: i32,
+    weight: i32, // weight itself is i8, but we normalize it and store it as i32
 }
 
-static INPUT_FILE: &str = "../data/graph/final/edges.gpu.bin";
-static OUTPUT_FILE: &str = "../data/graph/final/edges.gpu.csv";
+static NODES_FILE: &str = "data/graph/nodes.csv";
+static NODES_ENCODED_FILE: &str = "data/graph/french-phonetics-integers.txt";
+static INPUT_FILE: &str = "data/graph/final/edges.gpu.bin";
+static OUTPUT_FILE: &str = "data/graph/final/edges.gpu.csv";
+static HISTOGRAM_OUTPUT_FILE: &str = "data/graph/final/edge_weights.csv";
 
-/**
- * Read the edge binary file and convert to a list of edges.
- */
+/// Reads the edge binary file and converts it to a list of edges.
 fn read_edges(
     buffer: &Vec<u8>,
     word_lengths: &Vec<usize>,
 ) -> (Vec<Edge>, std::collections::HashMap<i32, u32>) {
     // The graph.edges file is a binary file that holds weights for edges of a graph.
-    // The file itself just contains a list of bytes, where each byte represents the weight of an edge.
+    // The file itself just contains a list of bytes, where each byte represents
+    // the weight of an edge.
     // The node ids are implicit in the order of the edges:
     // 0,1,score -> 0,2,score -> 0,3,score -> 1,1,score -> 1,2,score -> 1,3,score
     // here 3 is the maximum node id, which should be a parameter of the program.
@@ -66,8 +68,8 @@ fn read_edges(
 
 #[allow(dead_code)]
 fn read_node_labels() -> Vec<String> {
-    // csv file has data: id,label
-    let file = File::open("../data/graph/nodes.csv").expect("Failed to open nodes.csv");
+    // csv file: id,label
+    let file = File::open(NODES_FILE).expect("Failed to open nodes.csv");
     let mut labels = Vec::new();
     let mut rdr = csv::Reader::from_reader(file);
     for result in rdr.records() {
@@ -90,7 +92,7 @@ fn read_word_lengths(file_path: &str) -> io::Result<Vec<usize>> {
     Ok(lengths)
 }
 
-// Read the edge binary file and convert to a list of edges
+/// Reads the edge binary file and convert to a list of edges
 fn main() {
     let mut file = File::open(INPUT_FILE).expect("Failed to open edges.bin");
     let mut buffer = Vec::new();
@@ -104,16 +106,13 @@ fn main() {
     println!("Minimum weight: {}", min_weight);
     println!("Maximum weight: {}", max_weight);
 
-    let word_lengths = read_word_lengths("../data/graph/french-phonetics-integers.txt")
-        .expect("Failed to read word lengths");
+    let word_lengths = read_word_lengths(NODES_ENCODED_FILE).expect("Failed to read word lengths");
 
-    // store csv
     let (edges, histogram) = read_edges(&buffer, &word_lengths);
     println!("✅ Done reading edges.bin and nodes.csv");
     store_edge_csv(&edges);
     // store_weights_histogram(&histogram);
 
-    // store histogram
     // store_weights_histogram(&buffer);
 }
 
@@ -132,8 +131,8 @@ fn store_edge_csv(edges: &Vec<Edge>) {
 }
 
 fn store_weights_histogram(histogram: &std::collections::HashMap<i32, u32>) {
-    let mut wtr = csv::Writer::from_path("../data/graph/final/edge_weights.csv")
-        .expect("Failed to create edge_weights.csv");
+    let mut wtr =
+        csv::Writer::from_path(HISTOGRAM_OUTPUT_FILE).expect("Failed to create edge_weights.csv");
     wtr.write_record(&["weight", "count"])
         .expect("Failed to write header");
 

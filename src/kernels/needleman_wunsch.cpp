@@ -10,7 +10,6 @@ static const i8 GAP_PENALTY = -1;
  */
 __device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_matrix)
 {
-    // Populate matrix
     for (int i = 0; i <= a_length; ++i)
     {
         score_matrix[i * (b_length + 1)] = GAP_PENALTY * i;
@@ -20,7 +19,6 @@ __device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_m
         score_matrix[j] = GAP_PENALTY * j;
     }
 
-    // Calculate score using the Needleman-Wunsch algorithm
     for (int i = 1; i <= a_length; ++i)
     {
         for (int j = 1; j <= b_length; ++j)
@@ -35,9 +33,6 @@ __device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_m
     }
 
     return score_matrix[a_length * (b_length + 1) + b_length];
-    // i8 score = score_matrix[a_length * (b_length + 1) + b_length];
-    // normalize the score to the word length
-    // return static_cast<i8>((static_cast<float>(score) / max (a_length, b_length)) * 100);
 }
 
 extern "C" __global__ void needleman_wunsch(
