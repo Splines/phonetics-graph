@@ -1,48 +1,14 @@
 \section{Introduction}
 
-The \gls{ipa} uses special symbols\footnote{See for example the French list \href{https://en.wikipedia.org/wiki/Help:IPA/French}{here}.} to represent the sound of a spoken language. This is useful for language learners since the pronunciation of a word can be significantly different from its written form. For example, the French word \textit{renseignement} (information) is pronounced \textipa{/K\~{a}.sE\textltailn.m\~{a}/}. Based on this alphabet, one might wonder if we can construct a metric that quantifies the \textbf{distance between two words based on their phonetic transcription}. This would allow to construct a graph where nodes are words and undirected edges are weighted by the distance between the words. This graph could then be used to find neighbors of a word based on their phonetic similarity. This opens up the possibility to apply clustering algorithms and other methods stemming from graph theory in order to analyze the phonetic structure of a language.
+The \gls{ipa} uses special symbols\footnote{See for example the French list \href{https://en.wikipedia.org/wiki/Help:IPA/French}{here}.} to represent the sound of a spoken language \cite{ipa}. This is useful for language learners since the pronunciation of a word can be significantly different from its written form. For example, the French word \textit{renseignement} (information) is pronounced \textipa{/K\~{a}.sE\textltailn.m\~{a}/}. Based on this alphabet, one might wonder if we can construct a metric that quantifies the \textbf{similarity between two words based on their phonetic transcription}. This would allow to construct a graph where nodes are words and undirected edges are weighted by the distance between the words. Such a graph can be used to find neighbors of a word based on the respective phonetic similarity. This opens up the possibility to apply clustering algorithms and other methods stemming from graph theory in order to analyze the phonetic structure of a language.
 
-Calculating the distance between each pair of words corresponds to a fully-connected graph. Our dataset consist of around 600,000 French words and their \gls{ipa} transcription, alongside their frequency in the French language. Excluding self-loops, we find a vast number of edges \eqref{eq:num-edges}:
+Calculating the distance between each pair of words corresponds to a fully-connected graph. Our dataset consists of around 600,000 French words and their \gls{ipa} transcription, alongside their frequency in the French language. Excluding self-loops, we find a vast number of edges \eqref{eq:num-edges}:
 \begin{align}
     \text{\#nodes} &= 600,000 \\
     \text{\#edges} &= \frac{600,000 \cdot 599,999}{2} \approx \num{1.8e11}
 \end{align}
-This high number and the independent nature of the distance calculation for each pair of words makes the problem well-suited for parallelization. In \autoref{sec:needleman-wunsch}, we present the Needleman-Wunsch algorithm used to calculate the distance between two words. In \autoref{sec:impl}, we discuss how to parallelize this algorithm on a CPU using the \textit{Rayon} library in Rust and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library. Finally, we provide visualizations of the obtained graphs in \ref{sec:eval} and conclude in \autoref{sec:conclusion}.
+This high number and the independent nature of the distance calculation for each pair of words makes the problem well-suited for parallelization. In \autoref{sec:needleman-wunsch}, we present the Needleman-Wunsch algorithm used to calculate the distance between two words. In \autoref{sec:impl}, we discuss how to parallelize this algorithm on a CPU using the \textit{Rayon} library in Rust and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library. Finally, we present performance results and provide visualizations of the obtained graphs in \autoref{sec:eval}. We conclude in \autoref{sec:conclusion} and discuss how this method can be improved and how future work could extend it.
 
 % In the following, by \textit{word} we always refer to its phonetic transcription. That is, homophones like the French words \textit{vert} \textipa{/vEK/} (green) and \textit{verre} \textipa{/vEK/} (glass) are considered the same word.
 
-\vfill\null
-
-
-
-% To evaluate the feasibility of this project, we combined different datasets to create a new one consisting of \textbf{700,000 French words and their phonetic transcription} as well as their frequency in the French language\footnote{In the final report, we will provide more details on the dataset and their sources.}. We implemented a Rust program that calculates the distance of all pairs of words. This corresponds to \textbf{computing the weights for all edges of a fully-connected graph}, where nodes are the words (their phonetic transcriptions) and edges have weights corresponding to the distance between the words. For the full dataset, we thus find:
-
-% \begin{align}
-%     \text{Number of nodes} &= 700,000 \\
-%     \text{Number of edges} &= \frac{1}{2} \cdot 700,000 \cdot 699,999 \\
-%     &=  244,999,650,000
-% \end{align}
-% This presents a huge challenge both to computation and memory. Even if we only stored each edge weight with 7~bits, the edges alone would require $\approx \qty{214}{\giga\byte}$ of memory. With regards to computation, the algorithms lends itself to parallelization, as the distance calculation of two words is independent of other word pairs.
-
-% After a first Python implementation, we wrote a Rust program to calculate the distance with Needleman-Wunsch. It was parallelized on a 4-core consumer CPU using the Rayon library. Based on calculations on the first 20,000 words, we estimate that the implementation will take $\approx \qty{3}{\hour}$ to calculate the distances for all word pairs. This could be acceptable as it only has to be done once. After that, the lookup is in $\mathcal{O}(1)$ time.
-
-% However, we also want to adopt a \textbf{custom scoring matrix} for the Needleman-Wunsch algorithm that takes into account phonetic symbol similarity itself. For example, replacing a \textit{b} by a \textit{p} should have a lower penalty than replacing a \textit{b} by an \textit{m}. Defining such a matrix a priori based on random word pairs where only one sound is changed (minimal pairs) has turned out to be difficult. A better approach could be to calculate all distances with a given default scoring (1 on the diagonal, -1 on off-diagonals), then use the results to get the neighbors of a word. With this, we get a better understanding of what words are considered similar by the algorithm and can adjust the scoring matrix accordingly. This iterative process requires a fast implementation of the Needleman-Wunsch algorithm to reduce the turnaround time.
-
-% Future works could discuss how clustering algorithms like the Louvain method can be parallelized in a way that also allows only reading parts of the dataset at a time. By doing so, we could cluster words based on their phonetic similarity and thus find \textit{groups of words} that sound similar (compared to only finding the neighbors of a word).
-
-% \end{multicols*}
-% \begin{figure}[ht]
-%     \centering
-%     \subfigure[Neighbors of \q{glace}]{
-%         \includegraphics[width=0.45\textwidth,trim={5cm 4cm 4cm 4cm},clip]
-%             {assets/glace-neighbors.jpeg}
-%     }
-%     \hfill
-%     \subfigure[Neighbors of \q{prévoir}]{
-%         \includegraphics[width=0.45\textwidth,trim={3.5cm 3.5cm 4cm 3.5cm},clip]
-%             {assets/prévoir-neighbors.jpeg}
-%     }
-%     \caption{Visualization of neighbors based on phonetic distance. Edge weights encode the closeness of two words. Colors are artifacts of a previous visualization and can be ignored.}
-%     \label{fig:neighbors}
-% \end{figure}
-% \begin{multicols*}{2}
+% \vfill\null

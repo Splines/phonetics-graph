@@ -59,7 +59,7 @@
 \hypersetup{
 	colorlinks = true,
 	linkcolor={red!50!black}, % Color of internal links
-	% citecolor={blue!50!black}, % Color of citations
+	citecolor={blue!50!black}, % Color of citations
 	urlcolor={blue!80!black} % Color for external hyperlinks
 }
 \usepackage{todonotes}
@@ -107,3 +107,11 @@
     frame empty,
     colback=lightgray!20
 }
+
+% Bibliography
+\usepackage[
+    backend=biber,
+    style=numeric
+]{biblatex}
+
+\addbibresource{literature.bib}

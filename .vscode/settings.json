@@ -13,9 +13,23 @@
                 "-file-line-error",
                 "%DOC%"
             ]
+        },
+        {
+            "name": "biber",
+            "command": "biber",
+            "args": [
+                "%DOCFILE%"
+            ],
         }
     ],
     "latex-workshop.latex.recipes": [
+        {
+            "name": "pdflatex & biber",
+            "tools": [
+                "pdflatex",
+                "biber"
+            ]
+        },
         {
             "name": "pdflatex",
             "tools": [
@@ -86,6 +100,7 @@
         "dataclass",
         "dtype",
         "htod",
+        "louvain",
         "msgpack",
         "needleman",
         "Needleman",
@@ -104,5 +119,5 @@
     //////////////////////////////////////
     // C++
     //////////////////////////////////////
-    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.errorSquiggles": "disabled"
 }
