@@ -22,25 +22,58 @@ Our CUDA implementation is limited by the global memory (\qty{6}{\giga\byte} for
 \end{align}
 On the GPU at hand, we can handle up to around 107,000 nodes (mean time $\approx \qty{21.3}{\s}$) before experiencing \q{CUDA out of memory errors}. Currently we detect the limit, but do not implement a mechanism to go beyond it. One way could to be to detect the error, then copy the results back to the host and continue the computation while shifting the index back to $0$. The results are then concatenated on the host. For the further evaluation, we shall content ourselves with the results for the first 100,000 words, which already contain a lot of information of the French language. The binary file holding only the edge weights in row-major order, is \qty{4.66}{\giga\byte} in size.
 
-\textbf{Graph application.} In a further post-processing step, we convert the binary edge file to a CSV file and import it into the open-source graph visualization software \href{https://gephi.org/}{Gephi}. During the generation of the CSV file, we filter out edges with a weight below a certain threshold since Gephi is not able to handle the amount of data otherwise. \autoref{fig:edge-weight-histogram} depicts the histogram of edge weights.
+\textbf{Graph application.} \autoref{fig:hist} shows the histogram of edge weights. It strongly resembles a normal distribution, which is probably due to how word lengths are distributed in the language. Note that the minimum and maximum achievable alignment score for a word pair depends on the word lengths. To efface this dependency, we normalize every score by dividing by $\max(\text{len}(A), \text{len}(B))$ and then multiply by 100. The resulting histogram is shown in \autoref{fig:hist-norm}. It does not resemble a normal distribution anymore. Most nodes have the smallest score of $-100$. There is a gap of around width 10 around edge weight 0 that we have no explanation for. The global trend is that many edges have a strong negative edge weight, while a smaller proportion have a strongly positive one.
 
-\vfill
-\null
+The binary edge file is converted to a CSV file and imported into the open-source graph visualization software \href{https://gephi.org/}{Gephi}. As Gephi is far from being able to display 5 billion edges at the same time (let alone import such a file), we have to select specific ranges of edge weights we are interested in. We focus on the positive edge weights as they indicate a higher similarity between words.
+
+\vfill\null
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{assets/edge_weights.pdf}
     \caption{Histogram of edge weights (linear and logarithmic scale). Mean: $-1.5$, range: $[-19, 16]$.}
-    \label{fig:edge-weight-histogram}
+    \label{fig:hist}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{assets/edge_weights-normalized.pdf}
+    \caption{Histogram of normalized edge weights. Linear and logarithmic scale.}
+    \label{fig:hist-norm}
+\end{figure}
+
+\vfill\null
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth, trim=1cm 3.4cm 0.5cm 3.2cm, clip]{assets/puissant-ego.pdf}
+    \caption{Ego-network (depth 3) of the word \textit{puissant}.}
+    \label{fig:puissant-ego}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth, trim=1cm 4.8cm 0.5cm 3.2cm, clip]{assets/étirer.pdf}
+    \caption{Ego-network (depth 3) of the word \textit{étirer} for edge weights in the range $[40,49]$.}
+    \label{fig:etirer-ego}
+\end{figure}
+
+\vfill\null
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth, trim=1cm 4.8cm 0.5cm 3.2cm, clip]{assets/big view-min-min.jpg}
+    \caption{Overview of the graph containing edge weights in the range $[8,10]$. 30,185 nodes and 306,473 edges are shown.}
+    \label{fig:big-view}
 \end{figure}
 
 
 
-% Based on the first 100,000 most frequently used words, we calculated the distance between every pair and visualized the graph using \href{https://gephi.org/}{Gephi's} ForceAtlas2 algorithm. The neighbors of the word \q{glace} and \q{prévoir} are shown in \autoref{fig:neighbors}. For bigger graphs than that, Gephi is not able to handle the amount of data anymore.
+% ForceAtlas2 algorithm. The neighbors of the word \q{glace} and \q{prévoir} are shown in \autoref{fig:neighbors}. For bigger graphs than that, Gephi is not able to handle the amount of data anymore.
 
-% Having translated the problem into a graph structure also allows us to use graph algorithms to discover interesting properties. As an example, Gephi implements the \textit{shortest path algorithm}: users can click on two words and the shortest path between them is calculated and shown in the graph. Beforehand, we filtered the graph to only include the most strong edges. With this, we can find chains like the following (read them aloud to hear the phonetic similarity):
-% \begin{itemize}
-%     \item trottoir $\rightarrow$ entrevoir $\rightarrow$ devoir $\rightarrow$ voire $\rightarrow$ voile $\rightarrow$ val $\rightarrow$ valait $\rightarrow$ fallait $\rightarrow$ falaise
-%     \item falaise $\rightarrow$ fallait $\rightarrow$ palais $\rightarrow$ passais $\rightarrow$ dépassait $\rightarrow$ dépendait $\rightarrow$ répondait $\rightarrow$ répond $\rightarrow$ raison $\rightarrow$ maison
-%     \item confusion $\rightarrow$ conclusion $\rightarrow$ exclusion $\rightarrow$ explosion $\rightarrow$ exposition $\rightarrow$ explications $\rightarrow$ respiration $\rightarrow$ précipitation $\rightarrow$ présentation $\rightarrow$ présenta $\rightarrow$ présente $\rightarrow$ présence $\rightarrow$ présidence $\rightarrow$ résidence $\rightarrow$ résistance $\rightarrow$ existence
-% \end{itemize}
+Having translated the problem into a graph structure also allows us to use graph algorithms to discover interesting properties. As an example, Gephi implements the \textit{shortest path algorithm}: users can click on two words and the shortest path between them is calculated and shown in the graph. Beforehand, we filtered the graph to only include the most strong edges. With this, we can find chains like the following (read them aloud to hear the phonetic similarity):
+\begin{itemize}
+    \item trottoir $\rightarrow$ entrevoir $\rightarrow$ devoir $\rightarrow$ voire $\rightarrow$ voile $\rightarrow$ val $\rightarrow$ valait $\rightarrow$ fallait $\rightarrow$ falaise
+    \item falaise $\rightarrow$ fallait $\rightarrow$ palais $\rightarrow$ passais $\rightarrow$ dépassait $\rightarrow$ dépendait $\rightarrow$ répondait $\rightarrow$ répond $\rightarrow$ raison $\rightarrow$ maison
+    \item confusion $\rightarrow$ conclusion $\rightarrow$ exclusion $\rightarrow$ explosion $\rightarrow$ exposition $\rightarrow$ explications $\rightarrow$ respiration $\rightarrow$ précipitation $\rightarrow$ présentation $\rightarrow$ présenta $\rightarrow$ présente $\rightarrow$ présence $\rightarrow$ présidence $\rightarrow$ résidence $\rightarrow$ résistance $\rightarrow$ existence
+\end{itemize}
