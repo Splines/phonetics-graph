@@ -70,3 +70,18 @@ diff <(xxd ../data/graph/final/edges.cpu.bin) <(xxd ../data/graph/final/edges.gp
 ```bash
 head -c 100 ../data/graph/edges-new-gpu.bin | od -t d1
 ```
+
+
+
+## Graphs
+
+We consider different ranges of edge weights.
+
+- [60,100]: puissant ego
+- [40,49]:  étirer ego
+- [8,10], 30,185 nodes (30.19%),  306,473 edges (big view)
+- only -35: does not give any good results
+- [60, 100]: emporter ego (based on 458,529 edges, small graph: 449 nodes, 5921 edges)
+
+node opacity: 20
+edges opacity: 30

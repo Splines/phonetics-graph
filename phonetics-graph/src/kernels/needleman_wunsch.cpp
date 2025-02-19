@@ -33,7 +33,11 @@ __device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_m
             score_matrix[i * (b_length + 1) + j] = new_score;
         }
     }
+
     return score_matrix[a_length * (b_length + 1) + b_length];
+    // i8 score = score_matrix[a_length * (b_length + 1) + b_length];
+    // normalize the score to the word length
+    // return static_cast<i8>((static_cast<float>(score) / max (a_length, b_length)) * 100);
 }
 
 extern "C" __global__ void needleman_wunsch(

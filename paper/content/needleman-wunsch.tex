@@ -105,7 +105,8 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
         {
             \For{$j \in \{1, \ldots, \len(\WordB)\}$\label{algstep:nested2}}
             {
-                \Cost $\gets$ $\Sim(\WordA_{i-1}, \WordB_{j-1})$\;
+                \Cost $\gets$ $\Sim(\WordA_{i-1}, \WordB_{j-1})$
+                \label{algstep:sim}\;
                 \MatchScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j-1$} + \Cost
                 \label{algstep:matchscore}\;
                 \DeleteScore $\gets$ \ScoreMatrixIdx{$i-1$}{$j$} + \GapPenalty
