@@ -1,24 +1,32 @@
-\section{Conclusion}
+\section{Conclusion \& Outlook}
 \label{sec:conclusion}
+
+We presented a method calculate the similarity between words based on their phonetic \gls{ipa} transcription. For this purpose, we employed the Needleman-Wunsch algorithm with similarity matrix and gap penalty. We implemented this algorithm in Rust and parallelized it on a CPU using the Rayon library and on a consumer Nvidia GPU using the CUDA framework with the \textit{cudarc} Rust library, while writing the kernel itself in \Cpp. We detailed choice of data structures and memory layout to optimize the performance of the GPU implementation. For a graph with 100,000 nodes (words) and almost 5 billion edges (word-pairs), the algorithm takes less than \qty{20}{\s}. consistency between the CPU and GPU implementations was verified up to 30,000 nodes (after that the CPU implementation becomes too slow and consumes too much memory).
+
+Future work could include an adapted version that can read the whole graph of more than 600,000 nodes at the same time by copying back intermediate results from the GPU to the CPU as already outlined in the evaluation. To further speed up the computation, one could consider a more fine-grained parallelization, \ie parallelize at the level of the score matrix calculation. This is not trivial due to the dependencies between the cells of the matrix. A stencil computation approach could be used to parallelize this part of the algorithm.
+
+We also demonstrated the practical usability of the resulting edge weights by examining the graphs in Gephi. Even just by looking at small subsections of the full graph, we can deduce interesting properties of the language, \eg community detection revealed groups with similar endings and groups with the same root but different endings. Constructing the ego-network of a word allows to find words that are phonetically similar to a given word. One can envision an online platform where this functionality is offered to users to find rhymes or similar sounding words. This can be helpful for language learners as well to foster the playful exploration of a language. Future work could include:
+
+\begin{itemize}
+    \item Fine-tune the similarity matrix for language subtleties. In this document, we always used a fixed match/mismatch score of 1/-1, while in reality, some phonetic substitutions sound more similar than others. For example, replacing a vowel by a consonant might be more severe than replacing a vowel by another vowel. One might also want to experiment with the gap penalty that was set to $p=-1$ throughout.
+    
+    \item So far, we considered a dataset for the French language. The presented pipeline can work with other languages as well. This can open up the possibility to compare the phonetic structure of different languages and find similarities between them.
+    
+    \item We already showcased how a shortest path can find chains of words that sound similar and still allow to go from one word to another. Other graph-theoretical methods could be applied as well. For example, the Louvain method inherently constructs a multi-level hierarchy of communities. Looking at a lower granularity level (more high-level view) could reveal interesting results. For this purpose, we should consider a parallel Louvain implementation that can work on the whole graph. Limiting oneself to a slice of edge weights (as done here) might bias results or leave interesting structures unnoticed.
+    
+    % todo roots, lexeme
+\end{itemize}
+
+
+% Domain Level
+% - offer online service to show neighbors of a word in a ego network
+%   (users can search for a word)
+% - more graph theory applications other than shortest path?
+% normalize score to word length n+m
+% todo lemma, lexeme
+% https://en.wikipedia.org/wiki/Lemma_%28morphology%29
 
 % Computation
 % - stencil computation -> try to parallelize at finer granularity
 % - Calculate more words at the same time by filtering uninteresting weights
 %   directly (for this purpose generate histogram of weights distribution)
-
-% Domain Level
-% - fine-tune similarity matrix for language subtleties
-% - experiment with parameters: match/mismatch score, gap penalty p
-% - consider lexeme as those are more interesting
-% - multiple languages (!)
-% - offer online service to show neighbors of a word in a ego network
-%   (users can search for a word)
-
-% - more graph theory applications other than shortest path?
-
-
-% normalize score to word length n+m
-
-
-% todo lemma, lexeme
-% https://en.wikipedia.org/wiki/Lemma_%28morphology%29
