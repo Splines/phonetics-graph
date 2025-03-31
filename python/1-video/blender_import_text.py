@@ -16,6 +16,7 @@ path = os.path.dirname(os.path.abspath(filename))
 
 INPUT_FILE = os.path.join(path, "../../data/graph/nodes-first-random.csv")
 COLLECTION_NAME = "Texts"
+FONT_NAME = "Vermiglione Regular"
 
 
 def get_word_list() -> list[str]:
@@ -25,7 +26,7 @@ def get_word_list() -> list[str]:
         reader = csv.reader(file)
         for row in reader:
             words.extend(row)  # Assuming words are separated by commas
-            if len(words) >= 10:
+            if len(words) >= 200:
                 break
 
     # "word (pronunciation)" -> "word"
@@ -51,11 +52,15 @@ def main():
 
     texts_collection = ensure_collection(COLLECTION_NAME)
 
-    # Add each word as a text object
+    font = D.fonts.get(FONT_NAME)
+    if not font:
+        raise ValueError(f"Font '{FONT_NAME}' not found in Blender.")
+
     for i, word in enumerate(words):
-        text_data = bpy.data.curves.new(name=f"Text_{i}", type="FONT")
-        text_data.body = word.strip()  # Remove any extra whitespace
-        text_object = bpy.data.objects.new(name=f"Text_{i}", object_data=text_data)
+        text_data = D.curves.new(name=f"Word_{i}", type="FONT")
+        text_data.body = word.strip()
+        text_data.font = font
+        text_object = D.objects.new(name=f"Word_{i}", object_data=text_data)
         texts_collection.objects.link(text_object)
 
 
