@@ -26,7 +26,7 @@ def get_word_list() -> list[str]:
         reader = csv.reader(file)
         for row in reader:
             words.extend(row)  # Assuming words are separated by commas
-            if len(words) >= 200:
+            if len(words) >= 500:
                 break
 
     # "word (pronunciation)" -> "word"
@@ -62,6 +62,12 @@ def main():
         text_data.font = font
         text_object = D.objects.new(name=f"Word_{i}", object_data=text_data)
         texts_collection.objects.link(text_object)
+
+        # Convert text object to mesh
+        C.view_layer.objects.active = text_object
+        text_object.select_set(True)
+        bpy.ops.object.convert(target="MESH")
+        text_object.select_set(False)
 
 
 main()
