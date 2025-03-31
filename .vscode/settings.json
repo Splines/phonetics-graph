@@ -53,6 +53,12 @@
         "reportUndefinedVariable": "warning",
         "reportOptionalMemberAccess": "warning"
     },
+    "python.analysis.extraPaths": [
+        "venv/lib/python3.12/site-packages/"
+    ],
+    "python.autoComplete.extraPaths": [
+        "venv/lib/python3.12/site-packages/"
+    ],
     //////////////////////////////////////
     // Rust
     //////////////////////////////////////
