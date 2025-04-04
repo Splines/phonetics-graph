@@ -1,5 +1,6 @@
 use std::{
     cmp::Reverse,
+    fmt,
     fs::File,
     io::{self, Read, Seek, Write},
 };
@@ -11,20 +12,37 @@ struct EgoEdge {
     weight: i8, // but they are stored as u8 in the file
 }
 
+struct Word {
+    word: String,
+    phonetics: String,
+}
+
+impl fmt::Display for Word {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({})", self.word, self.phonetics)
+    }
+}
+
 static NODES_FILE: &str = "data/graph/nodes.csv";
 static EDGES_FILE: &str = "data/graph/final/edges.gpu.bin";
 
-fn read_node_labels() -> Vec<String> {
-    // csv file: id,label
+fn read_node_labels() -> Vec<Word> {
+    // csv file: id,label (phonetics)
     let file = File::open(NODES_FILE).expect("Failed to open nodes.csv");
-    let mut labels = Vec::new();
+    let mut words = Vec::new();
     let mut rdr = csv::Reader::from_reader(file);
     for result in rdr.records() {
         let record = result.expect("Failed to read record");
         let label = record.get(1).expect("Failed to get node label");
-        labels.push(label.to_string());
+        if let Some((word, phonetics)) = label.rsplit_once(" (") {
+            let phonetics = phonetics.trim_end_matches(')').to_string();
+            words.push(Word {
+                word: word.to_string(),
+                phonetics,
+            });
+        }
     }
-    labels
+    words
 }
 
 fn to_index(row: u64, col: u64) -> u64 {
@@ -33,7 +51,7 @@ fn to_index(row: u64, col: u64) -> u64 {
 
 fn main() {
     // Read node labels
-    let labels = read_node_labels();
+    let words = read_node_labels();
 
     // Prompt user for a word
     print!("Enter a word: ");
@@ -43,7 +61,7 @@ fn main() {
     let word = input.trim();
 
     // Find the node ID for the word
-    let node_id = match labels.iter().position(|label| label == word) {
+    let node_id = match words.iter().position(|w| w.word.eq_ignore_ascii_case(word)) {
         Some(id) => id as u32,
         None => {
             eprintln!("Word not found in the graph.");
@@ -89,16 +107,16 @@ fn main() {
         });
     }
 
-    // Sort edges by weight and select the top 100
+    // Sort edges by weight and select the best
     edges.sort_by_key(|edge| Reverse(edge.weight));
-    let top_edges = &edges[..edges.len().min(100)];
+    let top_edges = &edges[..edges.len().min(20)];
+    let user_word = &words[node_id as usize];
 
-    // Print the top 100 edges
-    println!("Top 100 edges for word '{}':", word);
+    println!("#Top edges for word \"{}\":", user_word);
     for edge in top_edges {
         println!(
-            "{} -> {} (weight: {})",
-            labels[node_id as usize], labels[edge.other_node as usize], edge.weight
+            "-> {} (weight: {})",
+            words[edge.other_node as usize], edge.weight
         );
     }
 }
