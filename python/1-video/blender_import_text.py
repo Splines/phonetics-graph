@@ -67,8 +67,6 @@ def main():
         C.view_layer.objects.active = text_object
         text_object.select_set(True)
         bpy.ops.object.convert(target="MESH")
-        bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS", center="BOUNDS")
-
         text_object.select_set(False)
 
 
