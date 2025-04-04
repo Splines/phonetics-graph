@@ -7,6 +7,7 @@ use std::{
 
 const NUM_NODES: u32 = 100_000;
 
+#[derive(Clone)]
 struct EgoEdge {
     other_node: u32,
     weight: i8, // but they are stored as u8 in the file
@@ -107,13 +108,18 @@ fn main() {
         });
     }
 
-    // Sort edges by weight and select the best
+    // Sort edges by weight and select some
     edges.sort_by_key(|edge| Reverse(edge.weight));
-    let top_edges = &edges[..edges.len().min(20)];
+    let filtered_edges: Vec<EgoEdge> = edges
+        .iter()
+        .filter(|edge| words[edge.other_node as usize].word.len() <= 13)
+        .cloned()
+        .collect();
+    let best_edges = &filtered_edges[..filtered_edges.len().min(1000)];
     let user_word = &words[node_id as usize];
 
     println!("#Top edges for word \"{}\":", user_word);
-    for edge in top_edges {
+    for edge in best_edges {
         println!(
             "-> {} (weight: {})",
             words[edge.other_node as usize], edge.weight
