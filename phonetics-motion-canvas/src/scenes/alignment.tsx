@@ -5,6 +5,7 @@ import {
   useScene,
   all,
 } from "@motion-canvas/core";
+import { deepCloneMap } from "../utils";
 
 const phoneticFamily = "Charis";
 
@@ -201,6 +202,10 @@ class AlignState {
     const generators = [];
 
     const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
+      // console.log("before");
+      // for (const [key, textObj] of textRefsMap) {
+      //   console.log(`Key: ${key}, Text: ${textObj.text()}`);
+      // }
       const newTextRefsMap = new Map(textRefsMap);
 
       const map = this.mapToNewAlignment(oldWord, newWord);
@@ -211,19 +216,20 @@ class AlignState {
         if (map.has(i)) {
           // shift to new position
           const newIndex = map.get(i);
+          // console.log(`shift ${i} to ${newIndex}`);
           newTextRefsMap.set(newIndex, current);
           const newPos = this.calcPosition(newIndex);
           generators.push(current.position.x(newPos, duration));
         } else {
           // remove old gaps
           generators.push(current.opacity(0, 0.8 * duration).do(() => current.remove()));
-          newTextRefsMap.delete(i);
         }
       }
 
       // show new gaps
       for (let i = 0; i < newWord.length; i++) {
         if (newWord[i] === "–") {
+          // console.log(`create new gap at ${i}`);
           const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
           newTextRefsMap.set(i, charTxt);
           this.container().add(charTxt);
@@ -241,6 +247,10 @@ class AlignState {
       this.textReferenceUpMap, -this.SHIFT);
     alignmentAnim(this.alignment.word2, newAlignment.word2,
       this.textReferenceDownMap, 0.7 * this.SHIFT);
+    // console.log("after");
+    // for (const [key, textObj] of this.textReferenceDownMap) {
+    //   console.log(`Key: ${key}, Text: ${textObj.text()}`);
+    // }
 
     this.alignment = newAlignment;
     yield* all(...generators);
@@ -307,15 +317,18 @@ export default makeScene2D(function* (view) {
   // yield* waitFor(0.5);
   // yield* alignState.animateToState("::::------", 1.2);
   // yield* waitFor(0.5);
+  // yield* alignState.animateToState("...--.", 1.2);
+  // yield* waitFor(0.5);
 
   let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
-  console.log(alignmentStrings);
+  // console.log(alignmentStrings);
 
   // limit to first 100
-  alignmentStrings = alignmentStrings.slice(0, 10);
+  alignmentStrings = alignmentStrings.slice(0, 200);
 
   for (const alignmentString of alignmentStrings) {
-    yield* waitFor(0.5);
-    yield* alignState.animateToState(alignmentString, 0.6);
+    // console.log(alignmentString);
+    yield* waitFor(0.05);
+    yield* alignState.animateToState(alignmentString, 0.1);
   }
 });
