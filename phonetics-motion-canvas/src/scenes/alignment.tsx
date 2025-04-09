@@ -50,11 +50,6 @@ class AlignState {
    */
   private alignment: Alignment[];
 
-  /**
-   * Stores references to the text elements created in `generateElements`.
-   */
-  private textReferences: { [index: number]: { up: Txt; down: Txt } } = {};
-
   private textReferenceUpMap: Map<number, Txt> = new Map();
   private textReferenceDownMap: Map<number, Txt> = new Map();
 
@@ -163,7 +158,6 @@ class AlignState {
         1,
       );
 
-      this.textReferences[i] = { up: charUpTxt, down: charDownTxt };
       this.textReferenceUpMap.set(i, charUpTxt);
       this.textReferenceDownMap.set(i, charDownTxt);
       elements.push(charUpTxt, charDownTxt);
