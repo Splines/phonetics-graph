@@ -314,16 +314,22 @@ export default makeScene2D(function* (view) {
   // yield* alignState.animateToState("...--.", 1.2);
   // yield* waitFor(0.5);
 
+  yield* waitFor(0.5);
+
   let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
 
-  // limit to first 100
-  alignmentStrings = alignmentStrings.slice(0, 100);
+  const riseAround = alignmentStrings.length * 0.999;
+  const c = 0.13;
 
-  for (const alignmentString of alignmentStrings) {
-    // console.log(alignmentString);
-    yield* waitFor(0.05);
-    yield* alignState.animateToState(alignmentString, 0.1);
+  for (let i = 0; i < alignmentStrings.length; i++) {
+    const fall = Math.exp(-0.04 * i);
+    const exp = Math.exp(c * (i - riseAround));
+    const rise = exp / (1 + exp);
+    const stretch = Math.max(fall + rise, 0.007);
+
+    yield* waitFor(0.3 * stretch);
+    yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
   }
 
-  yield* waitFor(2);
+  yield* waitFor(1);
 });
