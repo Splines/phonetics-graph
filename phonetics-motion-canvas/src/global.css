@@ -1,0 +1,27 @@
+@font-face {
+    font-family: "Vermiglione";
+    src: url("/public/fonts/Vermiglione-Medium.otf");
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Vermiglione";
+    src: url("/public/fonts/Vermiglione-SemiBold.otf");
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Vermiglione";
+    src: url("/public/fonts/Vermiglione-Bold.otf");
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Charis";
+    src: url("/public/fonts/Charis.ttf");
+    font-weight: 400;
+    font-style: normal;
+}
