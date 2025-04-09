@@ -7,6 +7,7 @@ import {
   waitFor,
   useScene,
   tween,
+  all,
 } from "@motion-canvas/core";
 
 const phoneticFamily = "Charis";
@@ -31,6 +32,16 @@ class AlignState {
    * The vertical shift applied to the text elements for alignment.
    */
   private SHIFT = 70;
+
+  /**
+   * The total width of the text elements in the alignment.
+   */
+  private WIDTH_TOTAL = 100;
+
+  /**
+   * The position of the leftmost text element in the alignment.
+   */
+  private START_X = 0;
 
   /**
    * Stores the current alignment state for animation.
@@ -58,6 +69,9 @@ class AlignState {
     this.word1 = Array.from(segmenter.segment(word1), segment => segment.segment);
     this.word2 = Array.from(segmenter.segment(word2), segment => segment.segment);
     this.alignment = this.calculateAlignment(alignmentString);
+
+    const totalWidth = (this.alignment.word1.length - 1) * this.WIDTH_TOTAL;
+    this.START_X = -totalWidth / 2;
   }
 
   /**
@@ -92,13 +106,13 @@ class AlignState {
     return alignment;
   }
 
+  calcPosition(index: number): number {
+    return this.START_X + index * this.WIDTH_TOTAL;
+  }
+
   generateElements() {
     const elements = [];
     const textFill = useScene().variables.get("textFill");
-    const widthTotal = 100;
-
-    const totalWidth = (this.alignment.word1.length - 1) * widthTotal;
-    const startX = -totalWidth / 2;
 
     for (let i = 0; i < this.alignment.word1.length; i++) {
       const charUpTxt = (
@@ -106,7 +120,7 @@ class AlignState {
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={startX + i * widthTotal}
+          x={this.calcPosition(i)}
           y={-this.SHIFT}
         >
           {this.alignment.word1[i]}
@@ -118,7 +132,7 @@ class AlignState {
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={startX + i * widthTotal}
+          x={this.calcPosition(i)}
           y={0.7 * this.SHIFT}
         >
           {this.alignment.word2[i]}
@@ -139,18 +153,71 @@ class AlignState {
    * - Gaps appear/disappear as needed (via `spawn`).
    */
   * animateToState(newAlignmentString: string, duration: number): ThreadGenerator {
-    // const newAlignment = this.calculateAlignment(newAlignmentString);
+    const newAlignment = this.calculateAlignment(newAlignmentString);
+    const generators = [];
 
-    // for (const { index, _char1, _char2 } of newAlignment) {
-    //   const current = this.textReferences[index];
+    /**
+     * Finds a mapping between the indices of chars such that the distance
+     * between each mapping is minimized.
+     */
+    function mapToNewAlignment(oldWord, newWord) {
+      const map = new Map();
 
-    //   if (current) {
-    //     yield* current.char1.position.x(index * 100, duration);
-    //     yield* current.char2.position.x(index * 100, duration);
-    //   }
-    // }
+      let oldIndex = 0;
+      let newIndex = 0;
 
-    // this.alignment = newAlignment;
+      while (oldIndex < oldWord.length && newIndex < newWord.length) {
+        const oldChar = oldWord[oldIndex];
+        const newChar = newWord[newIndex];
+
+        if (oldChar === newChar) {
+          if (oldChar === "–" || newChar === "–") {
+            // to account for "-" at the end
+            break;
+          }
+          map.set(oldIndex, newIndex);
+          oldIndex++;
+          newIndex++;
+        } else {
+          if (newChar === "–") {
+            newIndex++;
+          }
+          if (oldChar === "–") {
+            oldIndex++;
+          }
+        }
+      }
+
+      return map;
+    }
+
+    const mapUp = mapToNewAlignment(this.alignment.word1, newAlignment.word1);
+    const mapDown = mapToNewAlignment(this.alignment.word2, newAlignment.word2);
+
+    // iterate over every char from left to right
+    for (let i = 0; i < this.alignment.word1.length; i++) {
+      const current = this.textReferences[i];
+
+      if (current) {
+        if (mapUp.has(i)) {
+          const newPosUp = this.calcPosition(mapUp.get(i));
+          generators.push(current.up.position.x(newPosUp, duration));
+        } else {
+          generators.push(current.up.opacity(0, duration).do(() => current.up.remove()));
+        }
+
+        if (mapDown.has(i)) {
+          const newPosDown = this.calcPosition(mapDown.get(i));
+          generators.push(current.down.position.x(newPosDown, duration));
+        } else {
+          generators.push(current.down.opacity(0, duration).do(() => current.down.remove()));
+        }
+      }
+    }
+
+    this.alignment = newAlignment;
+
+    yield* all(...generators);
   }
 }
 
@@ -165,5 +232,6 @@ export default makeScene2D(function* (view) {
     </Rect>,
   );
 
-  // yield* alignState.animateToState("....--", 1);
+  yield* waitFor(0.5);
+  yield* alignState.animateToState("....--", 1);
 });
