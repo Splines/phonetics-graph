@@ -43,7 +43,7 @@ class AlignState {
   /**
    * The position of the leftmost text element in the alignment.
    */
-  private START_X = 0;
+  private startX = 0;
 
   /**
    * Stores the current alignment state for animation.
@@ -54,6 +54,9 @@ class AlignState {
    * Stores references to the text elements created in `generateElements`.
    */
   private textReferences: { [index: number]: { up: Txt; down: Txt } } = {};
+
+  private textReferenceUpMap: Map<number, Txt> = new Map();
+  private textReferenceDownMap: Map<number, Txt> = new Map();
 
   /**
    * Constructs an instance of `AlignState`.
@@ -73,9 +76,6 @@ class AlignState {
     this.word1 = Array.from(segmenter.segment(word1), segment => segment.segment);
     this.word2 = Array.from(segmenter.segment(word2), segment => segment.segment);
     this.alignment = this.calculateAlignment(alignmentString);
-
-    const totalWidth = (this.alignment.word1.length - 1) * this.WIDTH_TOTAL;
-    this.START_X = -totalWidth / 2;
   }
 
   /**
@@ -107,11 +107,20 @@ class AlignState {
       throw new Error("Alignment lengths do not match");
     }
 
+    const totalWidth = (alignment.word1.length - 1) * this.WIDTH_TOTAL;
+    this.startX = -totalWidth / 2;
+
     return alignment;
   }
 
+  /**
+   * Calculates the x position of a character based on its index.
+   *
+   * You should call calculateAlignment first as its recomputes
+   * the startX value.
+   */
   calcPosition(index: number): number {
-    return this.START_X + index * this.WIDTH_TOTAL;
+    return this.startX + index * this.WIDTH_TOTAL;
   }
 
   /**
@@ -155,10 +164,48 @@ class AlignState {
       );
 
       this.textReferences[i] = { up: charUpTxt, down: charDownTxt };
+      this.textReferenceUpMap.set(i, charUpTxt);
+      this.textReferenceDownMap.set(i, charDownTxt);
       elements.push(charUpTxt, charDownTxt);
     }
 
     return elements;
+  }
+
+  /**
+   * Finds a mapping between the indices of chars such that the distance
+   * between each mapping is minimized.
+   */
+  mapToNewAlignment(oldWord, newWord) {
+    // console.log(`oldWord: ${oldWord}, newWord: ${newWord}`);
+    const map = new Map();
+
+    let oldIndex = 0;
+    let newIndex = 0;
+
+    while (oldIndex < oldWord.length && newIndex < newWord.length) {
+      // console.log(`oldIndex: ${oldIndex}, newIndex: ${newIndex}`);
+      const oldChar = oldWord[oldIndex];
+      const newChar = newWord[newIndex];
+
+      if (oldChar === newChar) {
+        if (oldChar !== "–" && newChar !== "–") {
+          // console.log(`Mapping ${oldIndex} -> ${newIndex}`);
+          map.set(oldIndex, newIndex);
+        }
+        oldIndex++;
+        newIndex++;
+      } else {
+        if (newChar === "–") {
+          newIndex++;
+        }
+        if (oldChar === "–") {
+          oldIndex++;
+        }
+      }
+    }
+
+    return map;
   }
 
   /**
@@ -171,70 +218,42 @@ class AlignState {
     const newAlignment = this.calculateAlignment(newAlignmentString);
     const generators = [];
 
-    /**
-     * Finds a mapping between the indices of chars such that the distance
-     * between each mapping is minimized.
-     */
-    function mapToNewAlignment(oldWord, newWord) {
-      const map = new Map();
-
-      let oldIndex = 0;
-      let newIndex = 0;
-
-      while (oldIndex < oldWord.length && newIndex < newWord.length) {
-        const oldChar = oldWord[oldIndex];
-        const newChar = newWord[newIndex];
-
-        if (oldChar === newChar) {
-          if (oldChar === "–" || newChar === "–") {
-            // to account for "-" at the end
-            break;
-          }
-          map.set(oldIndex, newIndex);
-          oldIndex++;
-          newIndex++;
-        } else {
-          if (newChar === "–") {
-            newIndex++;
-          }
-          if (oldChar === "–") {
-            oldIndex++;
-          }
-        }
-      }
-
-      return map;
-    }
-
-    const mapAlignment = (oldWord, newWord, textRefs, yShift) => {
-      const map = mapToNewAlignment(oldWord, newWord);
+    const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
+      const map = this.mapToNewAlignment(oldWord, newWord);
 
       for (let i = 0; i < oldWord.length; i++) {
-        const current = textRefs[i];
+        const current = textRefsMap.get(i);
 
         if (map.has(i)) {
-          const newPos = this.calcPosition(map.get(i));
+          // shift to new position
+          const newIndex = map.get(i);
+          textRefsMap.set(newIndex, textRefsMap.get(i));
+          const newPos = this.calcPosition(newIndex);
           generators.push(current.position.x(newPos, duration));
         } else {
-          generators.push(current.opacity(0, duration).do(() => current.remove()));
+          // remove old gaps
+          generators.push(current.opacity(0, 0.8 * duration).do(() => current.remove()));
+          textRefsMap.delete(i);
         }
       }
 
+      // show new gaps
       for (let i = 0; i < newWord.length; i++) {
         if (newWord[i] === "–") {
           const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
+          textRefsMap.set(i, charTxt);
           this.container().add(charTxt);
-          generators.push(charTxt.opacity(1, duration));
+          generators.push(charTxt.opacity(1, 0.8 * duration));
         }
       }
     };
 
-    mapAlignment(
+    alignmentAnim(
       this.alignment.word1, newAlignment.word1,
-      Object.values(this.textReferences).map(ref => ref.up), -this.SHIFT);
-    mapAlignment(
+      this.textReferenceUpMap, -this.SHIFT);
+    alignmentAnim(
       this.alignment.word2, newAlignment.word2,
-      Object.values(this.textReferences).map(ref => ref.down), 0.7 * this.SHIFT);
+      this.textReferenceDownMap, 0.7 * this.SHIFT);
 
     this.alignment = newAlignment;
     yield* all(...generators);
@@ -254,5 +273,8 @@ export default makeScene2D(function* (view) {
   );
 
   yield* waitFor(0.5);
-  yield* alignState.animateToState("....--", 1);
+  yield* alignState.animateToState("..-.:--", 1.2);
+  yield* waitFor(0.5);
+  yield* alignState.animateToState("....--", 1.2);
+  yield* waitFor(0.5);
 });
