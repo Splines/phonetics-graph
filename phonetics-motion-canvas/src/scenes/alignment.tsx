@@ -198,7 +198,6 @@ class AlignState {
    */
   * animateToState(newAlignmentString: string, duration: number): ThreadGenerator {
     const newAlignment = this.calculateAlignment(newAlignmentString);
-    console.log(`New alignment length: ${newAlignment.word1.length}`);
     const generators = [];
 
     const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
@@ -212,7 +211,6 @@ class AlignState {
         if (map.has(i)) {
           // shift to new position
           const newIndex = map.get(i);
-          console.log(`Shift ${i} to ${newIndex}`);
           newTextRefsMap.set(newIndex, current);
           const newPos = this.calcPosition(newIndex);
           generators.push(current.position.x(newPos, duration));
@@ -262,13 +260,31 @@ class AlignState {
  * - num(".") + num(":") = word2Length
  *
  * In an extreme case, we can have a string like
- * ----:::::: (word1Length = 4, word2Length = 6)
+ * ::::------ (word1Length = 6, word2Length = 4)
  */
 function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: number): string[] {
   const results: string[] = [];
 
-  // TODO
+  function backtrack(current: string, dots: number, dashes: number, colons: number) {
+    if (dots + dashes === word1Length && dots + colons === word2Length) {
+      results.push(current);
+      return;
+    }
 
+    if (dots < Math.min(word1Length, word2Length)) {
+      backtrack(current + ".", dots + 1, dashes, colons);
+    }
+
+    if (dashes < word1Length) {
+      backtrack(current + "-", dots, dashes + 1, colons);
+    }
+
+    if (colons < word2Length) {
+      backtrack(current + ":", dots, dashes, colons + 1);
+    }
+  }
+
+  backtrack("", 0, 0, 0);
   return results;
 }
 
@@ -292,14 +308,14 @@ export default makeScene2D(function* (view) {
   // yield* alignState.animateToState("::::------", 1.2);
   // yield* waitFor(0.5);
 
-  // const alignmentStrings = generateAllPossibleAlignmentStrings(4, 6);
-  // console.log(alignmentStrings);
+  let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
+  console.log(alignmentStrings);
 
-  // let i = 0;
-  // for (const alignmentString of alignmentStrings) {
-  //   console.log(i);
-  //   yield* waitFor(0.5);
-  //   yield* alignState.animateToState(alignmentString, 1.2);
-  //   i++;
-  // }
+  // limit to first 100
+  alignmentStrings = alignmentStrings.slice(0, 10);
+
+  for (const alignmentString of alignmentStrings) {
+    yield* waitFor(0.5);
+    yield* alignState.animateToState(alignmentString, 0.6);
+  }
 });
