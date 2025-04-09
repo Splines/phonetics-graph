@@ -23,6 +23,8 @@ class Alignment {
  * segmentation to handle multi-character graphemes correctly.
  */
 class AlignState {
+  private container: Rect;
+
   /**
    * The size of the font used for rendering text elements.
    */
@@ -64,7 +66,9 @@ class AlignState {
    *                    - `":"`: gap in the first word.
    *                    - `"."`: match between characters in both words.
    */
-  constructor(word1: string, word2: string, alignmentString: string) {
+  constructor(container, word1: string, word2: string, alignmentString: string) {
+    this.container = container;
+
     const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
     this.word1 = Array.from(segmenter.segment(word1), segment => segment.segment);
     this.word2 = Array.from(segmenter.segment(word2), segment => segment.segment);
@@ -215,6 +219,48 @@ class AlignState {
       }
     }
 
+    // wherever words now have a gap, add a new gap
+    for (let i = 0; i < newAlignment.word1.length; i++) {
+      const upChar = newAlignment.word1[i];
+      const downChar = newAlignment.word2[i];
+
+      if (upChar === "–") {
+        const charUpTxt = (
+          <Txt
+            fontFamily={phoneticFamily}
+            fontSize={this.SIZE}
+            fill={useScene().variables.get("textFill")}
+            opacity={0}
+            x={this.calcPosition(i)}
+            y={-this.SHIFT}
+          >
+            {newAlignment.word1[i]}
+          </Txt>
+        );
+
+        this.container().add(charUpTxt);
+        generators.push(charUpTxt.opacity(1, duration));
+      }
+
+      if (downChar === "–") {
+        const charUpTxt = (
+          <Txt
+            fontFamily={phoneticFamily}
+            fontSize={this.SIZE}
+            fill={useScene().variables.get("textFill")}
+            opacity={0}
+            x={this.calcPosition(i)}
+            y={0.7 * this.SHIFT}
+          >
+            {newAlignment.word2[i]}
+          </Txt>
+        );
+
+        this.container().add(charUpTxt);
+        generators.push(charUpTxt.opacity(1, duration));
+      }
+    }
+
     this.alignment = newAlignment;
 
     yield* all(...generators);
@@ -224,10 +270,11 @@ class AlignState {
 export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill");
 
-  const alignState = new AlignState("pɥisɑ̃s", "nɥɑ̃s", "-.-.:.-");
+  const container = createRef<Rect>();
+  const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "-.-.:.-");
 
   view.add(
-    <Rect>
+    <Rect ref={container}>
       {alignState.generateElements()}
     </Rect>,
   );
