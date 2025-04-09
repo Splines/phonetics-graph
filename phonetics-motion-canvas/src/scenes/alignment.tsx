@@ -202,10 +202,6 @@ class AlignState {
     const generators = [];
 
     const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
-      // console.log("before");
-      // for (const [key, textObj] of textRefsMap) {
-      //   console.log(`Key: ${key}, Text: ${textObj.text()}`);
-      // }
       const newTextRefsMap = new Map(textRefsMap);
 
       const map = this.mapToNewAlignment(oldWord, newWord);
@@ -216,7 +212,6 @@ class AlignState {
         if (map.has(i)) {
           // shift to new position
           const newIndex = map.get(i);
-          // console.log(`shift ${i} to ${newIndex}`);
           newTextRefsMap.set(newIndex, current);
           const newPos = this.calcPosition(newIndex);
           generators.push(current.position.x(newPos, duration));
@@ -229,7 +224,6 @@ class AlignState {
       // show new gaps
       for (let i = 0; i < newWord.length; i++) {
         if (newWord[i] === "–") {
-          // console.log(`create new gap at ${i}`);
           const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
           newTextRefsMap.set(i, charTxt);
           this.container().add(charTxt);
@@ -247,10 +241,6 @@ class AlignState {
       this.textReferenceUpMap, -this.SHIFT);
     alignmentAnim(this.alignment.word2, newAlignment.word2,
       this.textReferenceDownMap, 0.7 * this.SHIFT);
-    // console.log("after");
-    // for (const [key, textObj] of this.textReferenceDownMap) {
-    //   console.log(`Key: ${key}, Text: ${textObj.text()}`);
-    // }
 
     this.alignment = newAlignment;
     yield* all(...generators);
@@ -324,7 +314,7 @@ export default makeScene2D(function* (view) {
   // console.log(alignmentStrings);
 
   // limit to first 100
-  alignmentStrings = alignmentStrings.slice(0, 200);
+  alignmentStrings = alignmentStrings.slice(0, 100);
 
   for (const alignmentString of alignmentStrings) {
     // console.log(alignmentString);
