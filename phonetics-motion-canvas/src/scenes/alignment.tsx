@@ -1,12 +1,8 @@
 import { makeScene2D, Txt, Rect } from "@motion-canvas/2d";
 import {
-  createEffect,
   createRef,
-  createSignal,
-  spawn,
   waitFor,
   useScene,
-  tween,
   all,
 } from "@motion-canvas/core";
 
@@ -23,8 +19,6 @@ class Alignment {
  * segmentation to handle multi-character graphemes correctly.
  */
 class AlignState {
-  private container: Rect;
-
   /**
    * The size of the font used for rendering text elements.
    */
@@ -45,11 +39,8 @@ class AlignState {
    */
   private startX = 0;
 
-  /**
-   * Stores the current alignment state for animation.
-   */
+  private container: Rect;
   private alignment: Alignment[];
-
   private textReferenceUpMap: Map<number, Txt> = new Map();
   private textReferenceDownMap: Map<number, Txt> = new Map();
 
@@ -171,20 +162,17 @@ class AlignState {
    * between each mapping is minimized.
    */
   mapToNewAlignment(oldWord, newWord) {
-    // console.log(`oldWord: ${oldWord}, newWord: ${newWord}`);
     const map = new Map();
 
     let oldIndex = 0;
     let newIndex = 0;
 
     while (oldIndex < oldWord.length && newIndex < newWord.length) {
-      // console.log(`oldIndex: ${oldIndex}, newIndex: ${newIndex}`);
       const oldChar = oldWord[oldIndex];
       const newChar = newWord[newIndex];
 
       if (oldChar === newChar) {
         if (oldChar !== "–" && newChar !== "–") {
-          // console.log(`Mapping ${oldIndex} -> ${newIndex}`);
           map.set(oldIndex, newIndex);
         }
         oldIndex++;
@@ -242,11 +230,9 @@ class AlignState {
       }
     };
 
-    alignmentAnim(
-      this.alignment.word1, newAlignment.word1,
+    alignmentAnim(this.alignment.word1, newAlignment.word1,
       this.textReferenceUpMap, -this.SHIFT);
-    alignmentAnim(
-      this.alignment.word2, newAlignment.word2,
+    alignmentAnim(this.alignment.word2, newAlignment.word2,
       this.textReferenceDownMap, 0.7 * this.SHIFT);
 
     this.alignment = newAlignment;
