@@ -12,7 +12,7 @@ class AlignState {
   /**
    * The size of the font used for rendering text elements.
    */
-  private SIZE = 80;
+  private SIZE = 90;
 
   /**
    * The vertical shift applied to the text elements for alignment.
@@ -75,6 +75,10 @@ class AlignState {
     const elements = [];
     const textFill = useScene().variables.get("textFill");
     const alignmentData = this.calculateAlignment();
+    const widthTotal = 100;
+
+    const totalWidth = (alignmentData.length - 1) * widthTotal;
+    const startX = -totalWidth / 2;
 
     for (const { char1, char2, index } of alignmentData) {
       elements.push(
@@ -82,19 +86,20 @@ class AlignState {
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={-200 + index * 100}
+          x={startX + index * widthTotal}
           y={-this.SHIFT}
         >
           {char1}
         </Txt>,
       );
+
       elements.push(
         <Txt
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={-200 + index * 100}
-          y={this.SHIFT}
+          x={startX + index * widthTotal}
+          y={0.85 * this.SHIFT}
         >
           {char2}
         </Txt>,
