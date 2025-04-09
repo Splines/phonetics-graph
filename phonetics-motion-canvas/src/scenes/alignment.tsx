@@ -11,6 +11,11 @@ import {
 
 const phoneticFamily = "Charis";
 
+class Alignment {
+  word1: string[] = [];
+  word2: string[] = [];
+}
+
 /**
  * The `AlignState` class is responsible for managing the alignment of two words
  * and generating corresponding visual elements for rendering. It uses grapheme
@@ -28,90 +33,100 @@ class AlignState {
   private SHIFT = 70;
 
   /**
+   * Stores the current alignment state for animation.
+   */
+  private alignment: Alignment[];
+
+  /**
+   * Stores references to the text elements created in `generateElements`.
+   */
+  private textReferences: { [index: number]: { up: Txt; down: Txt } } = {};
+
+  /**
    * Constructs an instance of `AlignState`.
    *
-   * @param word1 - The first word to be aligned.
-   * @param word2 - The second word to be aligned.
+   * @param word1 - The first word to be aligned (up).
+   * @param word2 - The second word to be aligned (down).
    * @param alignment - A string representing the alignment pattern.
    *                    It can contain the following characters:
    *                    - `"-"`: gap in the second word.
    *                    - `":"`: gap in the first word.
    *                    - `"."`: match between characters in both words.
-   *
-   * @throws Throws an error if an invalid alignment character is encountered.
    */
-  constructor(word1: string, word2: string, alignment: string) {
+  constructor(word1: string, word2: string, alignmentString: string) {
     const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
     this.word1 = Array.from(segmenter.segment(word1), segment => segment.segment);
     this.word2 = Array.from(segmenter.segment(word2), segment => segment.segment);
-    this.alignment = alignment;
+    this.alignment = this.calculateAlignment(alignmentString);
   }
 
   /**
    * Calculates the alignment between the two words
    * based on the alignment string.
-   *
-   * @returns An array of alignment objects, where each object contains:
-   *          - `char1`: The character from the first word or `"-"` for a gap.
-   *          - `char2`: The character from the second word or `"-"` for a gap.
-   *          - `index`: The index of the alignment in the alignment string.
-   *
-   * @throws Throws an error if an invalid alignment character is encountered.
    */
-  calculateAlignment() {
-    const result = [];
+  calculateAlignment(alignmentString: string): Alignment[] {
+    const alignment = new Alignment();
     let i = 0, j = 0;
 
-    for (let k = 0; k < this.alignment.length; k++) {
-      const alignChar = this.alignment[k];
+    for (let k = 0; k < alignmentString.length; k++) {
+      const alignChar = alignmentString[k];
 
       if (alignChar === "-") {
-        result.push({ char1: this.word1[i++], char2: "–", index: k });
+        alignment.word1.push(this.word1[i++]);
+        alignment.word2.push("–");
       } else if (alignChar === ":") {
-        result.push({ char1: "–", char2: this.word2[j++], index: k });
+        alignment.word1.push("–");
+        alignment.word2.push(this.word2[j++]);
       } else if (alignChar === ".") {
-        result.push({ char1: this.word1[i++], char2: this.word2[j++], index: k });
+        alignment.word1.push(this.word1[i++]);
+        alignment.word2.push(this.word2[j++]);
       } else {
         throw new Error(`Invalid alignment character: ${alignChar}`);
       }
     }
 
-    return result;
+    if (alignment.word1.length !== alignment.word2.length) {
+      throw new Error("Alignment lengths do not match");
+    }
+
+    return alignment;
   }
 
   generateElements() {
     const elements = [];
     const textFill = useScene().variables.get("textFill");
-    const alignmentData = this.calculateAlignment();
     const widthTotal = 100;
 
-    const totalWidth = (alignmentData.length - 1) * widthTotal;
+    const totalWidth = (this.alignment.word1.length - 1) * widthTotal;
     const startX = -totalWidth / 2;
 
-    for (const { char1, char2, index } of alignmentData) {
-      elements.push(
+    for (let i = 0; i < this.alignment.word1.length; i++) {
+      const charUpTxt = (
         <Txt
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={startX + index * widthTotal}
+          x={startX + i * widthTotal}
           y={-this.SHIFT}
         >
-          {char1}
-        </Txt>,
+          {this.alignment.word1[i]}
+        </Txt>
       );
 
-      elements.push(
+      const charDownTxt = (
         <Txt
           fontFamily={phoneticFamily}
           fontSize={this.SIZE}
           fill={textFill}
-          x={startX + index * widthTotal}
-          y={0.85 * this.SHIFT}
+          x={startX + i * widthTotal}
+          y={0.7 * this.SHIFT}
         >
-          {char2}
-        </Txt>,
+          {this.alignment.word2[i]}
+        </Txt>
       );
+
+      this.textReferences[i] = { up: charUpTxt, down: charDownTxt };
+      elements.push(charUpTxt, charDownTxt);
     }
 
     return elements;
@@ -123,8 +138,19 @@ class AlignState {
    * - Letters will be shifted to the new position (via `tween`).
    * - Gaps appear/disappear as needed (via `spawn`).
    */
-  * animateToState(state: string, duration: number): ThreadGenerator {
-    yield* waitFor(1);
+  * animateToState(newAlignmentString: string, duration: number): ThreadGenerator {
+    // const newAlignment = this.calculateAlignment(newAlignmentString);
+
+    // for (const { index, _char1, _char2 } of newAlignment) {
+    //   const current = this.textReferences[index];
+
+    //   if (current) {
+    //     yield* current.char1.position.x(index * 100, duration);
+    //     yield* current.char2.position.x(index * 100, duration);
+    //   }
+    // }
+
+    // this.alignment = newAlignment;
   }
 }
 
@@ -139,5 +165,5 @@ export default makeScene2D(function* (view) {
     </Rect>,
   );
 
-  yield* alignState.animateToState("....--");
+  // yield* alignState.animateToState("....--", 1);
 });
