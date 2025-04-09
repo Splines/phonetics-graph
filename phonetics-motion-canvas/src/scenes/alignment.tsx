@@ -114,33 +114,44 @@ class AlignState {
     return this.START_X + index * this.WIDTH_TOTAL;
   }
 
+  /**
+   * Creates a text element for a given character.
+   * @param char - The character to display.
+   * @param position - The x position of the character.
+   * @param yShift - The vertical shift for the character.
+   * @param opacity - The initial opacity of the character.
+   */
+  private createTextElement(char: string, position: number, yShift: number, opacity: number): Txt {
+    return (
+      <Txt
+        fontFamily={phoneticFamily}
+        fontSize={this.SIZE}
+        fill={useScene().variables.get("textFill")}
+        opacity={opacity}
+        x={position}
+        y={yShift}
+      >
+        {char}
+      </Txt>
+    );
+  }
+
   generateElements() {
     const elements = [];
-    const textFill = useScene().variables.get("textFill");
 
     for (let i = 0; i < this.alignment.word1.length; i++) {
-      const charUpTxt = (
-        <Txt
-          fontFamily={phoneticFamily}
-          fontSize={this.SIZE}
-          fill={textFill}
-          x={this.calcPosition(i)}
-          y={-this.SHIFT}
-        >
-          {this.alignment.word1[i]}
-        </Txt>
+      const charUpTxt = this.createTextElement(
+        this.alignment.word1[i],
+        this.calcPosition(i),
+        -this.SHIFT,
+        1,
       );
 
-      const charDownTxt = (
-        <Txt
-          fontFamily={phoneticFamily}
-          fontSize={this.SIZE}
-          fill={textFill}
-          x={this.calcPosition(i)}
-          y={0.7 * this.SHIFT}
-        >
-          {this.alignment.word2[i]}
-        </Txt>
+      const charDownTxt = this.createTextElement(
+        this.alignment.word2[i],
+        this.calcPosition(i),
+        0.7 * this.SHIFT,
+        1,
       );
 
       this.textReferences[i] = { up: charUpTxt, down: charDownTxt };
@@ -195,74 +206,37 @@ class AlignState {
       return map;
     }
 
-    const mapUp = mapToNewAlignment(this.alignment.word1, newAlignment.word1);
-    const mapDown = mapToNewAlignment(this.alignment.word2, newAlignment.word2);
+    const mapAlignment = (oldWord, newWord, textRefs, yShift) => {
+      const map = mapToNewAlignment(oldWord, newWord);
 
-    // iterate over every char from left to right
-    for (let i = 0; i < this.alignment.word1.length; i++) {
-      const current = this.textReferences[i];
+      for (let i = 0; i < oldWord.length; i++) {
+        const current = textRefs[i];
 
-      if (current) {
-        if (mapUp.has(i)) {
-          const newPosUp = this.calcPosition(mapUp.get(i));
-          generators.push(current.up.position.x(newPosUp, duration));
+        if (map.has(i)) {
+          const newPos = this.calcPosition(map.get(i));
+          generators.push(current.position.x(newPos, duration));
         } else {
-          generators.push(current.up.opacity(0, duration).do(() => current.up.remove()));
-        }
-
-        if (mapDown.has(i)) {
-          const newPosDown = this.calcPosition(mapDown.get(i));
-          generators.push(current.down.position.x(newPosDown, duration));
-        } else {
-          generators.push(current.down.opacity(0, duration).do(() => current.down.remove()));
+          generators.push(current.opacity(0, duration).do(() => current.remove()));
         }
       }
-    }
 
-    // wherever words now have a gap, add a new gap
-    for (let i = 0; i < newAlignment.word1.length; i++) {
-      const upChar = newAlignment.word1[i];
-      const downChar = newAlignment.word2[i];
-
-      if (upChar === "–") {
-        const charUpTxt = (
-          <Txt
-            fontFamily={phoneticFamily}
-            fontSize={this.SIZE}
-            fill={useScene().variables.get("textFill")}
-            opacity={0}
-            x={this.calcPosition(i)}
-            y={-this.SHIFT}
-          >
-            {newAlignment.word1[i]}
-          </Txt>
-        );
-
-        this.container().add(charUpTxt);
-        generators.push(charUpTxt.opacity(1, duration));
+      for (let i = 0; i < newWord.length; i++) {
+        if (newWord[i] === "–") {
+          const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
+          this.container().add(charTxt);
+          generators.push(charTxt.opacity(1, duration));
+        }
       }
+    };
 
-      if (downChar === "–") {
-        const charUpTxt = (
-          <Txt
-            fontFamily={phoneticFamily}
-            fontSize={this.SIZE}
-            fill={useScene().variables.get("textFill")}
-            opacity={0}
-            x={this.calcPosition(i)}
-            y={0.7 * this.SHIFT}
-          >
-            {newAlignment.word2[i]}
-          </Txt>
-        );
-
-        this.container().add(charUpTxt);
-        generators.push(charUpTxt.opacity(1, duration));
-      }
-    }
+    mapAlignment(
+      this.alignment.word1, newAlignment.word1,
+      Object.values(this.textReferences).map(ref => ref.up), -this.SHIFT);
+    mapAlignment(
+      this.alignment.word2, newAlignment.word2,
+      Object.values(this.textReferences).map(ref => ref.down), 0.7 * this.SHIFT);
 
     this.alignment = newAlignment;
-
     yield* all(...generators);
   }
 }
