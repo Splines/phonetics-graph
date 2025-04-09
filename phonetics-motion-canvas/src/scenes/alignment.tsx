@@ -168,13 +168,17 @@ class AlignState {
     let oldIndex = 0;
     let newIndex = 0;
 
+    // mapping: to new index -> from old index
+    const gapShiftedFrom = new Map();
+
     while (oldIndex < oldWord.length && newIndex < newWord.length) {
       const oldChar = oldWord[oldIndex];
       const newChar = newWord[newIndex];
 
       if (oldChar === newChar) {
-        if (oldChar !== "–" && newChar !== "–") {
-          map.set(oldIndex, newIndex);
+        map.set(oldIndex, newIndex);
+        if (oldChar === "–") {
+          gapShiftedFrom.set(newIndex, oldIndex);
         }
         oldIndex++;
         newIndex++;
@@ -188,7 +192,7 @@ class AlignState {
       }
     }
 
-    return map;
+    return [map, gapShiftedFrom];
   }
 
   /**
@@ -204,7 +208,7 @@ class AlignState {
     const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
       const newTextRefsMap = new Map(textRefsMap);
 
-      const map = this.mapToNewAlignment(oldWord, newWord);
+      const [map, gapShiftedFrom] = this.mapToNewAlignment(oldWord, newWord);
 
       for (let i = 0; i < oldWord.length; i++) {
         const current = textRefsMap.get(i);
@@ -223,7 +227,7 @@ class AlignState {
 
       // show new gaps
       for (let i = 0; i < newWord.length; i++) {
-        if (newWord[i] === "–") {
+        if (newWord[i] === "–" && !gapShiftedFrom.has(i)) {
           const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
           newTextRefsMap.set(i, charTxt);
           this.container().add(charTxt);
@@ -311,7 +315,6 @@ export default makeScene2D(function* (view) {
   // yield* waitFor(0.5);
 
   let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
-  // console.log(alignmentStrings);
 
   // limit to first 100
   alignmentStrings = alignmentStrings.slice(0, 100);
@@ -321,4 +324,6 @@ export default makeScene2D(function* (view) {
     yield* waitFor(0.05);
     yield* alignState.animateToState(alignmentString, 0.1);
   }
+
+  yield* waitFor(2);
 });
