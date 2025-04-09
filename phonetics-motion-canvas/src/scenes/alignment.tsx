@@ -198,9 +198,12 @@ class AlignState {
    */
   * animateToState(newAlignmentString: string, duration: number): ThreadGenerator {
     const newAlignment = this.calculateAlignment(newAlignmentString);
+    console.log(`New alignment length: ${newAlignment.word1.length}`);
     const generators = [];
 
     const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
+      const newTextRefsMap = new Map(textRefsMap);
+
       const map = this.mapToNewAlignment(oldWord, newWord);
 
       for (let i = 0; i < oldWord.length; i++) {
@@ -209,13 +212,14 @@ class AlignState {
         if (map.has(i)) {
           // shift to new position
           const newIndex = map.get(i);
-          textRefsMap.set(newIndex, textRefsMap.get(i));
+          console.log(`Shift ${i} to ${newIndex}`);
+          newTextRefsMap.set(newIndex, current);
           const newPos = this.calcPosition(newIndex);
           generators.push(current.position.x(newPos, duration));
         } else {
           // remove old gaps
           generators.push(current.opacity(0, 0.8 * duration).do(() => current.remove()));
-          textRefsMap.delete(i);
+          newTextRefsMap.delete(i);
         }
       }
 
@@ -223,10 +227,15 @@ class AlignState {
       for (let i = 0; i < newWord.length; i++) {
         if (newWord[i] === "–") {
           const charTxt = this.createTextElement(newWord[i], this.calcPosition(i), yShift, 0);
-          textRefsMap.set(i, charTxt);
+          newTextRefsMap.set(i, charTxt);
           this.container().add(charTxt);
           generators.push(charTxt.opacity(1, 0.8 * duration));
         }
+      }
+
+      // replace the old map
+      for (const [key, value] of newTextRefsMap) {
+        textRefsMap.set(key, value);
       }
     };
 
@@ -238,6 +247,29 @@ class AlignState {
     this.alignment = newAlignment;
     yield* all(...generators);
   }
+}
+
+/**
+ * Generates all possible alignment strings for a given minimum word length.
+ * Alignments strings can have varying lengths up to the both word lengths
+ * added up.
+ *
+ * - There must be at most `minWordLength` dots (".") in the string.
+ * - All remaining chars are "-" or ":" (arbitrary order)
+ *
+ * It must be guaranteed for the final string that:
+ * - num(".") + num("-") = word1Length
+ * - num(".") + num(":") = word2Length
+ *
+ * In an extreme case, we can have a string like
+ * ----:::::: (word1Length = 4, word2Length = 6)
+ */
+function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: number): string[] {
+  const results: string[] = [];
+
+  // TODO
+
+  return results;
 }
 
 export default makeScene2D(function* (view) {
@@ -252,9 +284,22 @@ export default makeScene2D(function* (view) {
     </Rect>,
   );
 
-  yield* waitFor(0.5);
-  yield* alignState.animateToState("..-.:--", 1.2);
-  yield* waitFor(0.5);
-  yield* alignState.animateToState("....--", 1.2);
-  yield* waitFor(0.5);
+  // yield* waitFor(0.5);
+  // yield* alignState.animateToState("..-.:--", 1.2);
+  // yield* waitFor(0.5);
+  // yield* alignState.animateToState("....--", 1.2);
+  // yield* waitFor(0.5);
+  // yield* alignState.animateToState("::::------", 1.2);
+  // yield* waitFor(0.5);
+
+  // const alignmentStrings = generateAllPossibleAlignmentStrings(4, 6);
+  // console.log(alignmentStrings);
+
+  // let i = 0;
+  // for (const alignmentString of alignmentStrings) {
+  //   console.log(i);
+  //   yield* waitFor(0.5);
+  //   yield* alignState.animateToState(alignmentString, 1.2);
+  //   i++;
+  // }
 });
