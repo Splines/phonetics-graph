@@ -1,5 +1,13 @@
 import { makeScene2D, Txt, Rect } from "@motion-canvas/2d";
-import { useScene } from "@motion-canvas/core/lib/utils";
+import {
+  createEffect,
+  createRef,
+  createSignal,
+  spawn,
+  waitFor,
+  useScene,
+  tween,
+} from "@motion-canvas/core";
 
 const phoneticFamily = "Charis";
 
@@ -108,16 +116,28 @@ class AlignState {
 
     return elements;
   }
+
+  /**
+   * Animates the elements to a specified state.
+   *
+   * - Letters will be shifted to the new position (via `tween`).
+   * - Gaps appear/disappear as needed (via `spawn`).
+   */
+  * animateToState(state: string, duration: number): ThreadGenerator {
+    yield* waitFor(1);
+  }
 }
 
 export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill");
 
-  const elements = new AlignState("pɥisɑ̃s", "nɥɑ̃s", "-.-.:.-").generateElements();
+  const alignState = new AlignState("pɥisɑ̃s", "nɥɑ̃s", "-.-.:.-");
 
   view.add(
     <Rect>
-      {elements}
+      {alignState.generateElements()}
     </Rect>,
   );
+
+  yield* alignState.animateToState("....--");
 });
