@@ -296,7 +296,7 @@ export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill");
 
   const container = createRef<Rect>();
-  const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "-.-.:.-");
+  const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
 
   view.add(
     <Rect ref={container}>
@@ -314,7 +314,7 @@ export default makeScene2D(function* (view) {
   // yield* alignState.animateToState("...--.", 1.2);
   // yield* waitFor(0.5);
 
-  yield* waitFor(0.5);
+  yield* waitFor(0.1);
 
   let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
 
@@ -322,14 +322,17 @@ export default makeScene2D(function* (view) {
   const c = 0.13;
 
   for (let i = 0; i < alignmentStrings.length; i++) {
-    const fall = Math.exp(-0.04 * i);
+    const fall = Math.exp(-0.035 * i);
     const exp = Math.exp(c * (i - riseAround));
     const rise = exp / (1 + exp);
-    const stretch = Math.max(fall + rise, 0.007);
+    const stretch = Math.max(fall + rise, 0.01);
 
-    yield* waitFor(0.3 * stretch);
     yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
+    yield* waitFor(0.3 * stretch);
   }
 
-  yield* waitFor(1);
+  yield* waitFor(0.5);
+  yield* alignState.animateToState("....--", 1);
+
+  yield* waitFor(0.1);
 });
