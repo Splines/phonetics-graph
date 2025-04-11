@@ -1,9 +1,11 @@
-import { is, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
+import { is, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
-  all, createRef, Reference, sequence, ThreadGenerator,
+  all, chain, createRef, Reference, sequence, ThreadGenerator,
   useScene, waitFor,
 } from "@motion-canvas/core";
+import { LetterTxt } from "./LetterTxt";
 
+const TEXT_FONT = "Vermiglione";
 const PHONETIC_FAMILY = "Charis";
 
 class Alignment {
@@ -373,7 +375,75 @@ export default makeScene2D(function* (view) {
     rect().end(1, 0.8),
     all(...textsAll.map(txt => txt.fill(textFill, 0.8))),
   );
-  yield* waitFor(0.6);
+  yield* waitFor(1.6);
   yield* rect().opacity(0, 1.2);
-  yield* waitFor(1);
+  yield* waitFor(0.2);
+
+  // 🎈 Random alignments
+  // const tenRandomNumbers = Array.from({ length: 10 },
+  //   () => Math.floor(Math.random() * alignmentStrings.length));
+  // for (const i of tenRandomNumbers) {
+  //   console.log(alignmentStrings[i]);
+  // }
+  const randomAlignmentStrings = ["-.--:.-:", ".-:-.-:-", ":---:--.:",
+    ":-.--::--", "-..-:.-", "....--"];
+  const textTransforms = randomAlignmentStrings.map((str) => {
+    return chain(
+      alignState.animateToState(str, 0.9),
+      waitFor(0.3),
+    );
+  });
+
+  const toMatrixLine = createRef<Line>();
+  view.add(
+    <Line
+      ref={toMatrixLine}
+      points={[
+        [-150, 0],
+        [150, 0],
+      ]}
+      lineWidth={10}
+      stroke={textFill}
+      arrowSize={25}
+      endArrow
+      lineCap="round"
+      lineDash={[20, 20]}
+      opacity={0}
+      end={0}
+    />,
+  );
+
+  // const pathText = (
+  //   <Txt
+  //     fill={textFill}
+  //     fontFamily={TEXT_FONT}
+  //     fontSize={100}
+  //     x={600}
+  //     letterSpacing={5}
+  //   >
+  //     Paths in a grid
+  //   </Txt>
+  // ) as Txt;
+  // view.add(pathText);
+  const pathText = (
+    <LetterTxt
+      fill={textFill}
+      fontFamily={TEXT_FONT}
+      fontSize={100}
+      letterSpacing={50}
+      x={350}
+    >
+      Paths in a grid
+    </LetterTxt>
+  ) as LetterTxt;
+  view.add(pathText);
+
+  yield* all(
+    chain(waitFor(1.0), ...textTransforms),
+    container().position.x(-800, 5),
+    chain(waitFor(2.3), all(toMatrixLine().opacity(1, 0.5), toMatrixLine().end(1, 3))),
+    chain(waitFor(4), pathText.flyIn(1, 0.04)),
+  );
+
+  yield* waitFor(0.5);
 });
