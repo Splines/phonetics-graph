@@ -10,11 +10,11 @@
       "x": 3840,
       "y": 2160
     },
-    "audioOffset": 0
+    "audioOffset": -3.3268031692072344
   },
   "preview": {
     "fps": 30,
-    "resolutionScale": 1
+    "resolutionScale": 0.5
   },
   "rendering": {
     "fps": 30,

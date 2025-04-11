@@ -1,5 +1,5 @@
-import { makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
-import { all, createRef, Reference, ThreadGenerator, useScene, waitFor } from "@motion-canvas/core";
+import { is, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
+import { all, createRef, Reference, sequence, ThreadGenerator, useScene, waitFor } from "@motion-canvas/core";
 
 const PHONETIC_FAMILY = "Charis";
 
@@ -293,25 +293,17 @@ function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: n
 export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill", "white");
   const highlightColor = "#FFEB6C";
+  const highlightColor2 = "#53E6DF";
 
   const container = createRef<Node>();
   const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
+  const texts = alignState.generateElements();
 
   view.add(
     <Rect ref={container}>
-      {alignState.generateElements()}
+      { texts }
     </Rect>,
   );
-
-  // yield* waitFor(0.5);
-  // yield* alignState.animateToState("..-.:--", 1.2);
-  // yield* waitFor(0.5);
-  // yield* alignState.animateToState("....--", 1.2);
-  // yield* waitFor(0.5);
-  // yield* alignState.animateToState("::::------", 1.2);
-  // yield* waitFor(0.5);
-  // yield* alignState.animateToState("...--.", 1.2);
-  // yield* waitFor(0.5);
 
   yield* waitFor(0.1);
 
@@ -320,21 +312,65 @@ export default makeScene2D(function* (view) {
   const riseAround = alignmentStrings.length * 0.999;
   const c = 0.13;
 
-  for (let i = 0; i < alignmentStrings.length; i++) {
-    const fall = Math.exp(-0.04 * i);
-    const exp = Math.exp(c * (i - riseAround));
-    const rise = exp / (1 + exp);
-    const stretch = Math.max(fall + rise, 0.006);
+  // for (let i = 0; i < alignmentStrings.length; i++) {
+  //   const fall = Math.exp(-0.04 * i);
+  //   const exp = Math.exp(c * (i - riseAround));
+  //   const rise = exp / (1 + exp);
+  //   const stretch = Math.max(fall + rise, 0.006);
 
-    yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
-    yield* waitFor(0.3 * stretch);
-  }
+  //   yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
+  //   yield* waitFor(0.3 * stretch);
+  // }
 
   yield* waitFor(0.2);
   yield* alignState.animateToState("....--", 1);
 
+  // 🎈 Discuss one alignment
   yield* waitFor(0.5);
   yield* alignState.animateToState("..--..", 1.4);
+
+  yield* waitFor(1);
+
+  yield* sequence(0.2, ...[2, 3, 8, 5, 10, 7].map((i) => {
+    return texts[i].fill(highlightColor, 0.6);
+  }));
+
+  yield* waitFor(1);
+
+  yield* sequence(0.2, ...[0, 1].map((i) => {
+    return texts[i].fill(highlightColor2, 0.6);
+  }));
+
+  yield* waitFor(1);
+
+  const textsAll = view.findAll(is(Txt));
+  yield* sequence(0.2, ...[4, 10, 6, 11].map((i) => {
+    return textsAll[i].fill(highlightColor2, 0.6);
+  }));
+
+  yield* waitFor(1);
+
+  const rect = createRef<Rect>();
+  view.add(
+    <Rect
+      ref={rect}
+      rotation={180}
+      lineWidth={5}
+      stroke={textFill}
+      width={700}
+      height={300}
+      radius={12}
+      closed
+      end={0}
+    />,
+  );
+  yield* all(
+    rect().end(1, 0.8),
+    all(...textsAll.map(txt => txt.fill(textFill, 0.8))),
+  );
+  yield* waitFor(0.5);
+
+  yield* rect().opacity(0, 1.2);
 
   yield* waitFor(1);
 });
