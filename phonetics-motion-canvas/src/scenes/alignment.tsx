@@ -1,5 +1,8 @@
 import { is, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
-import { all, createRef, Reference, sequence, ThreadGenerator, useScene, waitFor } from "@motion-canvas/core";
+import {
+  all, createRef, Reference, sequence, ThreadGenerator,
+  useScene, waitFor,
+} from "@motion-canvas/core";
 
 const PHONETIC_FAMILY = "Charis";
 
