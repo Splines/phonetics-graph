@@ -430,7 +430,7 @@ export default makeScene2D(function* (view) {
       fill={textFill}
       fontFamily={TEXT_FONT}
       fontSize={100}
-      letterSpacing={50}
+      letterSpacing={10}
       x={350}
     >
       Paths in a grid
