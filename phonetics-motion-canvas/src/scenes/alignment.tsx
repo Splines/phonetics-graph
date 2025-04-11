@@ -296,7 +296,8 @@ function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: n
 export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill", "white");
   const highlightColor = "#FFEB6C";
-  const highlightColor2 = "#53E6DF";
+  // const highlightColor2 = "#68D3F7";
+  const highlightColor2 = "#C0B8F2";
 
   const container = createRef<Node>();
   const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
@@ -360,10 +361,11 @@ export default makeScene2D(function* (view) {
       rotation={180}
       lineWidth={5}
       stroke={textFill}
-      width={700}
-      height={300}
-      radius={12}
+      width={780}
+      height={350}
+      radius={6}
       closed
+      opacity={0.7}
       end={0}
     />,
   );
@@ -371,9 +373,7 @@ export default makeScene2D(function* (view) {
     rect().end(1, 0.8),
     all(...textsAll.map(txt => txt.fill(textFill, 0.8))),
   );
-  yield* waitFor(0.5);
-
+  yield* waitFor(0.6);
   yield* rect().opacity(0, 1.2);
-
   yield* waitFor(1);
 });
