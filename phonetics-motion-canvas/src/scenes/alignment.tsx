@@ -413,18 +413,6 @@ export default makeScene2D(function* (view) {
     />,
   );
 
-  // const pathText = (
-  //   <Txt
-  //     fill={textFill}
-  //     fontFamily={TEXT_FONT}
-  //     fontSize={100}
-  //     x={600}
-  //     letterSpacing={5}
-  //   >
-  //     Paths in a grid
-  //   </Txt>
-  // ) as Txt;
-  // view.add(pathText);
   const pathText = (
     <LetterTxt
       fill={textFill}
@@ -433,7 +421,7 @@ export default makeScene2D(function* (view) {
       letterSpacing={7}
       x={350}
     >
-      Paths in a grid
+      Path in a grid
     </LetterTxt>
   ) as LetterTxt;
   view.add(pathText);
@@ -442,7 +430,7 @@ export default makeScene2D(function* (view) {
     chain(waitFor(1.0), ...textTransforms),
     container().position.x(-800, 5),
     chain(waitFor(2.3), all(toMatrixLine().opacity(1, 0.5), toMatrixLine().end(1, 3))),
-    chain(waitFor(4), pathText.flyIn(1, 0.04)),
+    chain(waitFor(4), pathText.flyIn(1, 0.035)),
   );
 
   yield* waitFor(0.5);
