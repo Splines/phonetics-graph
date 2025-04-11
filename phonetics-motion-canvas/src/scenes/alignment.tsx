@@ -1,13 +1,7 @@
-import { makeScene2D, Txt, Rect } from "@motion-canvas/2d";
-import {
-  createRef,
-  waitFor,
-  useScene,
-  all,
-} from "@motion-canvas/core";
-import { deepCloneMap } from "../utils";
+import { makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
+import { all, createRef, Reference, ThreadGenerator, useScene, waitFor } from "@motion-canvas/core";
 
-const phoneticFamily = "Charis";
+const PHONETIC_FAMILY = "Charis";
 
 class Alignment {
   word1: string[] = [];
@@ -40,10 +34,13 @@ class AlignState {
    */
   private startX = 0;
 
-  private container: Rect;
-  private alignment: Alignment[];
+  private container: Reference<Node>;
+  private alignment: Alignment;
   private textReferenceUpMap: Map<number, Txt> = new Map();
   private textReferenceDownMap: Map<number, Txt> = new Map();
+
+  private word1: string[];
+  private word2: string[];
 
   /**
    * Constructs an instance of `AlignState`.
@@ -56,7 +53,7 @@ class AlignState {
    *                    - `":"`: gap in the first word.
    *                    - `"."`: match between characters in both words.
    */
-  constructor(container, word1: string, word2: string, alignmentString: string) {
+  constructor(container: Reference<Node>, word1: string, word2: string, alignmentString: string) {
     this.container = container;
 
     const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -69,7 +66,7 @@ class AlignState {
    * Calculates the alignment between the two words
    * based on the alignment string.
    */
-  calculateAlignment(alignmentString: string): Alignment[] {
+  calculateAlignment(alignmentString: string): Alignment {
     const alignment = new Alignment();
     let i = 0, j = 0;
 
@@ -120,16 +117,16 @@ class AlignState {
   private createTextElement(char: string, position: number, yShift: number, opacity: number): Txt {
     return (
       <Txt
-        fontFamily={phoneticFamily}
+        fontFamily={PHONETIC_FAMILY}
         fontSize={this.SIZE}
-        fill={useScene().variables.get("textFill")}
+        fill={useScene().variables.get("textFill", "white")}
         opacity={opacity}
         x={position}
         y={yShift}
       >
         {char}
       </Txt>
-    );
+    ) as Txt;
   }
 
   generateElements() {
@@ -162,7 +159,7 @@ class AlignState {
    * Finds a mapping between the indices of chars such that the distance
    * between each mapping is minimized.
    */
-  mapToNewAlignment(oldWord, newWord) {
+  mapToNewAlignment(oldWord: string[], newWord: string[]) {
     const map = new Map();
 
     let oldIndex = 0;
@@ -203,9 +200,10 @@ class AlignState {
    */
   * animateToState(newAlignmentString: string, duration: number): ThreadGenerator {
     const newAlignment = this.calculateAlignment(newAlignmentString);
-    const generators = [];
+    const generators: ThreadGenerator[] = [];
 
-    const alignmentAnim = (oldWord, newWord, textRefsMap, yShift) => {
+    const alignmentAnim = (oldWord: string[], newWord: string[],
+      textRefsMap: Map<number, Txt>, yShift: number) => {
       const newTextRefsMap = new Map(textRefsMap);
 
       const [map, gapShiftedFrom] = this.mapToNewAlignment(oldWord, newWord);
@@ -293,9 +291,10 @@ function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: n
 }
 
 export default makeScene2D(function* (view) {
-  const textFill = useScene().variables.get("textFill");
+  const textFill = useScene().variables.get("textFill", "white");
+  const highlightColor = "#FFEB6C";
 
-  const container = createRef<Rect>();
+  const container = createRef<Node>();
   const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
 
   view.add(
@@ -322,17 +321,20 @@ export default makeScene2D(function* (view) {
   const c = 0.13;
 
   for (let i = 0; i < alignmentStrings.length; i++) {
-    const fall = Math.exp(-0.035 * i);
+    const fall = Math.exp(-0.04 * i);
     const exp = Math.exp(c * (i - riseAround));
     const rise = exp / (1 + exp);
-    const stretch = Math.max(fall + rise, 0.01);
+    const stretch = Math.max(fall + rise, 0.006);
 
     yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
     yield* waitFor(0.3 * stretch);
   }
 
-  yield* waitFor(0.5);
+  yield* waitFor(0.2);
   yield* alignState.animateToState("....--", 1);
 
-  yield* waitFor(0.1);
+  yield* waitFor(0.5);
+  yield* alignState.animateToState("..--..", 1.4);
+
+  yield* waitFor(1);
 });

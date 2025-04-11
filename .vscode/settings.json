@@ -71,13 +71,17 @@
     "editor.formatOnSave": false, // it still autosaves with the options below
     // https://eslint.style/guide/faq#how-to-auto-format-on-save
     // https://github.com/microsoft/vscode-eslint#settings-options
-    "[typescript]": {
+    "[typescriptreact]": {
         "editor.formatOnSave": false, // to avoid formatting twice (ESLint + VSCode)
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.indentSize": 2,
+        "editor.tabSize": 2,
     },
     "[javascript]": {
         "editor.formatOnSave": false, // to avoid formatting twice (ESLint + VSCode)
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.indentSize": 2,
+        "editor.tabSize": 2,
     },
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
@@ -132,6 +136,7 @@
     // Spell Checker
     //////////////////////////////////////
     "cSpell.language": "en,de-DE,fr",
+    "cSpell.diagnosticLevel": "Hint",
     "cSpell.words": [
         "Cuda",
         "cudarc",

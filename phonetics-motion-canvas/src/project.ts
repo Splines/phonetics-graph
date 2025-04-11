@@ -1,12 +1,12 @@
-import {makeProject} from '@motion-canvas/core';
+import { makeProject } from "@motion-canvas/core";
 
-import alignment from './scenes/alignment?scene';
+import test from "./scenes/test?scene";
 
-import './global.css';
+import "./global.css";
 
 export default makeProject({
-    scenes: [alignment],
+  scenes: [test],
   variables: {
-    textFill: "white"
-  }
+    textFill: "white",
+  },
 });
