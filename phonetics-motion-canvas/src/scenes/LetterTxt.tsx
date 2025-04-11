@@ -29,8 +29,14 @@ export class LetterTxt extends Node {
     }
 
     let cursorX = 0;
+    let previousWidth = 0;
 
-    for (const char of text) {
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const currentWidth = ctx.measureText(text.substring(0, i + 1)).width;
+      const charWidth = currentWidth - previousWidth;
+      previousWidth = currentWidth;
+
       const txt = (
         <Txt
           fontFamily={props.fontFamily}
@@ -50,8 +56,7 @@ export class LetterTxt extends Node {
       container.add(txt);
       this.txtObjects.push(txt);
 
-      const metrics = ctx.measureText(char);
-      cursorX += metrics.width;
+      cursorX += charWidth;
     }
   }
 
