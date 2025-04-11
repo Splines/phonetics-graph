@@ -24,9 +24,7 @@ export class LetterTxt extends Node {
     const fontStyle = props.fontStyle ?? "normal";
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
     ctx.textBaseline = "bottom";
-    if ("letterSpacing" in ctx) {
-      ctx.letterSpacing = `${props.letterSpacing}px`;
-    }
+    ctx.letterSpacing = `${props.letterSpacing ?? 7}px`;
 
     let cursorX = 0;
     let previousWidth = 0;
@@ -39,15 +37,11 @@ export class LetterTxt extends Node {
 
       const txt = (
         <Txt
-          fontFamily={props.fontFamily}
-          fontSize={props.fontSize}
-          fontWeight={props.fontWeight}
-          fontStyle={props.fontStyle}
-          fill={props.fill}
-          letterSpacing={0}
+          {...props}
           x={cursorX}
           y={80}
           opacity={0}
+          offsetX={-1}
         >
           {char}
         </Txt>
