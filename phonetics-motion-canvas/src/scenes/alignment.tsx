@@ -304,6 +304,11 @@ export default makeScene2D(function* (view) {
   const container = createRef<Node>();
   const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
   const texts = alignState.generateElements();
+  const alignmentDelta = 100;
+  for (const text of texts) {
+    text.position.y(text.position.y() + alignmentDelta);
+    text.opacity(0);
+  }
 
   view.add(
     <Rect ref={container}>
@@ -313,20 +318,46 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(0.1);
 
-  let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
+  yield* all(
+    ...texts.map(txt => txt.position.y(txt.position.y() - alignmentDelta, 0.8)),
+    ...texts.map(txt => txt.opacity(1, 0.8)),
+  );
 
+  yield* waitFor(1);
+
+  yield* sequence(0.2, ...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+    return texts[i].fill(highlightColor, 0.6);
+  }));
+
+  yield* waitFor(0.5);
+
+  yield* sequence(0.2, ...[8, 9, 10, 11].map((i) => {
+    return texts[i].fill(highlightColor2, 0.6);
+  }));
+
+  yield* waitFor(0.5);
+
+  // 🎈 All possible alignments
+  let alignmentStrings = generateAllPossibleAlignmentStrings(6, 4);
   const riseAround = alignmentStrings.length * 0.999;
   const c = 0.13;
 
-  // for (let i = 0; i < alignmentStrings.length; i++) {
-  //   const fall = Math.exp(-0.04 * i);
-  //   const exp = Math.exp(c * (i - riseAround));
-  //   const rise = exp / (1 + exp);
-  //   const stretch = Math.max(fall + rise, 0.006);
+  for (let i = 0; i < alignmentStrings.length; i++) {
+    const fall = Math.exp(-0.04 * i);
+    const exp = Math.exp(c * (i - riseAround));
+    const rise = exp / (1 + exp);
+    const stretch = Math.max(fall + rise, 0.006);
 
-  //   yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
-  //   yield* waitFor(0.3 * stretch);
-  // }
+    if (i === 0) {
+      yield* all(
+        alignState.animateToState(alignmentStrings[i], 0.5 * stretch),
+        all(...texts.map(txt => txt.fill(textFill, 0.5))),
+      );
+    } else {
+      yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
+    }
+    yield* waitFor(0.3 * stretch);
+  }
 
   yield* waitFor(0.2);
   yield* alignState.animateToState("....--", 1);
