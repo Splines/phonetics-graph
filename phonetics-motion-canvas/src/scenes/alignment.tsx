@@ -1,4 +1,4 @@
-import { is, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
+import { is, Layout, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
   all, chain, createRef, Reference, sequence, ThreadGenerator,
   useScene, waitFor,
@@ -12,6 +12,8 @@ class Alignment {
   word1: string[] = [];
   word2: string[] = [];
 }
+
+const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
 
 /**
  * The `AlignState` class is responsible for managing the alignment of two words
@@ -60,8 +62,6 @@ class AlignState {
    */
   constructor(container: Reference<Node>, word1: string, word2: string, alignmentString: string) {
     this.container = container;
-
-    const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
     this.word1 = Array.from(segmenter.segment(word1), segment => segment.segment);
     this.word2 = Array.from(segmenter.segment(word2), segment => segment.segment);
     this.alignment = this.calculateAlignment(alignmentString);
@@ -342,22 +342,22 @@ export default makeScene2D(function* (view) {
   const riseAround = alignmentStrings.length * 0.999;
   const c = 0.13;
 
-  for (let i = 0; i < alignmentStrings.length; i++) {
-    const fall = Math.exp(-0.04 * i);
-    const exp = Math.exp(c * (i - riseAround));
-    const rise = exp / (1 + exp);
-    const stretch = Math.max(fall + rise, 0.006);
+  // for (let i = 0; i < alignmentStrings.length; i++) {
+  //   const fall = Math.exp(-0.04 * i);
+  //   const exp = Math.exp(c * (i - riseAround));
+  //   const rise = exp / (1 + exp);
+  //   const stretch = Math.max(fall + rise, 0.006);
 
-    if (i === 0) {
-      yield* all(
-        alignState.animateToState(alignmentStrings[i], 0.5 * stretch),
-        all(...texts.map(txt => txt.fill(textFill, 0.5))),
-      );
-    } else {
-      yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
-    }
-    yield* waitFor(0.3 * stretch);
-  }
+  //   if (i === 0) {
+  //     yield* all(
+  //       alignState.animateToState(alignmentStrings[i], 0.5 * stretch),
+  //       all(...texts.map(txt => txt.fill(textFill, 0.5))),
+  //     );
+  //   } else {
+  //     yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
+  //   }
+  //   yield* waitFor(0.3 * stretch);
+  // }
 
   yield* waitFor(0.2);
   yield* alignState.animateToState("....--", 1);
@@ -464,5 +464,99 @@ export default makeScene2D(function* (view) {
     chain(waitFor(4), pathText.flyIn(1, 0.035)),
   );
 
-  yield* waitFor(0.5);
+  yield* waitFor(2);
+
+  // 🎈 Construct the matrix
+  const matrixContainerRef = createRef<Node>();
+  view.add(
+    <Rect
+      ref={matrixContainerRef}
+      x={800}
+      y={-55}
+    />,
+  );
+  const matrix = new Matrix(matrixContainerRef);
+
+  yield* matrix.word2Texts[0].fill(highlightColor, 0.6);
+  yield* matrix.word1Texts[0].fill(highlightColor, 0.6);
+
+  yield* waitFor(2);
 });
+
+class Matrix {
+  private layout: Reference<Layout>;
+  private rects: Rect[] = [];
+
+  private numRows = 6 + 2; // puissance
+  private numCols = 4 + 2; // nuance
+
+  private FONT_SIZE = 80;
+
+  private word1 = Array.from(segmenter.segment("pɥisɑ̃s"), segment => segment.segment);
+  private word2 = Array.from(segmenter.segment("nɥɑ̃s"), segment => segment.segment);
+  public word1Texts: Txt[] = [];
+  public word2Texts: Txt[] = [];
+
+  constructor(container: Reference<Node>) {
+    const layout = createRef<Layout>();
+    this.layout = layout;
+    container().add(<Layout ref={layout} layout gap={20} width={900} wrap="wrap" />);
+
+    for (const char of [" ", " ", ...this.word2]) {
+      const txt = this.createTextInRect(char);
+      if (char !== " ") {
+        this.word2Texts.push(txt.childAs(0));
+      }
+      this.layout().add(txt);
+    }
+
+    for (let i = 1; i < this.numRows; i++) {
+      for (let j = 0; j < this.numCols; j++) {
+        if (i >= 2 && j === 0) {
+          const txt = this.createTextInRect(this.word1[i - 2]);
+          this.word1Texts.push(txt.childAs(0));
+          this.layout().add(txt);
+          continue;
+        }
+
+        if (j === 0) {
+          this.layout().add(<Rect width={130} height={130} />);
+          continue;
+        }
+
+        const rect = this.getRect();
+        this.rects.push(rect);
+        this.layout().add(rect);
+      }
+    }
+  }
+
+  private getRect(): Rect {
+    return new Rect({
+      width: 130,
+      height: 130,
+      stroke: "white",
+      lineWidth: 6,
+      radius: 8,
+    });
+  }
+
+  private createTextInRect(char: string): Rect {
+    return (
+      <Rect
+        width={130}
+        height={130}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Txt
+          fontFamily={PHONETIC_FAMILY}
+          fontSize={this.FONT_SIZE}
+          fill={useScene().variables.get("textFill", "white")}
+        >
+          {char}
+        </Txt>
+      </Rect>
+    ) as Rect;
+  }
+}
