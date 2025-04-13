@@ -1,7 +1,7 @@
 import { is, Layout, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
   all, chain, createRef, Reference, sequence, ThreadGenerator,
-  useScene, waitFor,
+  useScene, Vector2, waitFor,
 } from "@motion-canvas/core";
 import { LetterTxt } from "./LetterTxt";
 
@@ -526,6 +526,9 @@ export default makeScene2D(function* (view) {
   yield* matrix.highlight(0, 0, 0.8);
   yield* waitFor(1.5);
   yield* matrix.step(0, 0, 1, 1, 0.8);
+
+  yield* matrix.highlightCoordinates(1, 1, 1);
+
   yield* waitFor(1);
 });
 
@@ -606,15 +609,30 @@ class Matrix {
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
 
-    const inset = 30;
+    let xOffset = 0;
+    let yOffset = 0;
+    // diagonal step
+    if (iSource === iTarget - 1 && jSource === jTarget - 1) {
+      xOffset = sourceRect.width() / 6;
+      yOffset = sourceRect.height() / 6;
+    }
+
+    const arrowStart = new Vector2(
+      sourceRect.x() + xOffset,
+      sourceRect.y() + yOffset,
+    );
+    const arrowEnd = new Vector2(
+      targetRect.x() - xOffset,
+      targetRect.y() - yOffset,
+    );
 
     const arrow = (
       <Line
         points={[
-          [sourceRect.x() + inset, sourceRect.y() + inset],
-          [targetRect.x() - inset, targetRect.y() - inset],
+          arrowStart,
+          arrowEnd,
         ]}
-        lineWidth={20}
+        lineWidth={18}
         stroke={highlightColor}
         lineCap="round"
         opacity={0}
@@ -635,6 +653,38 @@ class Matrix {
           arrow.start(1, duration),
           chain(waitFor(0.3 * duration), arrow.opacity(0, duration)),
           this.highlightRect(targetRect, duration),
+        ),
+      ),
+    );
+  }
+
+  public highlightCoordinates(i: number, j: number, duration: number): ThreadGenerator {
+    const rect = this.getRectAt(i, j);
+
+    const arrowHorizontal = (
+      <Line
+        points={[
+          rect.position(),
+          new Vector2(rect.position().x - 1.0 * (i + 1) * rect.width(), rect.position().y),
+        ]}
+        lineWidth={15}
+        stroke={this.ARROW_COLOR}
+        lineCap="round"
+        opacity={0}
+        lineDash={[10, 30]}
+        end={0}
+      />
+    ) as Line;
+    this.container().add(arrowHorizontal);
+
+    return all(
+      arrowHorizontal.opacity(1, 0.6 * duration),
+      arrowHorizontal.end(1, duration),
+      chain(
+        waitFor(0.8 * duration),
+        all(
+          arrowHorizontal.start(1, duration),
+          arrowHorizontal.opacity(0, duration),
         ),
       ),
     );
