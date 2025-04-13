@@ -538,6 +538,7 @@ class Matrix {
   private numCols = 4 + 1; // nuance
 
   private FONT_SIZE = 80;
+  private ARROW_COLOR = "#54B0CF";
 
   private word1 = Array.from(segmenter.segment("pɥisɑ̃s"), segment => segment.segment);
   private word2 = Array.from(segmenter.segment("nɥɑ̃s"), segment => segment.segment);
@@ -602,27 +603,40 @@ class Matrix {
 
   public step(iSource: number, jSource: number,
     iTarget: number, jTarget: number, duration: number): ThreadGenerator {
-    // const arrow = (
-    //   <Line
-    //     points={[
-    //       [0, 0],
-    //       [0, -130],
-    //     ]}
-    //     lineWidth={5}
-    //     stroke={highlightColor}
-    //     arrowSize={10}
-    //     endArrow
-    //     lineCap="round"
-    //     opacity={0}
-    //   />
-    // ) as Line;
-    // this.container().add(arrow);
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
 
+    const inset = 30;
+
+    const arrow = (
+      <Line
+        points={[
+          [sourceRect.x() + inset, sourceRect.y() + inset],
+          [targetRect.x() - inset, targetRect.y() - inset],
+        ]}
+        lineWidth={20}
+        stroke={highlightColor}
+        lineCap="round"
+        opacity={0}
+        end={0}
+      />
+    ) as Line;
+    this.container().add(arrow);
+
     return all(
-      sourceRect.fill(null, duration),
-      this.highlightRect(targetRect, duration),
+      all(
+        sourceRect.fill(null, duration),
+        arrow.opacity(1, duration),
+        arrow.end(1, duration),
+      ),
+      chain(
+        waitFor(0.5 * duration),
+        all(
+          arrow.start(1, duration),
+          chain(waitFor(0.3 * duration), arrow.opacity(0, duration)),
+          this.highlightRect(targetRect, duration),
+        ),
+      ),
     );
   }
 
