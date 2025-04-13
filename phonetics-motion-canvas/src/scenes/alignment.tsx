@@ -449,8 +449,8 @@ export default makeScene2D(function* (view) {
       fill={textFill}
       fontFamily={TEXT_FONT}
       fontSize={100}
-      letterSpacing={7}
-      x={350}
+      letterSpacing={4}
+      x={360}
     >
       Path in a grid
     </LetterTxt>
@@ -501,6 +501,7 @@ export default makeScene2D(function* (view) {
         all(
           clone.absolutePosition(target.absolutePosition(), 0.7),
           clone.opacity(1, 0.1),
+          original.opacity(0, 0.1),
           clone.fontSize(target.fontSize(), 0.7),
         ),
       );
@@ -509,9 +510,14 @@ export default makeScene2D(function* (view) {
     return anims;
   };
 
+  const gaps = view.findAll(is(Txt)).filter(txt => txt.text() === "–");
+
   yield* sequence(0.13, ...animateTextClones([0, 2, 4, 6, 8, 10], matrix.word1Texts));
   yield* waitFor(0.3);
-  yield* sequence(0.13, ...animateTextClones([1, 3, 5, 7], matrix.word2Texts));
+  yield* all(
+    sequence(0.13, ...animateTextClones([1, 3, 5, 7], matrix.word2Texts)),
+    ...gaps.map(txt => txt.opacity(0, 1.2)),
+  );
 
   yield* waitFor(0.5);
 
