@@ -499,11 +499,18 @@ export default makeScene2D(function* (view) {
       clone.absolutePosition(original.absolutePosition());
 
       anims.push(
-        all(
-          clone.absolutePosition(target.absolutePosition(), 0.7),
-          clone.opacity(1, 0.1),
-          original.opacity(0, 0.1),
-          clone.fontSize(target.fontSize(), 0.7),
+        chain(
+          all(
+            clone.absolutePosition(target.absolutePosition(), 0.7),
+            clone.opacity(1, 0.1),
+            original.opacity(0, 0.1),
+            clone.fontSize(target.fontSize(), 0.7),
+          ),
+          all(
+            // replace clone by target
+            clone.opacity(0, 0),
+            target.opacity(1, 0),
+          ),
         ),
       );
     }
@@ -529,7 +536,7 @@ export default makeScene2D(function* (view) {
 
   yield* matrix.highlightCoordinates(1, 1, 1);
 
-  yield* waitFor(1);
+  yield* waitFor(2);
 });
 
 class Matrix {
@@ -541,7 +548,7 @@ class Matrix {
   private numCols = 4 + 1; // nuance
 
   private FONT_SIZE = 80;
-  private ARROW_COLOR = "#54B0CF";
+  private COORD_COLOR = "#54B0CF";
 
   private word1 = Array.from(segmenter.segment("pɥisɑ̃s"), segment => segment.segment);
   private word2 = Array.from(segmenter.segment("nɥɑ̃s"), segment => segment.segment);
@@ -664,27 +671,42 @@ class Matrix {
     const arrowHorizontal = (
       <Line
         points={[
-          rect.position(),
+          new Vector2(rect.position().x - rect.width() / 6, rect.position().y),
           new Vector2(rect.position().x - 1.0 * (i + 1) * rect.width(), rect.position().y),
         ]}
-        lineWidth={15}
-        stroke={this.ARROW_COLOR}
+        lineWidth={12}
+        stroke={highlightColor}
         lineCap="round"
         opacity={0}
         lineDash={[10, 30]}
         end={0}
       />
     ) as Line;
+
+    const arrowVertical = arrowHorizontal.clone() as Line;
+    arrowVertical.points([
+      new Vector2(rect.position().x, rect.position().y - rect.height() / 6),
+      new Vector2(rect.position().x, rect.position().y - 1.0 * (j + 1) * rect.height()),
+    ]);
+
     this.container().add(arrowHorizontal);
+    this.container().add(arrowVertical);
 
     return all(
       arrowHorizontal.opacity(1, 0.6 * duration),
       arrowHorizontal.end(1, duration),
+      arrowVertical.opacity(1, 0.6 * duration),
+      arrowVertical.end(1, duration),
       chain(
-        waitFor(0.8 * duration),
+        waitFor(1.5 * duration),
         all(
           arrowHorizontal.start(1, duration),
           arrowHorizontal.opacity(0, duration),
+          arrowVertical.start(1, duration),
+          arrowVertical.opacity(0, duration),
+
+          this.word1Texts[0].fill(highlightColor, duration),
+          this.word2Texts[0].fill(highlightColor, duration),
         ),
       ),
     );
