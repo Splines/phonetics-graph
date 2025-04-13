@@ -484,46 +484,34 @@ export default makeScene2D(function* (view) {
   );
 
   // Text to new positions
-  const puissanceTxtClones = [0, 2, 4, 6, 8, 10].map((i) => {
-    const original = texts[i];
-    const txt = original.clone();
-    txt.opacity(0);
-    view.add(txt);
-    txt.absolutePosition(original.absolutePosition());
-    return txt;
-  });
-  yield* sequence(0.12, ...puissanceTxtClones.map((txt, i) => {
-    const newTxt = matrix.word1Texts[i];
-    return all(
-      txt.absolutePosition(newTxt.absolutePosition(), 0.7),
-      txt.opacity(1, 0.1),
-      txt.fontSize(newTxt.fontSize(), 0.7),
-    );
-  }));
+  const animateTextClones = (indices: number[], targetTexts: Txt[]) => {
+    const anims: ThreadGenerator[] = [];
 
+    let iTarget = 0;
+    for (const i of indices) {
+      const original = texts[i];
+      const target = targetTexts[iTarget++];
+
+      const clone = original.clone();
+      clone.opacity(0);
+      view.add(clone);
+      clone.absolutePosition(original.absolutePosition());
+
+      anims.push(
+        all(
+          clone.absolutePosition(target.absolutePosition(), 0.7),
+          clone.opacity(1, 0.1),
+          clone.fontSize(target.fontSize(), 0.7),
+        ),
+      );
+    }
+
+    return anims;
+  };
+
+  yield* sequence(0.13, ...animateTextClones([0, 2, 4, 6, 8, 10], matrix.word1Texts));
   yield* waitFor(0.3);
-
-  const nuanceTxtClones = [1, 3, 5, 7].map((i) => {
-    const original = texts[i];
-    const txt = original.clone();
-    txt.opacity(0);
-    view.add(txt);
-    txt.absolutePosition(original.absolutePosition());
-    return txt;
-  });
-  yield* sequence(0.12, ...nuanceTxtClones.map((txt, i) => {
-    const newTxt = matrix.word2Texts[i];
-    return all(
-      txt.absolutePosition(newTxt.absolutePosition(), 0.7),
-      txt.opacity(1, 0.1),
-      txt.fontSize(newTxt.fontSize(), 0.7),
-    );
-  }));
-
-  puissanceTxtClones.forEach(txt => txt.opacity(0));
-  nuanceTxtClones.forEach(txt => txt.opacity(0));
-  matrix.word1Texts.forEach(txt => txt.opacity(1));
-  matrix.word2Texts.forEach(txt => txt.opacity(1));
+  yield* sequence(0.13, ...animateTextClones([1, 3, 5, 7], matrix.word2Texts));
 
   yield* waitFor(0.5);
 
