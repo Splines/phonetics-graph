@@ -417,7 +417,7 @@ export default makeScene2D(function* (view) {
   //   console.log(alignmentStrings[i]);
   // }
   const randomAlignmentStrings = ["-.--:.-:", ".-:-.-:-", ":---:--.:",
-    ":-.--::--", "-..-:.-", "....--"];
+    ":-.--::--", "....--"];
   const textTransforms = randomAlignmentStrings.map((str) => {
     return chain(
       alignState.animateToState(str, 0.9),
@@ -458,13 +458,13 @@ export default makeScene2D(function* (view) {
   view.add(pathText);
 
   yield* all(
-    chain(waitFor(1.0), ...textTransforms),
+    chain(waitFor(0.8), ...textTransforms),
     container().position.x(-800, 5),
     chain(waitFor(2.3), all(toMatrixLine().opacity(1, 0.5), toMatrixLine().end(1, 3))),
     chain(waitFor(4), pathText.flyIn(1, 0.035)),
   );
 
-  yield* waitFor(2);
+  yield* waitFor(0.5);
 
   // 🎈 Construct the matrix
   const matrixContainerRef = createRef<Node>();
@@ -477,15 +477,65 @@ export default makeScene2D(function* (view) {
   );
   const matrix = new Matrix(matrixContainerRef);
 
-  yield* matrix.word2Texts[0].fill(highlightColor, 0.6);
-  yield* matrix.word1Texts[0].fill(highlightColor, 0.6);
+  yield* all(
+    toMatrixLine().opacity(0, 0.8),
+    pathText.opacity(0, 0.8),
+    sequence(0.03, ...matrix.rects.map(rect => rect.opacity(1, 1))),
+  );
+
+  // Text to new positions
+  const puissanceTxtClones = [0, 2, 4, 6, 8, 10].map((i) => {
+    const original = texts[i];
+    const txt = original.clone();
+    txt.opacity(0);
+    view.add(txt);
+    txt.absolutePosition(original.absolutePosition());
+    return txt;
+  });
+  yield* sequence(0.12, ...puissanceTxtClones.map((txt, i) => {
+    const newTxt = matrix.word1Texts[i];
+    return all(
+      txt.absolutePosition(newTxt.absolutePosition(), 0.7),
+      txt.opacity(1, 0.1),
+      txt.fontSize(newTxt.fontSize(), 0.7),
+    );
+  }));
+
+  yield* waitFor(0.3);
+
+  const nuanceTxtClones = [1, 3, 5, 7].map((i) => {
+    const original = texts[i];
+    const txt = original.clone();
+    txt.opacity(0);
+    view.add(txt);
+    txt.absolutePosition(original.absolutePosition());
+    return txt;
+  });
+  yield* sequence(0.12, ...nuanceTxtClones.map((txt, i) => {
+    const newTxt = matrix.word2Texts[i];
+    return all(
+      txt.absolutePosition(newTxt.absolutePosition(), 0.7),
+      txt.opacity(1, 0.1),
+      txt.fontSize(newTxt.fontSize(), 0.7),
+    );
+  }));
+
+  puissanceTxtClones.forEach(txt => txt.opacity(0));
+  nuanceTxtClones.forEach(txt => txt.opacity(0));
+  matrix.word1Texts.forEach(txt => txt.opacity(1));
+  matrix.word2Texts.forEach(txt => txt.opacity(1));
+
+  yield* waitFor(0.5);
+
+  // yield* matrix.word2Texts[0].fill(highlightColor, 0.6);
+  // yield* matrix.word1Texts[0].fill(highlightColor, 0.6);
 
   yield* waitFor(2);
 });
 
 class Matrix {
   private layout: Reference<Layout>;
-  private rects: Rect[] = [];
+  public rects: Rect[] = [];
 
   private numRows = 6 + 2; // puissance
   private numCols = 4 + 2; // nuance
@@ -538,6 +588,7 @@ class Matrix {
       stroke: "white",
       lineWidth: 6,
       radius: 8,
+      opacity: 0,
     });
   }
 
@@ -553,6 +604,7 @@ class Matrix {
           fontFamily={PHONETIC_FAMILY}
           fontSize={this.FONT_SIZE}
           fill={useScene().variables.get("textFill", "white")}
+          opacity={0}
         >
           {char}
         </Txt>
