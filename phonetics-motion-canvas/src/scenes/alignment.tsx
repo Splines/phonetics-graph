@@ -3,6 +3,7 @@ import {
   all, chain, createRef, Reference, sequence, ThreadGenerator,
   useScene, Vector2, waitFor,
 } from "@motion-canvas/core";
+import { Highlight } from "./Highlight";
 import { LetterTxt } from "./LetterTxt";
 
 const TEXT_FONT = "Vermiglione";
@@ -472,8 +473,8 @@ export default makeScene2D(function* (view) {
   view.add(
     <Rect
       ref={matrixContainerRef}
-      x={800}
-      y={-55}
+      x={520}
+      y={-65}
     />,
   );
   const matrix = new Matrix(matrixContainerRef);
@@ -529,33 +530,99 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
+  container().x(container().x() + 300);
+
   // 🎈 Diagonal steps
+  const animateMatrixStep = function* (
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number,
+    highlightIndices: number[],
+    duration: number,
+  ) {
+    yield* matrix.step(startRow, startCol, endRow, endCol, duration);
+    yield* matrix.highlightCoordinates(endRow, endCol, duration);
+    yield* all(
+      ...highlightIndices.map(i => texts[i].opacity(1, duration)),
+      ...highlightIndices.map(i => texts[i].fill(highlightColor, duration)),
+    );
+    yield* waitFor(0.6);
+    yield* all(
+      ...highlightIndices.map(i => texts[i].fill(textFill, duration)),
+    );
+  };
+
   yield* matrix.highlight(0, 0, 0.8);
   yield* waitFor(1.5);
+  yield* animateMatrixStep(0, 0, 1, 1, [0, 1], 0.8);
+  yield* animateMatrixStep(1, 1, 2, 2, [2, 3], 0.8);
+  yield* animateMatrixStep(2, 2, 3, 3, [4, 5], 0.8);
+  yield* animateMatrixStep(3, 3, 4, 4, [6, 7], 0.8);
+  yield* all(
+    matrix.word1Texts[3].fill(textFill, 0.8),
+    matrix.word2Texts[3].fill(textFill, 0.8),
+  );
 
-  yield* matrix.step(0, 0, 1, 1, 0.8);
-  yield* matrix.highlightCoordinates(1, 1, 1);
-  yield* all(
-    texts[0].opacity(1, 0.8),
-    texts[1].opacity(1, 0.8),
-    texts[0].fill(highlightColor, 0.8),
-    texts[1].fill(highlightColor, 0.8),
-  );
-  yield* waitFor(0.6);
+  // 🎈 Missing letters in puissance
+  const highlight = (
+    <Highlight
+      width={420}
+      height={130}
+      x={-300}
+      y={-28}
+    />
+  ) as Highlight;
+  view.add(highlight);
+  yield* highlight.highlight(1);
+
+  yield* waitFor(1.0);
+
+  yield* sequence(0.5, ...[8, 10].map((i) => {
+    return all(
+      texts[i].opacity(1, 0.6),
+      texts[i].fill(highlightColor2, 0.6),
+    );
+  }));
+  yield* waitFor(0.8);
+  yield* sequence(0.5, ...gaps.map((txt) => {
+    return all(
+      txt.opacity(1, 0.6),
+      txt.fill(highlightColor2, 0.6),
+    );
+  }));
+  yield* waitFor(0.2);
 
   yield* all(
-    matrix.step(1, 1, 2, 2, 0.8),
-    texts[0].fill(textFill, 0.8),
-    texts[1].fill(textFill, 0.8),
+    texts[8].fill(textFill, 0.8),
+    texts[10].fill(textFill, 0.8),
+    ...gaps.map(txt => txt.fill(textFill, 0.8)),
   );
-  yield* matrix.highlightCoordinates(2, 2, 1);
+
+  yield* animateMatrixStep(4, 4, 5, 4, [], 0.8);
   yield* all(
-    texts[2].opacity(1, 0.8),
-    texts[3].opacity(1, 0.8),
-    texts[2].fill(highlightColor, 0.8),
-    texts[3].fill(highlightColor, 0.8),
+    texts[8].fill(highlightColor, 0.8),
+    gaps[0].fill(highlightColor, 0.8),
   );
-  yield* waitFor(0.6);
+  yield* waitFor(0.5);
+  yield* all(
+    texts[8].fill(textFill, 0.8),
+    gaps[0].fill(textFill, 0.8),
+  );
+  yield* animateMatrixStep(5, 4, 6, 4, [], 0.8);
+  yield* all(
+    texts[10].fill(highlightColor, 0.8),
+    gaps[1].fill(highlightColor, 0.8),
+  );
+  yield* waitFor(0.5);
+  yield* all(
+    texts[10].fill(textFill, 1.2),
+    gaps[1].fill(textFill, 1.2),
+    matrix.word1Texts[5].fill(textFill, 1.2),
+    matrix.word2Texts[3].fill(textFill, 1.2),
+    matrix.getRectAt(6, 4).fill(null, 1.2),
+  );
+  yield* waitFor(0.2);
 
   yield* waitFor(2);
 });
@@ -615,7 +682,7 @@ class Matrix {
     return i * this.numCols + j;
   }
 
-  private getRectAt(i: number, j: number): Rect {
+  public getRectAt(i: number, j: number): Rect {
     const index = this.calcIndex(i, j);
     return this.rects[index];
   }
@@ -694,8 +761,8 @@ class Matrix {
     const arrowHorizontal = (
       <Line
         points={[
-          new Vector2(rect.position().x - rect.width() / 6, rect.position().y),
-          new Vector2(rect.position().x - 1.0 * (i + 1) * rect.width(), rect.position().y),
+          new Vector2(rect.position().x, rect.position().y),
+          new Vector2(rect.position().x - (j + 1) * (rect.width() + 10), rect.position().y),
         ]}
         lineWidth={12}
         stroke={highlightColor}
@@ -708,8 +775,8 @@ class Matrix {
 
     const arrowVertical = arrowHorizontal.clone() as Line;
     arrowVertical.points([
-      new Vector2(rect.position().x, rect.position().y - rect.height() / 6),
-      new Vector2(rect.position().x, rect.position().y - 1.0 * (j + 1) * rect.height()),
+      new Vector2(rect.position().x, rect.position().y),
+      new Vector2(rect.position().x, rect.position().y - (i + 1) * (rect.height() + 10)),
     ]);
 
     this.container().add(arrowHorizontal);

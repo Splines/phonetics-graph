@@ -1,0 +1,43 @@
+import { Rect, RectProps } from "@motion-canvas/2d";
+import { all, chain, ThreadGenerator, waitFor } from "@motion-canvas/core";
+
+export class Highlight extends Rect {
+  private HIGHLIGHT_COLOR = "#FFEB6C";
+
+  private highlightRect: Rect;
+
+  public constructor({ children, ...props }: RectProps) {
+    super(props);
+    if (children) throw new Error("A highlight cannot have children");
+
+    const highlightRect = (
+      <Rect
+        width={200}
+        height={100}
+        stroke={this.HIGHLIGHT_COLOR}
+        lineWidth={5}
+        {...props}
+        opacity={0}
+        end={0}
+      >
+      </Rect>
+    ) as Rect;
+
+    this.add(highlightRect);
+    this.highlightRect = highlightRect;
+  }
+
+  * highlight(duration: number): ThreadGenerator {
+    yield*
+    all(
+      this.highlightRect.opacity(1, 0.2 * duration),
+      this.highlightRect.end(1, duration),
+      chain(
+        waitFor(0.3 * duration),
+        all(
+          this.highlightRect.start(1, duration),
+        ),
+      ),
+    );
+  }
+}
