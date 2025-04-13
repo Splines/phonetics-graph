@@ -529,12 +529,33 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
-  // 🎈 First field & diagonal step
+  // 🎈 Diagonal steps
   yield* matrix.highlight(0, 0, 0.8);
   yield* waitFor(1.5);
-  yield* matrix.step(0, 0, 1, 1, 0.8);
 
+  yield* matrix.step(0, 0, 1, 1, 0.8);
   yield* matrix.highlightCoordinates(1, 1, 1);
+  yield* all(
+    texts[0].opacity(1, 0.8),
+    texts[1].opacity(1, 0.8),
+    texts[0].fill(highlightColor, 0.8),
+    texts[1].fill(highlightColor, 0.8),
+  );
+  yield* waitFor(0.6);
+
+  yield* all(
+    matrix.step(1, 1, 2, 2, 0.8),
+    texts[0].fill(textFill, 0.8),
+    texts[1].fill(textFill, 0.8),
+  );
+  yield* matrix.highlightCoordinates(2, 2, 1);
+  yield* all(
+    texts[2].opacity(1, 0.8),
+    texts[3].opacity(1, 0.8),
+    texts[2].fill(highlightColor, 0.8),
+    texts[3].fill(highlightColor, 0.8),
+  );
+  yield* waitFor(0.6);
 
   yield* waitFor(2);
 });
@@ -650,6 +671,8 @@ class Matrix {
 
     return all(
       all(
+        ...this.word1Texts.map(txt => txt.fill("white", 0.8)),
+        ...this.word2Texts.map(txt => txt.fill("white", 0.8)),
         sourceRect.fill(null, duration),
         arrow.opacity(1, duration),
         arrow.end(1, duration),
@@ -698,15 +721,15 @@ class Matrix {
       arrowVertical.opacity(1, 0.6 * duration),
       arrowVertical.end(1, duration),
       chain(
-        waitFor(1.5 * duration),
+        waitFor(1.2 * duration),
         all(
           arrowHorizontal.start(1, duration),
           arrowHorizontal.opacity(0, duration),
           arrowVertical.start(1, duration),
           arrowVertical.opacity(0, duration),
 
-          this.word1Texts[0].fill(highlightColor, duration),
-          this.word2Texts[0].fill(highlightColor, duration),
+          this.word1Texts[i - 1].fill(highlightColor, duration),
+          this.word2Texts[j - 1].fill(highlightColor, duration),
         ),
       ),
     );
