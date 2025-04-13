@@ -520,16 +520,17 @@ export default makeScene2D(function* (view) {
     ...gaps.map(txt => txt.opacity(0, 1.2)),
   );
 
-  yield* waitFor(2);
+  yield* waitFor(1);
 
   // 🎈 First field & diagonal step
   yield* matrix.highlight(0, 0, 0.8);
-  yield* waitFor(1);
-  yield* matrix.highlight(1, 1, 0.8);
+  yield* waitFor(1.5);
+  yield* matrix.step(0, 0, 1, 1, 0.8);
   yield* waitFor(1);
 });
 
 class Matrix {
+  private container: Reference<Node>;
   private layout: Reference<Layout>;
   public rects: Rect[] = [];
 
@@ -544,6 +545,7 @@ class Matrix {
   public word2Texts: Txt[] = [];
 
   constructor(container: Reference<Node>) {
+    this.container = container;
     const layout = createRef<Layout>();
     this.layout = layout;
     container().add(<Layout ref={layout} layout gap={20} width={900} wrap="wrap" />);
@@ -577,15 +579,50 @@ class Matrix {
     }
   }
 
+  private calcIndex(i: number, j: number): number {
+    return i * this.numCols + j;
+  }
+
+  private getRectAt(i: number, j: number): Rect {
+    const index = this.calcIndex(i, j);
+    return this.rects[index];
+  }
+
   public highlight(i: number, j: number, duration: number): ThreadGenerator {
-    const index = i * this.numCols + j;
-    const rect = this.rects[index];
+    const rect = this.getRectAt(i, j);
+    return this.highlightRect(rect, duration);
+  }
+
+  private highlightRect(rect: Rect, duration: number): ThreadGenerator {
     return all(
       rect.stroke(highlightColor, duration),
       rect.fill(highlightColor, duration),
-      // all other fields only stroke
-      ...this.rects.filter((_, k) => k !== index)
-        .map(r => r.fill(null, duration)),
+    );
+  }
+
+  public step(iSource: number, jSource: number,
+    iTarget: number, jTarget: number, duration: number): ThreadGenerator {
+    // const arrow = (
+    //   <Line
+    //     points={[
+    //       [0, 0],
+    //       [0, -130],
+    //     ]}
+    //     lineWidth={5}
+    //     stroke={highlightColor}
+    //     arrowSize={10}
+    //     endArrow
+    //     lineCap="round"
+    //     opacity={0}
+    //   />
+    // ) as Line;
+    // this.container().add(arrow);
+    const sourceRect = this.getRectAt(iSource, jSource);
+    const targetRect = this.getRectAt(iTarget, jTarget);
+
+    return all(
+      sourceRect.fill(null, duration),
+      this.highlightRect(targetRect, duration),
     );
   }
 
