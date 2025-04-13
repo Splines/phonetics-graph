@@ -8,6 +8,10 @@ import { LetterTxt } from "./LetterTxt";
 const TEXT_FONT = "Vermiglione";
 const PHONETIC_FAMILY = "Charis";
 
+const highlightColor = "#FFEB6C";
+// const highlightColor2 = "#68D3F7";
+const highlightColor2 = "#C0B8F2";
+
 class Alignment {
   word1: string[] = [];
   word2: string[] = [];
@@ -297,9 +301,6 @@ function generateAllPossibleAlignmentStrings(word1Length: number, word2Length: n
 
 export default makeScene2D(function* (view) {
   const textFill = useScene().variables.get("textFill", "white");
-  const highlightColor = "#FFEB6C";
-  // const highlightColor2 = "#68D3F7";
-  const highlightColor2 = "#C0B8F2";
 
   const container = createRef<Node>();
   const alignState = new AlignState(container, "pɥisɑ̃s", "nɥɑ̃s", "....--");
@@ -519,20 +520,21 @@ export default makeScene2D(function* (view) {
     ...gaps.map(txt => txt.opacity(0, 1.2)),
   );
 
-  yield* waitFor(0.5);
-
-  // yield* matrix.word2Texts[0].fill(highlightColor, 0.6);
-  // yield* matrix.word1Texts[0].fill(highlightColor, 0.6);
-
   yield* waitFor(2);
+
+  // 🎈 First field & diagonal step
+  yield* matrix.highlight(0, 0, 0.8);
+  yield* waitFor(1);
+  yield* matrix.highlight(1, 1, 0.8);
+  yield* waitFor(1);
 });
 
 class Matrix {
   private layout: Reference<Layout>;
   public rects: Rect[] = [];
 
-  private numRows = 6 + 2; // puissance
-  private numCols = 4 + 2; // nuance
+  private numRows = 6 + 1; // puissance
+  private numCols = 4 + 1; // nuance
 
   private FONT_SIZE = 80;
 
@@ -554,8 +556,8 @@ class Matrix {
       this.layout().add(txt);
     }
 
-    for (let i = 1; i < this.numRows; i++) {
-      for (let j = 0; j < this.numCols; j++) {
+    for (let i = 1; i < this.numRows + 1; i++) {
+      for (let j = 0; j < this.numCols + 1; j++) {
         if (i >= 2 && j === 0) {
           const txt = this.createTextInRect(this.word1[i - 2]);
           this.word1Texts.push(txt.childAs(0));
@@ -573,6 +575,18 @@ class Matrix {
         this.layout().add(rect);
       }
     }
+  }
+
+  public highlight(i: number, j: number, duration: number): ThreadGenerator {
+    const index = i * this.numCols + j;
+    const rect = this.rects[index];
+    return all(
+      rect.stroke(highlightColor, duration),
+      rect.fill(highlightColor, duration),
+      // all other fields only stroke
+      ...this.rects.filter((_, k) => k !== index)
+        .map(r => r.fill(null, duration)),
+    );
   }
 
   private getRect(): Rect {
