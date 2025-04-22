@@ -1,8 +1,9 @@
 import { Line, makeScene2D, Node, Rect } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
-import { Matrix } from "./Matrix";
 import { TEXT_FILL } from "./globals";
+import { Matrix } from "./Matrix";
+import { ScoreRuler } from "./ScoreRuler";
 
 export default makeScene2D(function* (view) {
   // 🎈 Alignment -> Path in matrix
@@ -80,6 +81,20 @@ export default makeScene2D(function* (view) {
       ...matrix.highlightAlignmentPath(alignmentString, 0.4),
     )),
   );
+
+  yield* waitFor(1.5);
+
+  // 🎈 Path in matrix -> score
+  const scoreRuler = (
+    <ScoreRuler
+      points={[
+        [0, 400],
+        [0, -400],
+      ]}
+      x={700}
+    />
+  ) as ScoreRuler;
+  view.add(scoreRuler);
 
   yield* waitFor(5);
 });
