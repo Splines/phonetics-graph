@@ -1,6 +1,6 @@
 import { is, Layout, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
-  all, chain, createRef, Reference, sequence, ThreadGenerator,
+  all, chain, createRef, delay, Reference, sequence, ThreadGenerator,
   useScene, Vector2, waitFor,
 } from "@motion-canvas/core";
 import { Highlight } from "./Highlight";
@@ -801,6 +801,54 @@ export default makeScene2D(function* (view) {
     ...goodMoveEnds.map(([row, col]) => {
       return matrix.step(3, 3, row, col, 0.8);
     }),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Fade out matrix & show exercise alignment
+  const containerExercise = createRef<Node>();
+  const alignmentExercise = new AlignState(containerExercise, "pɥisɑ̃s", "nɥɑ̃s", "..--..");
+  const textsAlignment = alignmentExercise.generateElements();
+  for (const text of textsAlignment) {
+    text.position.y(text.position.y() + alignmentDelta + 150);
+    text.opacity(0);
+  }
+  view.add(
+    <Rect ref={containerExercise} x={0} y={-100}>
+      { textsAlignment.map((txt) => {
+        txt.rotation(20);
+        return txt;
+      })}
+    </Rect>,
+  );
+
+  const highlightExercise = (
+    <Highlight
+      width={650}
+      height={250}
+      x={0}
+      y={0}
+    />
+  ) as Highlight;
+  view.add(highlightExercise);
+
+  yield* all(
+    ...matrix.word1Texts.map(txt => txt.opacity(0, 1.5)),
+    ...matrix.word2Texts.map(txt => txt.opacity(0, 1.5)),
+    sequence(0.02,
+      ...matrix.rects.map((rect) => {
+        return all(
+          rect.height(0, 1),
+          rect.opacity(0, 1),
+        );
+      }),
+    ),
+    delay(1, all(
+      ...textsAlignment.map(txt => txt.position.y(txt.position.y() - 150, 1.2)),
+      ...textsAlignment.map(txt => txt.opacity(1, 1.2)),
+      ...textsAlignment.map(txt => txt.rotation(0, 1.2)),
+    )),
+    delay(1.6, highlightExercise.highlight(1.2)),
   );
 
   yield* waitFor(5);
