@@ -92,9 +92,16 @@ export default makeScene2D(function* (view) {
         [0, -400],
       ]}
       x={700}
+      maxValue={30}
     />
   ) as ScoreRuler;
   view.add(scoreRuler);
+
+  yield* waitFor(1);
+
+  yield* scoreRuler.value(30, 1.5);
+  yield* scoreRuler.value(-30, 1.5);
+  yield* scoreRuler.value(0, 1.5);
 
   yield* waitFor(5);
 });
