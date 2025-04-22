@@ -744,58 +744,14 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
-  // 🎈 Highlight bad moves
+  // 🎈 Highlight first bad move
   duration = 1.0;
-  const badMoveStart = matrix.getRectAt(3, 3);
-  let badMoveEnd = matrix.getRectAt(4, 2);
+  const startRect = matrix.getRectAt(3, 3);
   yield* all(
-    badMoveStart.fill(highlightColor2, duration),
-    badMoveStart.stroke(highlightColor2, duration),
-    badMoveStart.lineWidth(10, duration),
-  );
-  yield* waitFor(1);
-
-  const badMoveOffset = badMoveStart.width() / 6;
-  const arrow = (
-    <Line
-      points={[
-        new Vector2(
-          badMoveStart.x() - badMoveOffset,
-          badMoveStart.y() + badMoveOffset,
-        ),
-        new Vector2(
-          badMoveEnd.x() + badMoveOffset,
-          badMoveEnd.y() - badMoveOffset,
-        ),
-      ]}
-      lineWidth={18}
-      stroke={highlightColor2}
-      lineCap="round"
-      opacity={0}
-      end={0}
-    />
-  ) as Line;
-  matrix.container().add(arrow);
-
-  duration = 0.8;
-  yield* all(
-    all(
-      badMoveStart.fill(null, duration),
-      arrow.opacity(1, duration),
-      arrow.end(1, duration),
-    ),
-    chain(
-      waitFor(0.5 * duration),
-      all(
-        arrow.start(1, duration),
-        chain(waitFor(0.3 * duration), arrow.opacity(0, duration)),
-        all(
-          badMoveEnd.stroke(highlightColor2, duration * 1.2),
-          badMoveEnd.fill(highlightColor2, duration * 1.2),
-          badMoveEnd.lineWidth(10, duration * 1.2),
-        ),
-      ),
-    ),
+    startRect.lineWidth(10, duration),
+    startRect.stroke(highlightColor2, duration),
+    startRect.fill(highlightColor2, duration),
+    matrix.step(3, 3, 4, 2, duration, true),
   );
 
   yield* waitFor(1);
@@ -825,6 +781,26 @@ export default makeScene2D(function* (view) {
     ...texts2.map(txt => txt.opacity(0, duration)),
     ...texts3.map(txt => txt.opacity(0, duration)),
     ...resetMatrix,
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Highlight all bad & good moves
+  const badMoveEnds = [[3, 2], [2, 2], [2, 3], [2, 4]];
+  yield* chain(
+    ...badMoveEnds.map(([row, col]) => {
+      return matrix.step(3, 3, row, col, 0.8, true);
+    }),
+  );
+  yield* matrix.getRectAt(3, 3).stroke(matrix.BASE_COLOR, 0.8);
+
+  yield* waitFor(1);
+
+  const goodMoveEnds = [[3, 4], [4, 4], [4, 3]];
+  yield* chain(
+    ...goodMoveEnds.map(([row, col]) => {
+      return matrix.step(3, 3, row, col, 0.8);
+    }),
   );
 
   yield* waitFor(5);
@@ -896,15 +872,21 @@ class Matrix {
     return this.highlightRect(rect, duration);
   }
 
-  private highlightRect(rect: Rect, duration: number): ThreadGenerator {
+  private highlightRect(rect: Rect, duration: number,
+    isVariant: boolean = false): ThreadGenerator {
+    const color = isVariant ? highlightColor2 : highlightColor;
+    const strokeAnim = isVariant ? rect.lineWidth(10, duration) : null;
+
     return all(
-      rect.stroke(highlightColor, duration),
-      rect.fill(highlightColor, duration),
+      rect.stroke(color, duration),
+      rect.fill(color, duration),
+      strokeAnim,
     );
   }
 
   public step(iSource: number, jSource: number,
-    iTarget: number, jTarget: number, duration: number): ThreadGenerator {
+    iTarget: number, jTarget: number, duration: number,
+    isVariant: boolean = false): ThreadGenerator {
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
 
@@ -932,7 +914,7 @@ class Matrix {
           arrowEnd,
         ]}
         lineWidth={18}
-        stroke={highlightColor}
+        stroke={isVariant ? highlightColor2 : highlightColor}
         lineCap="round"
         opacity={0}
         end={0}
@@ -940,10 +922,13 @@ class Matrix {
     ) as Line;
     this.container().add(arrow);
 
+    const words1Anims = isVariant ? [] : this.word1Texts.map(txt => txt.fill("white", 0.8));
+    const words2Anims = this.word2Texts.map(txt => txt.fill("white", 0.8));
+
     return all(
       all(
-        ...this.word1Texts.map(txt => txt.fill("white", 0.8)),
-        ...this.word2Texts.map(txt => txt.fill("white", 0.8)),
+        ...words1Anims,
+        ...words2Anims,
         sourceRect.fill(null, duration),
         arrow.opacity(1, duration),
         arrow.end(1, duration),
@@ -953,7 +938,7 @@ class Matrix {
         all(
           arrow.start(1, duration),
           chain(waitFor(0.3 * duration), arrow.opacity(0, duration)),
-          this.highlightRect(targetRect, duration),
+          this.highlightRect(targetRect, duration, isVariant),
         ),
       ),
     );
