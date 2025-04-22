@@ -540,16 +540,19 @@ export default makeScene2D(function* (view) {
     endCol: number,
     highlightIndices: number[],
     duration: number,
+    customTexts?: Txt[],
   ) {
     yield* matrix.step(startRow, startCol, endRow, endCol, duration);
     yield* matrix.highlightCoordinates(endRow, endCol, duration);
+
+    let txt = customTexts ? customTexts : texts;
     yield* all(
-      ...highlightIndices.map(i => texts[i].opacity(1, duration)),
-      ...highlightIndices.map(i => texts[i].fill(highlightColor, duration)),
+      ...highlightIndices.map(i => txt[i].opacity(1, duration)),
+      ...highlightIndices.map(i => txt[i].fill(highlightColor, duration)),
     );
     yield* waitFor(0.6);
     yield* all(
-      ...highlightIndices.map(i => texts[i].fill(textFill, duration)),
+      ...highlightIndices.map(i => txt[i].fill(textFill, duration)),
     );
   };
 
@@ -620,11 +623,53 @@ export default makeScene2D(function* (view) {
     gaps[1].fill(textFill, 1.2),
     matrix.word1Texts[5].fill(textFill, 1.2),
     matrix.word2Texts[3].fill(textFill, 1.2),
-    matrix.getRectAt(6, 4).fill(null, 1.2),
   );
-  yield* waitFor(0.2);
+  yield* waitFor(1);
 
-  yield* waitFor(2);
+  // 🎈 Go back some steps
+  let duration = 0.5;
+  yield* all(
+    matrix.getRectAt(6, 4).stroke("white", duration * 1.2),
+    matrix.step(6, 4, 5, 4, duration),
+    texts[10].opacity(0, duration * 1.5),
+    gaps[1].opacity(0, duration * 1.5),
+  );
+  yield* all(
+    matrix.getRectAt(5, 4).stroke("white", duration * 1.2),
+    matrix.step(5, 4, 4, 4, duration),
+    texts[8].opacity(0, duration * 1.5),
+    gaps[0].opacity(0, duration * 1.5),
+  );
+  yield* all(
+    matrix.getRectAt(4, 4).stroke("white", duration * 1.2),
+    matrix.step(4, 4, 3, 3, duration),
+    texts[6].opacity(0, duration * 1.5),
+    texts[7].opacity(0, duration * 1.5),
+  );
+
+  yield* waitFor(1);
+
+  const container2 = createRef<Node>();
+  const alignment2 = new AlignState(container2, "pɥisɑ̃s", "nɥɑ̃s", "...:---");
+  const texts2 = alignment2.generateElements();
+  for (const text of texts2) {
+    text.position.y(text.position.y() + alignmentDelta);
+    text.opacity(0);
+  }
+  view.add(
+    <Rect ref={container2} x={-450} y={-100}>
+      { texts2 }
+    </Rect>,
+  );
+
+  // 🎈 Take horizontal step instead
+  duration = 0.4;
+  yield* animateMatrixStep(3, 3, 3, 4, [6, 7], 1.0, texts2), // wait
+  yield* animateMatrixStep(3, 4, 4, 4, [8, 9], duration, texts2),
+  yield* animateMatrixStep(4, 4, 5, 4, [10, 11], duration, texts2),
+  yield* animateMatrixStep(5, 4, 6, 4, [12, 13], duration, texts2),
+
+  yield* waitFor(5);
 });
 
 class Matrix {
