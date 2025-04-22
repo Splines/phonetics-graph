@@ -662,12 +662,84 @@ export default makeScene2D(function* (view) {
     </Rect>,
   );
 
-  // 🎈 Take horizontal step instead
+  // 🎈 Take horizontal step instead & finish alignment
   duration = 0.4;
   yield* animateMatrixStep(3, 3, 3, 4, [6, 7], 1.0, texts2), // wait
   yield* animateMatrixStep(3, 4, 4, 4, [8, 9], duration, texts2),
   yield* animateMatrixStep(4, 4, 5, 4, [10, 11], duration, texts2),
   yield* animateMatrixStep(5, 4, 6, 4, [12, 13], duration, texts2),
+  yield* all(
+    matrix.word1Texts[5].fill(textFill, 1.2),
+    matrix.word2Texts[3].fill(textFill, 1.2),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Go back some steps
+  duration = 0.5;
+  yield* all(
+    matrix.getRectAt(6, 4).stroke("white", duration * 1.2),
+    matrix.step(6, 4, 5, 4, duration),
+    texts2[12].opacity(0, duration * 1.5),
+    texts2[13].opacity(0, duration * 1.5),
+  );
+  yield* all(
+    matrix.getRectAt(5, 4).stroke("white", duration * 1.2),
+    matrix.step(5, 4, 4, 4, duration),
+    texts2[10].opacity(0, duration * 1.5),
+    texts2[11].opacity(0, duration * 1.5),
+  );
+  yield* all(
+    matrix.getRectAt(4, 4).stroke("white", duration * 1.2),
+    matrix.step(4, 4, 3, 4, duration),
+    texts2[8].opacity(0, duration * 1.5),
+    texts2[9].opacity(0, duration * 1.5),
+  );
+  yield* all(
+    matrix.getRectAt(3, 4).stroke("white", duration * 1.2),
+    matrix.step(3, 4, 3, 3, duration),
+    texts2[6].opacity(0, duration * 1.5),
+    texts2[7].opacity(0, duration * 1.5),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Take not-allowed step (bottom-left) & finish alignment
+  const container3 = createRef<Node>();
+  const alignment3 = new AlignState(container3, "pɥisɑ̃s", "nɥɑ̃ɥɑ̃s", "......");
+  const texts3 = alignment3.generateElements();
+  for (const text of texts3) {
+    text.position.y(text.position.y() + alignmentDelta);
+    text.opacity(0);
+  }
+  view.add(
+    <Rect ref={container3} x={-500} y={-100}>
+      { texts3 }
+    </Rect>,
+  );
+
+  duration = 0.8;
+  yield* animateMatrixStep(3, 3, 4, 2, [6, 7], duration, texts3);
+  yield* waitFor(1);
+  yield* animateMatrixStep(4, 2, 5, 3, [8, 9], duration, texts3);
+  yield* animateMatrixStep(5, 3, 6, 4, [10, 11], duration, texts3);
+  yield* all(
+    matrix.word1Texts[5].fill(textFill, 1.2),
+    matrix.word2Texts[3].fill(textFill, 1.2),
+  );
+
+  yield* waitFor(1);
+
+  const highlightWeird = (
+    <Highlight
+      width={600}
+      height={126}
+      x={-252}
+      y={30}
+    />
+  ) as Highlight;
+  view.add(highlightWeird);
+  yield* highlightWeird.highlight(1.5);
 
   yield* waitFor(5);
 });
