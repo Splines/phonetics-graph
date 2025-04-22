@@ -2,6 +2,7 @@ import { Layout, Line, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
   all, chain, createRef,
   Reference,
+  sequence,
   ThreadGenerator,
   useScene,
   Vector2,
@@ -194,6 +195,46 @@ export class Matrix {
         ),
       ),
     );
+  }
+
+  /**
+   * Highlights the alignment path in the matrix.
+   *
+   * - `.` = bottom-right diagonal
+   * - `:` = right
+   * - `-` = down
+   */
+  public highlightAlignmentPath(alignmentString: string, duration: number): ThreadGenerator[] {
+    const path: number[][] = [[0, 0]];
+    let row = 0;
+    let col = 0;
+
+    for (const char of alignmentString) {
+      if (char === ".") {
+        path.push([++row, ++col]);
+      } else if (char === ":") {
+        path.push([row, ++col]);
+      } else if (char === "-") {
+        path.push([++row, col]);
+      } else {
+        throw new Error(`Invalid character in alignment string: ${char}`);
+      }
+    }
+
+    return path.map((p) => {
+      const rect = this.getRectAt(p[0], p[1]);
+
+      const durationShort = duration * 0.6;
+
+      return sequence(durationShort,
+        this.highlight(p[0], p[1], durationShort),
+        all(
+          rect.fill(null, durationShort),
+          rect.stroke(HIGHLIGHT_COLOR, durationShort),
+          rect.lineWidth(9, durationShort),
+        ),
+      );
+    });
   }
 
   private getRect(): Rect {
