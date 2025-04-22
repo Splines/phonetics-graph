@@ -11,7 +11,8 @@ const PHONETIC_FAMILY = "Charis";
 
 const highlightColor = "#FFEB6C";
 // const highlightColor2 = "#68D3F7";
-const highlightColor2 = "#C0B8F2";
+// const highlightColor2 = "#C0B8F2";
+const highlightColor2 = "#FF5E7E";
 
 class Alignment {
   word1: string[] = [];
@@ -739,19 +740,105 @@ export default makeScene2D(function* (view) {
     />
   ) as Highlight;
   view.add(highlightWeird);
-  yield* highlightWeird.highlight(1.5);
+  yield* highlightWeird.highlight(1.2);
+
+  yield* waitFor(1);
+
+  // 🎈 Highlight bad moves
+  duration = 1.0;
+  const badMoveStart = matrix.getRectAt(3, 3);
+  let badMoveEnd = matrix.getRectAt(4, 2);
+  yield* all(
+    badMoveStart.fill(highlightColor2, duration),
+    badMoveStart.stroke(highlightColor2, duration),
+    badMoveStart.lineWidth(10, duration),
+  );
+  yield* waitFor(1);
+
+  const badMoveOffset = badMoveStart.width() / 6;
+  const arrow = (
+    <Line
+      points={[
+        new Vector2(
+          badMoveStart.x() - badMoveOffset,
+          badMoveStart.y() + badMoveOffset,
+        ),
+        new Vector2(
+          badMoveEnd.x() + badMoveOffset,
+          badMoveEnd.y() - badMoveOffset,
+        ),
+      ]}
+      lineWidth={18}
+      stroke={highlightColor2}
+      lineCap="round"
+      opacity={0}
+      end={0}
+    />
+  ) as Line;
+  matrix.container().add(arrow);
+
+  duration = 0.8;
+  yield* all(
+    all(
+      badMoveStart.fill(null, duration),
+      arrow.opacity(1, duration),
+      arrow.end(1, duration),
+    ),
+    chain(
+      waitFor(0.5 * duration),
+      all(
+        arrow.start(1, duration),
+        chain(waitFor(0.3 * duration), arrow.opacity(0, duration)),
+        all(
+          badMoveEnd.stroke(highlightColor2, duration * 1.2),
+          badMoveEnd.fill(highlightColor2, duration * 1.2),
+          badMoveEnd.lineWidth(10, duration * 1.2),
+        ),
+      ),
+    ),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Reset all matrix fields except (3,3) and (4,2) and move matrix to center
+  duration = 2.0;
+
+  let resetMatrix: ThreadGenerator[] = [];
+  for (let row = 0; row < matrix.numRows; row++) {
+    for (let col = 0; col < matrix.numCols; col++) {
+      if ((row === 3 && col === 3) || (row === 4 && col === 2)) {
+        continue;
+      }
+      const rect = matrix.getRectAt(row, col);
+      resetMatrix.push(
+        all(
+          rect.fill(null, duration),
+          rect.stroke(matrix.BASE_COLOR, duration),
+        ),
+      );
+    }
+  }
+  yield* all(
+    matrix.container().x(0, 2.5),
+    ...texts.map(txt => txt.opacity(0, duration)),
+    ...gaps.map(txt => txt.opacity(0, duration)),
+    ...texts2.map(txt => txt.opacity(0, duration)),
+    ...texts3.map(txt => txt.opacity(0, duration)),
+    ...resetMatrix,
+  );
 
   yield* waitFor(5);
 });
 
 class Matrix {
-  private container: Reference<Node>;
+  public container: Reference<Node>;
   private layout: Reference<Layout>;
   public rects: Rect[] = [];
 
-  private numRows = 6 + 1; // puissance
-  private numCols = 4 + 1; // nuance
+  public numRows = 6 + 1; // puissance
+  public numCols = 4 + 1; // nuance
 
+  public BASE_COLOR = "#EDEDED";
   private FONT_SIZE = 80;
   private COORD_COLOR = "#54B0CF";
 
@@ -923,7 +1010,7 @@ class Matrix {
     return new Rect({
       width: 130,
       height: 130,
-      stroke: "white",
+      stroke: this.BASE_COLOR,
       lineWidth: 6,
       radius: 8,
       opacity: 0,
