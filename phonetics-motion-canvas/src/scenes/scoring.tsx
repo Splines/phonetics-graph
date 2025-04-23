@@ -138,7 +138,7 @@ export default makeScene2D(function* (view) {
     )),
   );
 
-  yield* scoreRuler.value(-7, 1.2);
+  yield* scoreRuler.value(-15, 1.2);
 
   yield* waitFor(5);
 });
