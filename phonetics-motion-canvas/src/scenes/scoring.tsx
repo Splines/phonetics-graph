@@ -85,23 +85,60 @@ export default makeScene2D(function* (view) {
   yield* waitFor(1.5);
 
   // 🎈 Path in matrix -> score
+  const matrixToScoreLine = createRef<Line>();
+  view.add(
+    <Line
+      ref={matrixToScoreLine}
+      points={[
+        [-150, 0],
+        [150, 0],
+      ]}
+      lineWidth={10}
+      stroke={TEXT_FILL}
+      arrowSize={25}
+      endArrow
+      lineCap="round"
+      lineDash={[20, 20]}
+      opacity={0}
+      end={0}
+      x={1000}
+    />,
+  );
+
   const scoreRuler = (
     <ScoreRuler
       points={[
         [0, 400],
         [0, -400],
       ]}
-      x={700}
+      x={660}
       maxValue={30}
     />
   ) as ScoreRuler;
   view.add(scoreRuler);
+  scoreRuler.ruler.end(0);
+  scoreRuler.value(-30);
 
-  yield* waitFor(1);
+  yield* all(
+    sequence(0.06,
+      alignmentContainer().x(-1100, 1.5),
+      toMatrixLine().x(-380, 1.5),
+      matrixContainer().x(300, 1.5),
+    ),
+    delay(0.2,
+      all(
+        matrixToScoreLine().opacity(1, 1.0),
+        matrixToScoreLine().end(1, 1.5),
+      ),
+    ),
+    delay(0.5, all(
+      scoreRuler.opacity(1, 1),
+      scoreRuler.ruler.end(1, 1),
+      scoreRuler.value(20, 1.4),
+    )),
+  );
 
-  yield* scoreRuler.value(30, 1.5);
-  yield* scoreRuler.value(-30, 1.5);
-  yield* scoreRuler.value(0, 1.5);
+  yield* scoreRuler.value(-7, 1.2);
 
   yield* waitFor(5);
 });

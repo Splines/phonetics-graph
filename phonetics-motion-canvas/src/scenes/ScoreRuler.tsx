@@ -1,5 +1,6 @@
-import { initial, Line, LineProps, signal } from "@motion-canvas/2d";
-import { createSignal, SignalValue, SimpleSignal } from "@motion-canvas/core";
+import { initial, Line, LineProps, signal, Txt } from "@motion-canvas/2d";
+import { createSignal, SignalValue, SimpleSignal, unwrap } from "@motion-canvas/core";
+import { TEXT_FONT } from "./globals";
 
 export interface ScoreRulerProps extends LineProps {
   maxValue: SignalValue<number>;
@@ -10,7 +11,7 @@ export class ScoreRuler extends Line {
   @signal()
   public declare readonly maxValue: SimpleSignal<number, this>;
 
-  private ruler: Line;
+  public ruler: Line;
   public value: SimpleSignal<number> = createSignal(0); // range: [-100, 100]
 
   public constructor({ children, ...props }: ScoreRulerProps) {
@@ -23,11 +24,15 @@ export class ScoreRuler extends Line {
     if (props.points.length !== 2) {
       throw new Error("A score ruler must have exactly 2 points");
     }
-    if (props.points[0][0] !== props.points[1][0]) {
+    const myPoints = unwrap(props.points);
+    const startPoint = myPoints[0].valueOf() as [number, number];
+    const endPoint = myPoints[1].valueOf() as [number, number];
+
+    if (startPoint[0] !== endPoint[0]) {
       throw new Error("A score ruler must be vertical");
     }
 
-    const lineHeight = Math.abs(props.points[1][1] - props.points[0][1]) - 120;
+    const lineHeight = Math.abs(endPoint[1] - startPoint[1]) - 120;
 
     const ruler = (
       <Line
@@ -56,6 +61,25 @@ export class ScoreRuler extends Line {
     ) as Line;
     this.add(valueMarker);
 
-    valueMarker.y(() => -(this.value() / this.maxValue()) * (lineHeight / 2));
+    const getY = (value: number) => {
+      return -(value / this.maxValue()) * (lineHeight / 2);
+    };
+
+    valueMarker.y(() => getY(this.value()));
+
+    const valueText = (
+      <Txt
+        text={() => this.value().toFixed(0)}
+        fill="white"
+        fontFamily={TEXT_FONT}
+        fontWeight={700}
+        fontSize={80}
+        x={(unwrap(props.x) ?? 0) + 100}
+        y={() => getY(this.value()) + 4}
+      />
+    ) as Txt;
+    this.add(valueText);
+
+    this.opacity(0);
   }
 }
