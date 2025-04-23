@@ -2,6 +2,7 @@ import { is, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
 import { HIGHLIGHT_COLOR, TEXT_FILL } from "./globals";
+import { Highlight } from "./Highlight";
 import { Matrix } from "./Matrix";
 import { ScoreRuler } from "./ScoreRuler";
 
@@ -188,10 +189,29 @@ export default makeScene2D(function* (view) {
   yield* waitFor(1);
 
   const gaps = view.findAll(is(Txt)).filter(txt => txt.text() === "–");
-  yield* sequence(0.08,
-    ...gaps.map((text) => {
+  gaps.sort((a, b) => a.x() - b.x());
+
+  // Construct highlight boxes around each gap
+  const highlightBoxes = gaps.map((txt) => {
+    const highlight = (
+      <Highlight
+        width={70}
+        height={50}
+      />
+    ) as Highlight;
+    const newCoord = txt.localToParent().transformPoint();
+    highlight.absolutePosition(newCoord);
+    highlight.y(highlight.y() + 10);
+
+    return highlight;
+  });
+  alignmentContainer().add(highlightBoxes);
+
+  yield* sequence(0.3,
+    ...gaps.map((text, i) => {
       return all(
         text.fill(HIGHLIGHT_COLOR, 0.8),
+        highlightBoxes[i].highlight(0.8),
       );
     }));
 
