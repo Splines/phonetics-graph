@@ -101,7 +101,7 @@ export default makeScene2D(function* (view) {
       lineDash={[20, 20]}
       opacity={0}
       end={0}
-      x={1000}
+      x={850}
     />,
   );
 
@@ -111,7 +111,7 @@ export default makeScene2D(function* (view) {
         [0, 400],
         [0, -400],
       ]}
-      x={660}
+      x={570}
       maxValue={30}
     />
   ) as ScoreRuler;
@@ -121,9 +121,9 @@ export default makeScene2D(function* (view) {
 
   yield* all(
     sequence(0.06,
-      alignmentContainer().x(-1100, 1.5),
-      toMatrixLine().x(-380, 1.5),
-      matrixContainer().x(300, 1.5),
+      alignmentContainer().x(-1200, 1.5),
+      toMatrixLine().x(-500, 1.5),
+      matrixContainer().x(150, 1.5),
     ),
     delay(0.2,
       all(
@@ -139,6 +139,30 @@ export default makeScene2D(function* (view) {
   );
 
   yield* scoreRuler.value(-15, 1.2);
+
+  yield* waitFor(1.0);
+
+  const resetMatrixRects = matrix.rects.map((rect) => {
+    return all(
+      rect.lineWidth(6, 1.2),
+      rect.stroke(TEXT_FILL, 1.2),
+    );
+  });
+
+  alignmentString = "..--..";
+  yield* all(
+    all(
+      alignment.animateToState(alignmentString, 1.6),
+      alignmentContainer().x(-1050, 1.6),
+      ...resetMatrixRects,
+    ),
+    delay(1.5, sequence(0.1,
+      ...matrix.highlightAlignmentPath(alignmentString, 0.4),
+    )),
+    delay(1.9, all(
+      scoreRuler.value(-2, 1.5),
+    )),
+  );
 
   yield* waitFor(5);
 });
