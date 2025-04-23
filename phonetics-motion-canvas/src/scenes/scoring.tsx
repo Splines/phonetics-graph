@@ -1,7 +1,7 @@
-import { Line, makeScene2D, Node, Rect } from "@motion-canvas/2d";
+import { is, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
-import { TEXT_FILL } from "./globals";
+import { HIGHLIGHT_COLOR, TEXT_FILL } from "./globals";
 import { Matrix } from "./Matrix";
 import { ScoreRuler } from "./ScoreRuler";
 
@@ -142,10 +142,10 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1.0);
 
-  const resetMatrixRects = matrix.rects.map((rect) => {
+  const resetMatrixRects = (duration: number) => matrix.rects.map((rect) => {
     return all(
-      rect.lineWidth(6, 1.2),
-      rect.stroke(TEXT_FILL, 1.2),
+      rect.lineWidth(6, duration),
+      rect.stroke(TEXT_FILL, duration),
     );
   });
 
@@ -154,7 +154,7 @@ export default makeScene2D(function* (view) {
     all(
       alignment.animateToState(alignmentString, 1.6),
       alignmentContainer().x(-1050, 1.6),
-      ...resetMatrixRects,
+      ...resetMatrixRects(1.2),
     ),
     delay(1.5, sequence(0.1,
       ...matrix.highlightAlignmentPath(alignmentString, 0.4),
@@ -163,6 +163,37 @@ export default makeScene2D(function* (view) {
       scoreRuler.value(-2, 1.5),
     )),
   );
+
+  yield* waitFor(2);
+
+  // 🎈 Bad gaps
+  alignmentString = ":-.:-:---";
+
+  yield* all(
+    alignmentContainer().x(0, 2.0),
+    alignment.animateToState(alignmentString, 1.8),
+    all(
+      matrixContainer().x(600, 1.8),
+      matrixContainer().opacity(0, 1.7),
+      matrixToScoreLine().x(1100, 1.7),
+      matrixToScoreLine().opacity(0, 1.7),
+      scoreRuler.x(700, 1.7),
+      scoreRuler.opacity(0, 1.7),
+      ...resetMatrixRects(2.0),
+      toMatrixLine().x(-100, 1.7),
+      toMatrixLine().opacity(0, 1.7),
+    ),
+  );
+
+  yield* waitFor(1);
+
+  const gaps = view.findAll(is(Txt)).filter(txt => txt.text() === "–");
+  yield* sequence(0.08,
+    ...gaps.map((text) => {
+      return all(
+        text.fill(HIGHLIGHT_COLOR, 0.8),
+      );
+    }));
 
   yield* waitFor(5);
 });
