@@ -74,8 +74,8 @@ export default makeScene2D(function* (view) {
       sequence(0.03, ...matrix.rects.map(rect => rect.opacity(1, 1))),
       delay(0.8,
         all(
-          ...matrix.word1Texts.map((text, i) => text.opacity(1, 1.5)),
-          ...matrix.word2Texts.map((text, i) => text.opacity(1, 1.5)),
+          ...matrix.word1Texts.map(text => text.opacity(1, 1.5)),
+          ...matrix.word2Texts.map(text => text.opacity(1, 1.5)),
         ),
       ),
     )),
@@ -233,7 +233,7 @@ export default makeScene2D(function* (view) {
     <Latex
       tex="p"
       fill={TEXT_FILL}
-      fontSize={108}
+      fontSize={105}
       x={840}
       opacity={0}
     />
@@ -241,8 +241,8 @@ export default makeScene2D(function* (view) {
   view.add([gapPenaltyTxt, constP]);
 
   yield* all(
-    alignmentContainer().x(alignmentContainer().x() - 600, 1.5),
-    delay(0.45, all(
+    alignmentContainer().shiftX(-600, 1.5),
+    delay(0.3, all(
       gapPenaltyTxt.flyIn(1.0, 0.02),
       delay(0.5, constP.opacity(1, 1.0)),
     )),

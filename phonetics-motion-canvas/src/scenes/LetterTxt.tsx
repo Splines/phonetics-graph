@@ -1,5 +1,8 @@
 import { Node, Rect, Txt, TxtProps } from "@motion-canvas/2d";
-import { all, easeInOutQuart, sequence, ThreadGenerator, TimingFunction } from "@motion-canvas/core";
+import {
+  all,
+  easeInOutQuart, sequence, ThreadGenerator, TimingFunction,
+} from "@motion-canvas/core";
 
 export class LetterTxt extends Node {
   private txtObjects: Txt[] = [];
