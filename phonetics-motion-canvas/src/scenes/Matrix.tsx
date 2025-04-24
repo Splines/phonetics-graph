@@ -1,21 +1,28 @@
-import { Layout, Line, Node, Rect, Txt } from "@motion-canvas/2d";
+import { Latex, Layout, Line, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
   all, chain, createRef,
   Reference,
   sequence,
   ThreadGenerator,
-  useScene,
   Vector2,
   waitFor,
 } from "@motion-canvas/core";
-import { HIGHLIGHT_COLOR, HIGHLIGHT_COLOR_2, PHONETIC_FAMILY } from "./globals";
+import {
+  HIGHLIGHT_COLOR,
+  HIGHLIGHT_COLOR_2,
+  PHONETIC_FAMILY,
+  TEXT_FILL,
+  TEXT_FILL_DARK,
+} from "./globals";
 
 const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
 
 export class Matrix {
   public container: Reference<Node>;
-  private layout: Reference<Layout>;
+  public layout: Reference<Layout>;
   public rects: Rect[] = [];
+  public textRects: Rect[] = [];
+  public emptyRects: Rect[] = [];
 
   public numRows = 6 + 1; // puissance
   public numCols = 4 + 1; // nuance
@@ -53,7 +60,9 @@ export class Matrix {
         }
 
         if (j === 0) {
-          this.layout().add(<Rect width={130} height={130} />);
+          const emptyRect = <Rect width={130} height={130} /> as Rect;
+          this.emptyRects.push(emptyRect);
+          this.layout().add(emptyRect);
           continue;
         }
 
@@ -136,6 +145,9 @@ export class Matrix {
         ...words1Anims,
         ...words2Anims,
         sourceRect.fill(null, duration),
+        ...sourceRect.children().map((child) => {
+          return child instanceof Latex ? child.fill(TEXT_FILL, duration) : null;
+        }),
         arrow.opacity(1, duration),
         arrow.end(1, duration),
       ),
@@ -237,6 +249,43 @@ export class Matrix {
     });
   }
 
+  public getAllRects(): Rect[] {
+    return this.rects.concat(this.textRects).concat(this.emptyRects);
+  }
+
+  public writeTextAt(row: number, col: number, text: string, duration: number): ThreadGenerator {
+    const rect = this.getRectAt(row, col);
+    const txt = (
+      <Latex
+        tex={text}
+        fontSize={this.FONT_SIZE - 5}
+        fill={TEXT_FILL_DARK}
+        opacity={0}
+      >
+      </Latex>
+    ) as Latex;
+
+    rect.justifyContent("center");
+    rect.alignItems("center");
+    rect.add(txt);
+
+    // return all(
+    // rect.stroke(HIGHLIGHT_COLOR, 0.8),
+    // rect.lineWidth(9, 0.8),
+    // txt.opacity(1, 0.7),
+    // delay(0.8, all(
+    //   rect.stroke(this.BASE_COLOR, 0.8),
+    //   rect.lineWidth(6, 0.8),
+    //   txt.fill(TEXT_FILL, 0.8),
+    // )),
+    // );
+
+    return all(
+      this.highlightRect(rect, duration),
+      txt.opacity(1, duration),
+    );
+  }
+
   private getRect(): Rect {
     return new Rect({
       width: 130,
@@ -249,7 +298,7 @@ export class Matrix {
   }
 
   private createTextInRect(char: string): Rect {
-    return (
+    const rect = (
       <Rect
         width={130}
         height={130}
@@ -259,12 +308,15 @@ export class Matrix {
         <Txt
           fontFamily={PHONETIC_FAMILY}
           fontSize={this.FONT_SIZE}
-          fill={useScene().variables.get("textFill", "white")}
+          fill={TEXT_FILL}
           opacity={0}
         >
           {char}
         </Txt>
       </Rect>
     ) as Rect;
+
+    this.textRects.push(rect);
+    return rect;
   }
 }

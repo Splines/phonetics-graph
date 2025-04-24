@@ -231,22 +231,52 @@ export default makeScene2D(function* (view) {
   ) as LetterTxt;
   const constP = (
     <Latex
-      tex="p"
+      tex="p \in \mathbb{R}"
       fill={TEXT_FILL}
-      fontSize={105}
-      x={840}
+      fontSize={100}
+      x={970}
       opacity={0}
     />
   ) as Latex;
   view.add([gapPenaltyTxt, constP]);
 
   yield* all(
-    alignmentContainer().shiftX(-600, 1.5),
+    alignmentContainer().x(alignmentContainer().x() - 600, 1.5),
     delay(0.3, all(
       gapPenaltyTxt.flyIn(1.0, 0.02),
       delay(0.5, constP.opacity(1, 1.0)),
     )),
   );
+
+  yield* waitFor(1);
+
+  // 🎈 Gap penalty in matrix
+  const newRectWidth = 150;
+  matrixContainer().x(150);
+  yield* all(
+    matrixContainer().opacity(1, 1.3),
+    matrixContainer().x(-400, 1.3),
+    gapPenaltyTxt.x(gapPenaltyTxt.x() + 100, 1.3),
+    constP.x(constP.x() + 100, 1.3),
+    alignmentContainer().x(alignmentContainer().x() - 300, 1.3),
+    alignmentContainer().opacity(0, 1.3),
+    delay(0.5, all(
+      matrix.layout().width(1100, 1.2),
+      ...matrix.getAllRects().map((rect) => {
+        return all(
+          rect.width(newRectWidth, 1.2),
+          rect.height(newRectWidth, 1.2));
+      }),
+    )),
+  );
+
+  yield* waitFor(1);
+
+  yield* matrix.writeTextAt(0, 0, "0", 0.8);
+  yield* waitFor(1);
+  yield* matrix.step(0, 0, 0, 1, 0.8);
+  yield* waitFor(2);
+  yield* matrix.writeTextAt(0, 1, "p", 0);
 
   yield* waitFor(5);
 });
