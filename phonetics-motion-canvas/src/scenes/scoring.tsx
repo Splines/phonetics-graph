@@ -1,8 +1,9 @@
-import { is, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
+import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
-import { HIGHLIGHT_COLOR, TEXT_FILL } from "./globals";
+import { HIGHLIGHT_COLOR, TEXT_FILL, TEXT_FONT } from "./globals";
 import { Highlight } from "./Highlight";
+import { LetterTxt } from "./LetterTxt";
 import { Matrix } from "./Matrix";
 import { ScoreRuler } from "./ScoreRuler";
 
@@ -214,6 +215,38 @@ export default makeScene2D(function* (view) {
         highlightBoxes[i].highlight(0.8),
       );
     }));
+
+  yield* waitFor(1);
+
+  const gapPenaltyTxt = (
+    <LetterTxt
+      fill={TEXT_FILL}
+      fontFamily={TEXT_FONT}
+      fontSize={108}
+      letterSpacing={4}
+      x={200}
+    >
+      Gap Penalty
+    </LetterTxt>
+  ) as LetterTxt;
+  const constP = (
+    <Latex
+      tex="p"
+      fill={TEXT_FILL}
+      fontSize={108}
+      x={840}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add([gapPenaltyTxt, constP]);
+
+  yield* all(
+    alignmentContainer().x(alignmentContainer().x() - 600, 1.5),
+    delay(0.45, all(
+      gapPenaltyTxt.flyIn(1.0, 0.02),
+      delay(0.5, constP.opacity(1, 1.0)),
+    )),
+  );
 
   yield* waitFor(5);
 });

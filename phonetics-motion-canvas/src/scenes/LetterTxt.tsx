@@ -1,5 +1,5 @@
 import { Node, Rect, Txt, TxtProps } from "@motion-canvas/2d";
-import { all, sequence, ThreadGenerator } from "@motion-canvas/core";
+import { all, easeInOutQuart, sequence, ThreadGenerator, TimingFunction } from "@motion-canvas/core";
 
 export class LetterTxt extends Node {
   private txtObjects: Txt[] = [];
@@ -52,13 +52,17 @@ export class LetterTxt extends Node {
     }
   }
 
-  * flyIn(duration: number, delay: number): ThreadGenerator {
+  /**
+   * Animates the text using a smooth fly-in effect.
+   */
+  * flyIn(duration: number, delay: number,
+            easing: TimingFunction = easeInOutQuart): ThreadGenerator {
     const generators: ThreadGenerator[] = [];
 
     for (const txt of this.txtObjects) {
       generators.push(all(
         txt.opacity(1, duration),
-        txt.position.y(0, duration),
+        txt.position.y(0, duration, easing),
       ));
     }
 
