@@ -258,7 +258,7 @@ export class Matrix {
     const txt = (
       <Latex
         tex={text}
-        fontSize={this.FONT_SIZE - 5}
+        fontSize={61}
         fill={TEXT_FILL_DARK}
         opacity={0}
       >

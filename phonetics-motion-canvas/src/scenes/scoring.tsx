@@ -1,7 +1,7 @@
 import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
-import { HIGHLIGHT_COLOR, TEXT_FILL, TEXT_FONT } from "./globals";
+import { HIGHLIGHT_COLOR, TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT } from "./globals";
 import { Highlight } from "./Highlight";
 import { LetterTxt } from "./LetterTxt";
 import { Matrix } from "./Matrix";
@@ -136,7 +136,7 @@ export default makeScene2D(function* (view) {
     delay(0.5, all(
       scoreRuler.opacity(1, 1),
       scoreRuler.ruler.end(1, 1),
-      scoreRuler.value(20, 1.4),
+      scoreRuler.value(30, 1.4),
     )),
   );
 
@@ -231,7 +231,7 @@ export default makeScene2D(function* (view) {
   ) as LetterTxt;
   const constP = (
     <Latex
-      tex="p \in \mathbb{R}"
+      tex="{{p}} \in \mathbb{R}"
       fill={TEXT_FILL}
       fontSize={100}
       x={970}
@@ -276,7 +276,109 @@ export default makeScene2D(function* (view) {
   yield* waitFor(1);
   yield* matrix.step(0, 0, 0, 1, 0.8);
   yield* waitFor(2);
-  yield* matrix.writeTextAt(0, 1, "p", 0);
+
+  const pOnly = (
+    <Latex
+      tex="p"
+      fill={TEXT_FILL}
+      fontSize={100}
+      x={954}
+      y={14}
+      opacity={1}
+    />
+  ) as Latex;
+  view.add(pOnly);
+
+  yield* all(
+    pOnly.fontSize(61, 1.2),
+    pOnly.position([-535, -490], 1.2),
+    delay(0.2, pOnly.fill(TEXT_FILL_DARK, 1.4)),
+  );
+
+  yield* all(
+    matrix.writeTextAt(0, 1, "p", 0),
+    pOnly.opacity(0, 0),
+  );
+
+  const highlightMinus2 = (
+    <Highlight
+      width={400}
+      height={130}
+      x={550}
+      y={-5}
+    />
+  ) as Highlight;
+  view.add(highlightMinus2);
+  const matrixPLatex = matrix.getRectAt(0, 1).children()[0] as Latex;
+  yield* all(
+    constP.tex("{{p}} = -2", 1.3),
+    constP.x(1100, 1.3),
+    delay(0.4, all(
+      matrixPLatex.tex("-2", 1.3),
+      highlightMinus2.highlight(0.9),
+    )),
+  );
+
+  yield* waitFor(2);
+
+  // 🎈 Finish all first gap steps (horizontal, then vertical)
+  yield* all(
+    matrix.step(0, 1, 0, 2, 0.7),
+    delay(0.8, matrix.writeTextAt(0, 2, "-4", 0.6)),
+  );
+  yield* all(
+    matrix.step(0, 2, 0, 3, 0.7),
+    delay(0.8, matrix.writeTextAt(0, 3, "-6", 0.6)),
+  );
+  yield* all(
+    matrix.step(0, 3, 0, 4, 0.7),
+    delay(0.8, matrix.writeTextAt(0, 4, "-8", 0.6)),
+  );
+
+  yield* waitFor(0.3);
+  let latestRect = matrix.getRectAt(0, 4);
+  yield* all(
+    latestRect.lineWidth(7, 0.8),
+    // latestRect.stroke(matrix.BASE_COLOR, 0.8),
+    latestRect.fill(null, 0.8),
+    (latestRect.children()[0] as Latex).fill(TEXT_FILL, 0.8),
+  );
+
+  yield* waitFor(1);
+
+  // go down
+  yield* all(
+    matrix.step(0, 0, 1, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(1, 0, "-2", 0.6)),
+  );
+  yield* all(
+    matrix.step(1, 0, 2, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(2, 0, "-4", 0.6)),
+  );
+  yield* all(
+    matrix.step(2, 0, 3, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(3, 0, "-6", 0.6)),
+  );
+  yield* all(
+    matrix.step(3, 0, 4, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(4, 0, "-8", 0.6)),
+  );
+  yield* all(
+    matrix.step(4, 0, 5, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(5, 0, "-10", 0.6)),
+  );
+  yield* all(
+    matrix.step(5, 0, 6, 0, 0.7),
+    delay(0.8, matrix.writeTextAt(6, 0, "-12", 0.6)),
+  );
+
+  yield* waitFor(0.3);
+  latestRect = matrix.getRectAt(6, 0);
+  yield* all(
+    latestRect.lineWidth(7, 1.0),
+    latestRect.fill(null, 1.0),
+    (latestRect.children()[0] as Latex).fill(TEXT_FILL, 1.0),
+  );
 
   yield* waitFor(5);
 });
