@@ -372,12 +372,40 @@ export default makeScene2D(function* (view) {
     delay(0.8, matrix.writeTextAt(6, 0, "-12", 0.6)),
   );
 
-  yield* waitFor(0.3);
+  yield* waitFor(0.15);
   latestRect = matrix.getRectAt(6, 0);
   yield* all(
-    latestRect.lineWidth(7, 1.0),
-    latestRect.fill(null, 1.0),
-    (latestRect.children()[0] as Latex).fill(TEXT_FILL, 1.0),
+    latestRect.lineWidth(7, 1.3),
+    latestRect.fill(null, 1.3),
+    (latestRect.children()[0] as Latex).fill(TEXT_FILL, 1.3),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Diagonal steps
+
+  const diagonalStepTxt = (
+    <LetterTxt
+      fill={TEXT_FILL}
+      fontFamily={TEXT_FONT}
+      fontSize={108}
+      letterSpacing={4}
+      x={300}
+    >
+      Diagonal Steps
+    </LetterTxt>
+  ) as LetterTxt;
+  view.add(diagonalStepTxt);
+
+  yield* all(
+    gapPenaltyTxt.opacity(0, 1.0),
+    constP.opacity(0, 1.0),
+    diagonalStepTxt.flyIn(1.0, 0.02),
+  );
+
+  yield* all(
+    matrix.step(0, 0, 1, 1, 0.7),
+    delay(1.0, matrix.writeTextAt(1, 1, "\\textbf{?}", 0.6)),
   );
 
   yield* waitFor(5);
