@@ -32,27 +32,44 @@ export class LetterTxt extends Node {
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
+      let txtChar = char;
+
+      // Surrogate pairs for emojis 🤩
+      if (i < text.length - 1 && char >= "\uD800" && char <= "\uDBFF") {
+        const nextChar = text[i + 1];
+        if (nextChar >= "\uDC00" && nextChar <= "\uDFFF") {
+          txtChar = char + nextChar;
+        }
+      }
+
       const currentWidth = ctx.measureText(text.substring(0, i + 1)).width;
       const charWidth = currentWidth - previousWidth;
       previousWidth = currentWidth;
 
-      const txt = (
-        <Txt
-          {...props}
-          x={cursorX}
-          y={80}
-          opacity={0}
-          offsetX={-1}
-        >
-          {char}
-        </Txt>
-      ) as Txt;
-
+      const txt = this.constructTxt(txtChar, cursorX, props);
       container.add(txt);
       this.txtObjects.push(txt);
 
       cursorX += charWidth;
+
+      if (txtChar.length > 1) {
+        i += 1; // skip the next character as it's part of the surrogate pair
+      }
     }
+  }
+
+  private constructTxt(text: string, cursorX: number, props: any): Txt {
+    return (
+      <Txt
+        {...props}
+        x={cursorX}
+        y={80}
+        opacity={0}
+        offsetX={-1}
+      >
+        {text}
+      </Txt>
+    ) as Txt;
   }
 
   /**

@@ -1,7 +1,10 @@
 import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
-import { HIGHLIGHT_COLOR, TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT } from "./globals";
+import {
+  HIGHLIGHT_COLOR,
+  HIGHLIGHT_COLOR_2, TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT,
+} from "./globals";
 import { Highlight } from "./Highlight";
 import { LetterTxt } from "./LetterTxt";
 import { Matrix } from "./Matrix";
@@ -382,7 +385,7 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
-  // 🎈 Diagonal steps
+  // 🎈 Diagonal steps with emojis
 
   const diagonalStepTxt = (
     <LetterTxt
@@ -406,6 +409,98 @@ export default makeScene2D(function* (view) {
   yield* all(
     matrix.step(0, 0, 1, 1, 0.7),
     delay(1.0, matrix.writeTextAt(1, 1, "\\textbf{?}", 0.6)),
+  );
+
+  yield* waitFor(1);
+  yield* matrix.highlightCoordinates(1, 1, 1.0);
+  yield* waitFor(1);
+  yield* all(
+    matrix.step(1, 1, 2, 2, 0.7),
+    delay(0.7, matrix.writeTextAt(2, 2, "\\textbf{?}", 0.6)),
+  );
+  yield* matrix.highlightCoordinates(2, 2, 1.0);
+
+  yield* waitFor(1);
+
+  const badAlignRect = matrix.getRectAt(1, 1) as Rect;
+  const goodAlignRect = matrix.getRectAt(2, 2) as Rect;
+  const goodAlignEmoji = (
+    <Txt
+      fontFamily={TEXT_FONT}
+      fontSize={70}
+      fill={TEXT_FILL}
+      opacity={0}
+      x={goodAlignRect.x()}
+      y={goodAlignRect.y() + 8}
+    >
+      🤩
+    </Txt>
+  );
+  const badAlignEmoji = (
+    <Txt
+      fontFamily={TEXT_FONT}
+      fontSize={70}
+      fill={TEXT_FILL}
+      opacity={0}
+      x={badAlignRect.x()}
+      y={badAlignRect.y() + 8}
+    >
+      😕
+    </Txt>
+  );
+  matrix.container().add([badAlignEmoji, goodAlignEmoji]);
+
+  yield* all(
+    (goodAlignRect.children()[0] as Latex).opacity(0, 0.8),
+    goodAlignEmoji.opacity(1, 0.8),
+  );
+  yield* waitFor(1);
+  yield* all(
+    badAlignRect.fill(HIGHLIGHT_COLOR_2, 0.8),
+    badAlignRect.stroke(HIGHLIGHT_COLOR_2, 0.8),
+    matrix.word1Texts[0].fill(HIGHLIGHT_COLOR_2, 0.8),
+    matrix.word2Texts[0].fill(HIGHLIGHT_COLOR_2, 0.8),
+    (badAlignRect.children()[0] as Latex).opacity(0, 0.8),
+    badAlignEmoji.opacity(1, 0.8),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Score texts
+  const matchScoreTxt = (
+    <LetterTxt
+      fill={TEXT_FILL}
+      fontFamily={TEXT_FONT}
+      fontSize={75}
+      letterSpacing={4}
+      x={300}
+      y={70}
+    >
+      🤩 Match Score
+    </LetterTxt>
+  ) as LetterTxt;
+  const mismatchScoreTxt = (
+    <LetterTxt
+      fill={TEXT_FILL}
+      fontFamily={TEXT_FONT}
+      fontSize={75}
+      letterSpacing={4}
+      x={300}
+      y={140}
+    >
+      😕 Mismatch Score
+    </LetterTxt>
+  ) as LetterTxt;
+  view.add([matchScoreTxt, mismatchScoreTxt]);
+  yield* all(
+    diagonalStepTxt.y(diagonalStepTxt.y() - 70, 1.0),
+    matchScoreTxt.flyIn(1.0, 0.02),
+  );
+
+  yield* all(
+    diagonalStepTxt.y(diagonalStepTxt.y() - 30, 1.0),
+    matchScoreTxt.y(matchScoreTxt.y() - 30, 1.0),
+    mismatchScoreTxt.flyIn(1.0, 0.02),
   );
 
   yield* waitFor(5);
