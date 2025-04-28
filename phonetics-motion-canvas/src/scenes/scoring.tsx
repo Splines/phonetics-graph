@@ -16,6 +16,8 @@ import { Matrix } from "./Matrix";
 import { ScoreRuler } from "./ScoreRuler";
 
 export default makeScene2D(function* (view) {
+  let duration = 0.8;
+
   // 🎈 Alignment -> Path in matrix
   const alignmentContainer = createRef<Node>();
   const alignment = new AlignState(alignmentContainer, "pɥisɑ̃s", "nɥɑ̃s", "..--..");
@@ -530,6 +532,100 @@ export default makeScene2D(function* (view) {
   yield* matchScorePositive.opacity(1, 0.8);
   yield* waitFor(0.5);
   yield* matchScoreNegative.opacity(1, 0.8);
+
+  yield* waitFor(1);
+
+  // 🎈 First mismatch (first diagonal step)
+
+  duration = 0.8;
+  yield* all(
+    goodAlignRect.fill(null, duration),
+    goodAlignRect.stroke(TEXT_FILL, duration),
+    badAlignRect.fill(null, duration),
+    badAlignRect.stroke(TEXT_FILL, duration),
+    goodAlignEmoji.opacity(0, duration),
+    badAlignEmoji.opacity(0, duration),
+  );
+
+  yield* waitFor(1);
+
+  yield* matrix.step(0, 0, 1, 1, 0.8);
+
+  const highlightMismatchP = createRef<Highlight>();
+  const highlightMismatchN = createRef<Highlight>();
+  view.add(
+    <>
+      <Highlight
+        ref={highlightMismatchP}
+        width={80}
+        height={90}
+      />
+      <Highlight
+        ref={highlightMismatchN}
+        width={80}
+        height={80}
+      />
+    </>,
+  );
+  highlightMismatchP().absolutePosition(matrix.word1Texts[0].absolutePosition());
+  highlightMismatchP().y(highlightMismatchP().y() + 15);
+  highlightMismatchN().absolutePosition(matrix.word2Texts[0].absolutePosition());
+  highlightMismatchN().y(highlightMismatchN().y() + 10);
+  yield* sequence(0.4,
+    highlightMismatchP().highlight(0.8),
+    highlightMismatchN().highlight(0.8),
+  );
+
+  const firstMismatchCalc = (
+    <Latex
+      tex="0"
+      fill={TEXT_FILL}
+      fontSize={80}
+      x={530}
+      y={-310}
+      opacity={0}
+    />
+  ) as Latex;
+  const matchScoreNegativeCopy = matchScoreNegative.snapshotClone();
+  view.add([firstMismatchCalc, matchScoreNegativeCopy]);
+  yield* all(
+    firstMismatchCalc.opacity(1, 0.8),
+  );
+  yield* waitFor(0.2);
+  yield* all(
+    matchScoreNegativeCopy.position([620, -310], 1.5),
+    matchScoreNegativeCopy.opacity(0, 2.2),
+    delay(0.2, firstMismatchCalc.tex("{{0}} {{+}} {{(}} {{-}} {{1}} {{)}}", 1.5)),
+  );
+  yield* waitFor(0.5);
+  yield* all(
+    firstMismatchCalc.tex("{{0}} {{-}} {{1}} = -1", 1.8),
+  );
+
+  const firstMismatchResult = (
+    <Latex
+      tex="-1"
+      fill={TEXT_FILL}
+      fontSize={80}
+      x={700}
+      y={-310}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(firstMismatchResult);
+  matrix.getRectAt(1, 1).children().forEach(child => child.remove());
+  yield* all(
+    firstMismatchResult.opacity(1, 0.5),
+    firstMismatchResult.position([-535, -320], 1.5),
+    firstMismatchResult.fontSize(61, 1.5),
+    delay(0.5, firstMismatchResult.fill(TEXT_FILL_DARK, 1.5)),
+  );
+  yield* all(
+    matrix.writeTextAt(1, 1, "-1", 0.0),
+    firstMismatchResult.opacity(0, 0.0),
+  );
+
+  yield* waitFor(1);
 
   yield* waitFor(5);
 });
