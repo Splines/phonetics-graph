@@ -774,7 +774,7 @@ export default makeScene2D(function* (view) {
   };
   const diagCalc = (
     <Latex
-      tex="0 - 1 = -1"
+      tex="0 - 1 = {{-1}}"
       {...textProps}
       x={() => diagArrow.x()}
     />
@@ -809,7 +809,7 @@ export default makeScene2D(function* (view) {
   fromAboveArrow.absolutePosition(arrow2.absolutePosition());
   const fromAboveCalc = (
     <Latex
-      tex="-2 - 2 = -4"
+      tex="-2 - 2 = {{-4}}"
       {...textProps}
       x={() => fromAboveArrow.x() + 200}
     />
@@ -844,7 +844,7 @@ export default makeScene2D(function* (view) {
   fromLeftArrow.absolutePosition(arrow3.absolutePosition());
   const fromLeftCalc = (
     <Latex
-      tex="-2 - 2 = -4"
+      tex="-2 - 2 = {{-4}}"
       {...textProps}
       x={() => fromLeftArrow.x() + 30}
       y={165}
@@ -867,6 +867,194 @@ export default makeScene2D(function* (view) {
   ) as Highlight;
   view.add(highlight3);
   yield* highlight3.highlight(0.8);
+
+  yield* waitFor(1);
+
+  // 🎈 What value to keep? -> Maximum
+
+  yield* all(
+    diagCalc.tex("-1", 1.5),
+    diagCalc.x(diagCalc.x() - 220, 1.5),
+    fromAboveCalc.tex("-4", 1.5),
+    fromAboveCalc.x(fromAboveCalc.x() - 250, 1.5),
+    fromLeftCalc.tex("-4", 1.5),
+    fromLeftCalc.x(fromLeftCalc.x() - 250, 1.5),
+  );
+
+  yield* waitFor(1);
+
+  const maxLatex = (
+    <Latex
+      tex="{{ \text{max} }} {{ \bigl\{ }} {{ \quad\quad,\quad\quad,\quad\quad }} {{ \bigr\} }}"
+      fill={TEXT_FILL}
+      fontSize={80}
+      x={450}
+      y={0}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(maxLatex);
+
+  yield* all(
+    matrixContainer().x(matrixContainer().x() - 100, 1.5),
+
+    diagArrow.position([700, 820], 1.5),
+    fromAboveArrow.position([740, 820], 1.5),
+    fromLeftArrow.position([1150, 650], 1.5),
+
+    diagCalc.position([300, 0], 1.5),
+    fromAboveCalc.position([530, 0], 1.5),
+    fromLeftCalc.position([760, 0], 1.5),
+
+    delay(1.0, maxLatex.opacity(1, 1.5)),
+  );
+
+  const maxLatexResult = (
+    <Latex
+      tex="{{=}} {{-1}}"
+      fill={TEXT_FILL}
+      fontSize={80}
+      opacity={0}
+      x={950}
+    />
+  ) as Latex;
+  view.add(maxLatexResult);
+
+  const highlightMaxResult = (
+    <Highlight
+      width={140}
+      height={80}
+      x={555}
+    />
+  ) as Highlight;
+  view.add(highlightMaxResult);
+
+  yield* all(
+    maxLatexResult.x(1060, 0.9),
+    maxLatexResult.opacity(1, 0.9),
+    delay(0.35, highlightMaxResult.highlight(0.8)),
+  );
+
+  yield* waitFor(1);
+
+  const resultMin1 = (
+    <Latex
+      tex="-1"
+      fill={TEXT_FILL}
+      fontSize={80}
+      x={1111}
+    />
+  ) as Latex;
+  view.add(resultMin1);
+
+  yield* all(
+    oneDiagRect.fill(null, 1.5),
+    resultMin1.fontSize(61, 1.5),
+    resultMin1.position([-435, 171], 1.5),
+  );
+  resultMin1.remove();
+  oneDiagRect.children().forEach(child => child.opacity(1));
+
+  yield* waitFor(1);
+
+  // 🎈 user fields: -3 both cases
+
+  const fadeOutMaxText = all(
+    diagCalc.opacity(0, 1.5),
+    fromAboveCalc.opacity(0, 1.5),
+    fromLeftCalc.opacity(0, 1.5),
+    diagArrow.start(1, 1.5),
+    diagArrow.opacity(0, 1.5),
+    fromAboveArrow.start(1, 1.5),
+    fromAboveArrow.opacity(0, 1.5),
+    fromLeftArrow.start(1, 1.5),
+    fromLeftArrow.opacity(0, 1.5),
+    maxLatex.opacity(0, 1.5),
+    maxLatexResult.opacity(0, 1.5),
+  );
+
+  const fadeOutArrows = all(
+    arrow1.opacity(0, 1.5),
+    arrow1.start(1, 1.5),
+    arrow2.opacity(0, 1.5),
+    arrow2.start(1, 1.5),
+    arrow3.opacity(0, 1.5),
+    arrow3.start(1, 1.5),
+  );
+
+  const showAgainIndices = [3, 9, 15, 18, 19, 20];
+  const showMoreFieldsAgain = matrix.layout().children().map((child, i) => {
+    if (!showAgainIndices.includes(i)) {
+      return null;
+    }
+    return child.opacity(1.0, 1.8);
+  });
+
+  const userFieldHighlight1 = createRef<Highlight>();
+  const userFieldHighlight2 = createRef<Highlight>();
+
+  view.add(
+    <>
+      <Highlight
+        ref={userFieldHighlight1}
+        width={190}
+        height={190}
+        x={165}
+        y={35}
+      />
+      <Highlight
+        ref={userFieldHighlight2}
+        width={180}
+        height={180}
+        x={0}
+        y={200}
+      />
+    </>,
+  );
+
+  yield* all(
+    matrixContainer().x(matrixContainer().x() + 435, 2.5),
+    matrixContainer().y(matrixContainer().y() - 100, 2.5),
+    fadeOutMaxText,
+    fadeOutArrows,
+    ...showMoreFieldsAgain,
+    delay(0.2, all(
+      userFieldHighlight1().highlight(1.3),
+      delay(0.2, userFieldHighlight2().highlight(1.3)),
+    )),
+  );
+  yield* waitFor(1); // give user time
+
+  yield* all(
+    matrix.writeTextAt(1, 2, "-3", 1.0),
+    matrix.writeTextAt(2, 1, "-3", 1.0),
+  );
+
+  yield* waitFor(1);
+
+  const examineRect = matrix.getRectAt(2, 2);
+  examineRect.children().forEach(child => child.remove());
+  examineRect.stroke(matrix.BASE_COLOR);
+
+  const highlightExamine = (
+    <Highlight
+      width={180}
+      height={180}
+      x={165}
+      y={200}
+    />
+  ) as Highlight;
+  view.add(highlightExamine);
+
+  yield* all(
+    matrix.getRectAt(1, 2).fill(null, 1.0),
+    (matrix.getRectAt(1, 2).children()[0] as Txt).fill(TEXT_FILL, 1.0),
+    matrix.getRectAt(2, 1).fill(null, 1.0),
+    (matrix.getRectAt(2, 1).children()[0] as Txt).fill(TEXT_FILL, 1.0),
+
+    delay(0.5, examineRect.opacity(1, 1.0)),
+    delay(0.7, highlightExamine.highlight(1.0)),
+  );
 
   yield* waitFor(5);
 });
