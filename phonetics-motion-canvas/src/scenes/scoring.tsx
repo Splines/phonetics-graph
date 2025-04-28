@@ -262,7 +262,7 @@ export default makeScene2D(function* (view) {
   yield* waitFor(1);
 
   // 🎈 Gap penalty in matrix
-  const newRectWidth = 150;
+  let newRectWidth = 150;
   matrixContainer().x(150);
   yield* all(
     matrixContainer().opacity(1, 1.3),
@@ -710,14 +710,51 @@ export default makeScene2D(function* (view) {
     (secondDiagRect.children()[0] as Txt).fill(TEXT_FILL, 0.8),
   );
 
-  yield* waitFor(1);
+  yield* waitFor(0.5);
 
   // 🎈 First field from multiple directions
 
+  // shift entire matrix
+  newRectWidth = 150;
+  duration = 1.0;
+  const dontHideList = [2, 7, 8, 12, 13, 14];
+  yield* all(
+    // remove old text
+    diagonalStepTxt.opacity(0, 1.0),
+    matchScoreTxt.opacity(0, duration),
+    mismatchScoreTxt.opacity(0, duration),
+    matchScorePositive.opacity(0, duration),
+    matchScoreNegative.opacity(0, duration),
+    // increase matrix gaps & move
+    matrix.layout().width(1800, 1.5),
+    matrix.layout().gap(150, 1.5),
+    matrixContainer().y(600, 1.5),
+    matrixContainer().x(380, 1.5),
+    // hide rest of matrix
+    ...matrix.layout().children().map((child, i) => {
+      if (dontHideList.includes(i)) {
+        return null;
+      }
+      return child.opacity(0.0, 1.5);
+    }),
+  );
+
+  yield* waitFor(1);
+
   const oneDiagRect = matrix.getRectAt(1, 1);
   yield* all(
-    matrix.step(0, 0, 1, 1, 0.8),
+    matrix.step(0, 0, 1, 1, 1.0),
     delay(0.35, (oneDiagRect.children()[0] as Txt).fill(TEXT_FILL_DARK, 0.8)),
+  );
+  yield* waitFor(0.5);
+  yield* all(
+    oneDiagRect.fill(null, 0.8),
+    delay(0.25, matrix.step(0, 1, 1, 1, 0.8)),
+  );
+  yield* waitFor(0.5);
+  yield* all(
+    oneDiagRect.fill(null, 0.8),
+    delay(0.25, matrix.step(1, 0, 1, 1, 0.8)),
   );
 
   yield* waitFor(5);
