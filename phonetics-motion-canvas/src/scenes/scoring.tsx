@@ -1,6 +1,7 @@
 import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
 import {
   all,
+  chain,
   createRef, delay, sequence, Spring,
   spring, waitFor,
 } from "@motion-canvas/core";
@@ -613,7 +614,7 @@ export default makeScene2D(function* (view) {
     />
   ) as Latex;
   view.add(firstMismatchResult);
-  matrix.getRectAt(1, 1).children().forEach(child => child.remove());
+  matrix.getRectAt(1, 1).children().forEach(child => child.remove()); // remove emoji
   yield* all(
     firstMismatchResult.opacity(1, 0.5),
     firstMismatchResult.position([-535, -320], 1.5),
@@ -626,6 +627,98 @@ export default makeScene2D(function* (view) {
   );
 
   yield* waitFor(1);
+
+  // 🎈 Second diagonal step (match)
+
+  yield* all(
+    firstMismatchCalc.opacity(0, 1.0),
+    delay(0.2, all(
+      matrix.step(1, 1, 2, 2, 0.8),
+    )),
+  );
+
+  const highlightMatchY1 = createRef<Highlight>();
+  const highlightMatchY2 = createRef<Highlight>();
+  view.add(
+    <>
+      <Highlight
+        ref={highlightMatchY1}
+        width={80}
+        height={90}
+      />
+      <Highlight
+        ref={highlightMatchY2}
+        width={80}
+        height={80}
+      />
+    </>,
+  );
+  highlightMatchY1().absolutePosition(matrix.word1Texts[1].absolutePosition());
+  highlightMatchY1().y(highlightMatchY1().y() + 15);
+  highlightMatchY2().absolutePosition(matrix.word2Texts[1].absolutePosition());
+  highlightMatchY2().y(highlightMatchY2().y() + 15);
+  yield* sequence(0.4,
+    highlightMatchY1().highlight(0.8),
+    highlightMatchY2().highlight(0.8),
+  );
+
+  yield* waitFor(0.2);
+
+  const matchCalc = (
+    <Latex
+      tex="-1"
+      fill={TEXT_FILL}
+      fontSize={61}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(matchCalc);
+  matchCalc.absolutePosition(matrix.getRectAt(1, 1).absolutePosition());
+
+  yield* all(
+    matchCalc.opacity(1, 0.7),
+    matchCalc.position([540, -310], 1.5),
+    matchCalc.fontSize(80, 1.5),
+  );
+
+  const matchScoreClone = matchScorePositive.snapshotClone();
+  view.add(matchScoreClone);
+
+  yield* all(
+    matchScoreClone.position([660, -315], 1.5),
+    delay(0.26, chain(
+      matchCalc.tex("{{-1}} {{+}} {{1}}", 1.5),
+      matchCalc.tex("{{-1}} {{+}} {{1}} {{=}} {{0}}", 1.5),
+    )),
+    delay(0.45, matchScoreClone.opacity(0, 1.5)),
+  );
+
+  yield* waitFor(0.2);
+
+  yield* all(
+    matchCalc.tex("0", 1.0),
+    delay(0.5, matchCalc.fill(TEXT_FILL_DARK, 1.5)),
+    matchCalc.fontSize(61, 1.5),
+    matchCalc.absolutePosition(matrix.getRectAt(2, 2).absolutePosition(), 1.5),
+  );
+  matchCalc.remove();
+  matrix.getRectAt(2, 2).children().forEach(child => child.remove());
+  yield* matrix.writeTextAt(2, 2, "0", 0.0);
+  const secondDiagRect = matrix.getRectAt(2, 2);
+  yield* all(
+    secondDiagRect.fill(null, 0.8),
+    (secondDiagRect.children()[0] as Txt).fill(TEXT_FILL, 0.8),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 First field from multiple directions
+
+  const oneDiagRect = matrix.getRectAt(1, 1);
+  yield* all(
+    matrix.step(0, 0, 1, 1, 0.8),
+    delay(0.35, (oneDiagRect.children()[0] as Txt).fill(TEXT_FILL_DARK, 0.8)),
+  );
 
   yield* waitFor(5);
 });
