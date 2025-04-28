@@ -1,9 +1,14 @@
 import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d";
-import { all, createRef, delay, sequence, Spring, spring, waitFor } from "@motion-canvas/core";
+import {
+  all,
+  createRef, delay, sequence, Spring,
+  spring, waitFor,
+} from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
-  HIGHLIGHT_COLOR_2, TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT,
+  HIGHLIGHT_COLOR_2,
+  TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT,
 } from "./globals";
 import { Highlight } from "./Highlight";
 import { LetterTxt } from "./LetterTxt";
@@ -426,29 +431,25 @@ export default makeScene2D(function* (view) {
   const goodAlignRect = matrix.getRectAt(2, 2) as Rect;
   const goodAlignEmoji = (
     <Txt
-      fontFamily={TEXT_FONT}
-      fontSize={70}
       fill={TEXT_FILL}
+      fontSize={70}
       opacity={0}
-      x={goodAlignRect.x()}
-      y={goodAlignRect.y() + 8}
     >
       🤩
     </Txt>
-  );
+  ) as Txt;
   const badAlignEmoji = (
     <Txt
-      fontFamily={TEXT_FONT}
-      fontSize={70}
       fill={TEXT_FILL}
+      fontSize={70}
       opacity={0}
-      x={badAlignRect.x()}
-      y={badAlignRect.y() + 8}
     >
       😕
     </Txt>
-  );
-  matrix.container().add([badAlignEmoji, goodAlignEmoji]);
+  ) as Txt;
+  view.add([badAlignEmoji, goodAlignEmoji]);
+  goodAlignEmoji.absolutePosition(goodAlignRect.absolutePosition());
+  badAlignEmoji.absolutePosition(badAlignRect.absolutePosition());
 
   yield* all(
     (goodAlignRect.children()[0] as Latex).opacity(0, 0.8),
@@ -496,12 +497,39 @@ export default makeScene2D(function* (view) {
     diagonalStepTxt.y(diagonalStepTxt.y() - 70, 1.0),
     matchScoreTxt.flyIn(1.0, 0.02),
   );
-
+  yield* waitFor(0.3);
   yield* all(
     diagonalStepTxt.y(diagonalStepTxt.y() - 30, 1.0),
     matchScoreTxt.y(matchScoreTxt.y() - 30, 1.0),
     mismatchScoreTxt.flyIn(1.0, 0.02),
   );
+
+  yield* waitFor(1);
+
+  const matchScorePositive = (
+    <Latex
+      tex="1"
+      fill={TEXT_FILL}
+      fontSize={70}
+      x={910}
+      y={30}
+      opacity={0}
+    />
+  ) as Latex;
+  const matchScoreNegative = (
+    <Latex
+      tex="-1"
+      fill={TEXT_FILL}
+      fontSize={70}
+      x={1055}
+      y={130}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add([matchScorePositive, matchScoreNegative]);
+  yield* matchScorePositive.opacity(1, 0.8);
+  yield* waitFor(0.5);
+  yield* matchScoreNegative.opacity(1, 0.8);
 
   yield* waitFor(5);
 });
