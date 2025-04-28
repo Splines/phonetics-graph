@@ -726,9 +726,9 @@ export default makeScene2D(function* (view) {
     matchScorePositive.opacity(0, duration),
     matchScoreNegative.opacity(0, duration),
     // increase matrix gaps & move
-    matrix.layout().width(1800, 1.5),
-    matrix.layout().gap(150, 1.5),
-    matrixContainer().y(600, 1.5),
+    matrix.layout().width(1900, 1.5),
+    matrix.layout().gap(180, 1.5),
+    matrixContainer().y(666, 1.5),
     matrixContainer().x(380, 1.5),
     // hide rest of matrix
     ...matrix.layout().children().map((child, i) => {
@@ -739,13 +739,12 @@ export default makeScene2D(function* (view) {
     }),
   );
 
+  const oneDiagRect = matrix.getRectAt(1, 1);
+  yield* (oneDiagRect.children()[0] as Txt).opacity(0, 1.0);
+
   yield* waitFor(1);
 
-  const oneDiagRect = matrix.getRectAt(1, 1);
-  yield* all(
-    matrix.step(0, 0, 1, 1, 1.0),
-    delay(0.35, (oneDiagRect.children()[0] as Txt).fill(TEXT_FILL_DARK, 0.8)),
-  );
+  yield* matrix.step(0, 0, 1, 1, 1.0);
   yield* waitFor(0.5);
   yield* all(
     oneDiagRect.fill(null, 0.8),
@@ -755,6 +754,81 @@ export default makeScene2D(function* (view) {
   yield* all(
     oneDiagRect.fill(null, 0.8),
     delay(0.25, matrix.step(1, 0, 1, 1, 0.8)),
+  );
+
+  yield* waitFor(0.5);
+
+  // 🎈 Trinity of diag, up & left
+  const arrowListOffset = 200;
+
+  const [arrow1Anim, arrow1] = matrix.stepAndArrowStay(0, 0, 1, 1, 1.0);
+  yield* arrow1Anim;
+  const diagArrow = arrow1.snapshotClone();
+  view.add(diagArrow);
+  diagArrow.absolutePosition(arrow1.absolutePosition());
+  const textProps = {
+    fill: TEXT_FILL,
+    fontSize: 80,
+    opacity: 0,
+  };
+  const diagCalc = (
+    <Latex
+      tex="0 - 1 = -1"
+      {...textProps}
+      x={() => diagArrow.x()}
+    />
+  ) as Latex;
+  view.add(diagCalc);
+
+  yield* all(
+    matrixContainer().x(matrixContainer().x() - 500, 1.5),
+    diagArrow.x(700, 1.5),
+    delay(0.35, diagCalc.opacity(1, 1.5)),
+  );
+
+  yield* waitFor(1);
+
+  const [arrow2Anim, arrow2] = matrix.stepAndArrowStay(0, 1, 1, 1, 1.0);
+  yield* arrow2Anim;
+  const fromAboveArrow = arrow2.snapshotClone();
+  view.add(fromAboveArrow);
+  fromAboveArrow.absolutePosition(arrow2.absolutePosition());
+  const fromAboveCalc = (
+    <Latex
+      tex="-2 - 2 = -4"
+      {...textProps}
+      x={() => fromAboveArrow.x() + 200}
+    />
+  ) as Latex;
+  view.add(fromAboveCalc);
+
+  yield* all(
+    diagArrow.y(diagArrow.y() - arrowListOffset, 1.5),
+    diagCalc.y(diagCalc.y() - arrowListOffset, 1.5),
+    fromAboveArrow.x(530, 1.5),
+    delay(0.35, fromAboveCalc.opacity(1, 1.5)),
+  );
+
+  yield* waitFor(1);
+
+  const [arrow3Anim, arrow3] = matrix.stepAndArrowStay(1, 0, 1, 1, 1.0);
+  yield* arrow3Anim;
+  const fromLeftArrow = arrow3.snapshotClone();
+  view.add(fromLeftArrow);
+  fromLeftArrow.absolutePosition(arrow3.absolutePosition());
+  const fromLeftCalc = (
+    <Latex
+      tex="-2 - 2 = -4"
+      {...textProps}
+      x={() => fromLeftArrow.x() + 30}
+      y={165}
+    />
+  ) as Latex;
+  view.add(fromLeftCalc);
+
+  yield* all(
+    fromLeftArrow.x(700, 1.5),
+    delay(0.35, fromLeftCalc.opacity(1, 1.5)),
   );
 
   yield* waitFor(5);

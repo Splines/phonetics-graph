@@ -162,6 +162,42 @@ export class Matrix {
     );
   }
 
+  public stepAndArrowStay(iSource: number, jSource: number,
+    iTarget: number, jTarget: number, duration: number): [ThreadGenerator, Line] {
+    const sourceRect = this.getRectAt(iSource, jSource);
+    const targetRect = this.getRectAt(iTarget, jTarget);
+    const offset = 45;
+
+    const arrowStart = new Vector2(
+      sourceRect.x() + (jSource !== jTarget ? sourceRect.width() / 2 + offset : 0),
+      sourceRect.y() + (iSource !== iTarget ? sourceRect.height() / 2 + offset : 0),
+    );
+    const arrowEnd = new Vector2(
+      targetRect.x() - (jSource !== jTarget ? targetRect.width() / 2 + offset : 0),
+      targetRect.y() - (iSource !== iTarget ? targetRect.height() / 2 + offset : 0),
+    );
+    const arrow = (
+      <Line
+        points={[
+          arrowStart,
+          arrowEnd,
+        ]}
+        lineWidth={18}
+        stroke={HIGHLIGHT_COLOR}
+        endArrow
+        lineCap="round"
+        opacity={0}
+        end={0}
+      />
+    ) as Line;
+    this.container().add(arrow);
+
+    return [all(
+      arrow.opacity(1, 0.2 * duration),
+      arrow.end(1, duration),
+    ), arrow];
+  }
+
   public highlightCoordinates(i: number, j: number, duration: number): ThreadGenerator {
     const rect = this.getRectAt(i, j);
 
