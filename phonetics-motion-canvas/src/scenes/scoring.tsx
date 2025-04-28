@@ -761,6 +761,7 @@ export default makeScene2D(function* (view) {
   // 🎈 Trinity of diag, up & left
   const arrowListOffset = 200;
 
+  // Diagonal
   const [arrow1Anim, arrow1] = matrix.stepAndArrowStay(0, 0, 1, 1, 1.0);
   yield* arrow1Anim;
   const diagArrow = arrow1.snapshotClone();
@@ -786,10 +787,23 @@ export default makeScene2D(function* (view) {
     delay(0.35, diagCalc.opacity(1, 1.5)),
   );
 
+  const highlight1 = (
+    <Highlight
+      width={140}
+      height={80}
+      x={435}
+      y={0}
+    />
+  ) as Highlight;
+  view.add(highlight1);
+  yield* highlight1.highlight(0.8);
+
   yield* waitFor(1);
 
+  // From top to bottom
   const [arrow2Anim, arrow2] = matrix.stepAndArrowStay(0, 1, 1, 1, 1.0);
   yield* arrow2Anim;
+  yield* waitFor(0.5);
   const fromAboveArrow = arrow2.snapshotClone();
   view.add(fromAboveArrow);
   fromAboveArrow.absolutePosition(arrow2.absolutePosition());
@@ -809,8 +823,20 @@ export default makeScene2D(function* (view) {
     delay(0.35, fromAboveCalc.opacity(1, 1.5)),
   );
 
+  const highlight2 = (
+    <Highlight
+      width={140}
+      height={80}
+      x={471}
+      y={0}
+    />
+  ) as Highlight;
+  view.add(highlight2);
+  yield* highlight2.highlight(0.8);
+
   yield* waitFor(1);
 
+  // From left to right
   const [arrow3Anim, arrow3] = matrix.stepAndArrowStay(1, 0, 1, 1, 1.0);
   yield* arrow3Anim;
   const fromLeftArrow = arrow3.snapshotClone();
@@ -830,6 +856,17 @@ export default makeScene2D(function* (view) {
     fromLeftArrow.x(700, 1.5),
     delay(0.35, fromLeftCalc.opacity(1, 1.5)),
   );
+
+  const highlight3 = (
+    <Highlight
+      width={140}
+      height={80}
+      x={471}
+      y={81}
+    />
+  ) as Highlight;
+  view.add(highlight3);
+  yield* highlight3.highlight(0.8);
 
   yield* waitFor(5);
 });
