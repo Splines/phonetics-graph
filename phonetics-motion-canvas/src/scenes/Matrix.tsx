@@ -289,13 +289,14 @@ export class Matrix {
     return this.rects.concat(this.textRects).concat(this.emptyRects);
   }
 
-  public writeTextAt(row: number, col: number, text: string, duration: number): ThreadGenerator {
+  public writeTextAt(row: number, col: number, text: string, duration: number,
+    withHighlight = true): ThreadGenerator {
     const rect = this.getRectAt(row, col);
     const txt = (
       <Latex
         tex={text}
         fontSize={61}
-        fill={TEXT_FILL_DARK}
+        fill={withHighlight ? TEXT_FILL_DARK : TEXT_FILL}
         opacity={0}
       >
       </Latex>
@@ -305,20 +306,15 @@ export class Matrix {
     rect.alignItems("center");
     rect.add(txt);
 
-    // return all(
-    // rect.stroke(HIGHLIGHT_COLOR, 0.8),
-    // rect.lineWidth(9, 0.8),
-    // txt.opacity(1, 0.7),
-    // delay(0.8, all(
-    //   rect.stroke(this.BASE_COLOR, 0.8),
-    //   rect.lineWidth(6, 0.8),
-    //   txt.fill(TEXT_FILL, 0.8),
-    // )),
-    // );
-
+    if (withHighlight) {
+      return all(
+        this.highlightRect(rect, duration),
+        txt.opacity(1, duration),
+      );
+    }
     return all(
-      this.highlightRect(rect, duration),
       txt.opacity(1, duration),
+      rect.stroke(HIGHLIGHT_COLOR, duration),
     );
   }
 

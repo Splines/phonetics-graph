@@ -2,7 +2,8 @@ import { is, Latex, Line, makeScene2D, Node, Rect, Txt } from "@motion-canvas/2d
 import {
   all,
   chain,
-  createRef, delay, sequence, Spring,
+  createRef, delay,
+  sequence, Spring,
   spring, waitFor,
 } from "@motion-canvas/core";
 import { AlignState } from "./AlignState";
@@ -1056,5 +1057,188 @@ export default makeScene2D(function* (view) {
     delay(0.7, highlightExamine.highlight(1.0)),
   );
 
+  yield* waitFor(1.5);
+
+  // 🎈 Examine rect again together
+
+  // diagonal
+  const [examineAgain, examineDiag] = matrix.stepAndArrowStay(1, 1, 2, 2, 0.8);
+  const diagPlusOne = (
+    <Latex
+      tex="+1"
+      fill={HIGHLIGHT_COLOR}
+      fontSize={65}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(diagPlusOne);
+  diagPlusOne.absolutePosition(examineDiag.absolutePosition());
+  diagPlusOne.y(diagPlusOne.y() - 420);
+  yield* all(
+    examineAgain,
+    delay(0.2, all(
+      diagPlusOne.opacity(1, 0.8),
+      diagPlusOne.y(diagPlusOne.y() + 50, 0.8),
+    )),
+  );
+  yield* matrix.writeTextAt(2, 2, "0", 1.2);
+  yield* waitFor(0.5);
+
+  const examineMax = (
+    <Latex
+      tex="{{ \text{max} }} {{ \bigl\{ }} {{ 0 }} {{ \bigr\} }}"
+      fill={TEXT_FILL}
+      fontSize={75}
+      x={350}
+      y={400}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(examineMax);
+
+  yield* all(
+    examineMax.opacity(1, 1.3),
+    examineMax.x(examineMax.x() + 300, 1.3),
+    examineDiag.start(1, 1.3),
+    examineDiag.opacity(0, 1.3),
+    diagPlusOne.opacity(0, 1.3),
+    examineRect.fill(null, 1.3),
+    (examineRect.children()[0] as Latex).opacity(0, 1.3),
+  );
+  examineRect.children().forEach(child => child.remove());
+  yield* waitFor(1.0);
+
+  // top to bottom
+  const [examineFromTopAnim, examineFromTop] = matrix.stepAndArrowStay(1, 2, 2, 2, 0.8);
+  const fromTop = (
+    <Latex
+      tex="-2"
+      fill={HIGHLIGHT_COLOR}
+      fontSize={65}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(fromTop);
+  fromTop.absolutePosition(examineFromTop.absolutePosition());
+  fromTop.y(fromTop.y() - 385);
+  fromTop.x(fromTop.x() + 10);
+  yield* all(
+    examineFromTopAnim,
+    delay(0.2, all(
+      fromTop.opacity(1, 0.8),
+      fromTop.y(fromTop.y() + 50, 0.8),
+    )),
+  );
+  yield* matrix.writeTextAt(2, 2, "-5", 1.2);
+  yield* waitFor(0.5);
+
+  yield* all(
+    examineMax.tex("{{ \\text{max} }} {{ \\bigl\\{ }} {{ 0 }}, {{-5}} {{ \\bigr\\} }}", 1.3),
+    examineMax.x(examineMax.x() + 80, 1.3),
+    examineFromTop.start(1, 1.3),
+    examineFromTop.opacity(0, 1.3),
+    fromTop.opacity(0, 1.3),
+    examineRect.fill(null, 1.3),
+    (examineRect.children()[0] as Latex).opacity(0, 1.3),
+  );
+  examineRect.children().forEach(child => child.remove());
+  yield* waitFor(1.0);
+
+  // left to right
+  const [examineFromLeftAnim, examineFromLeft] = matrix.stepAndArrowStay(2, 1, 2, 2, 0.8);
+  const fromLeft = (
+    <Latex
+      tex="-2"
+      fill={HIGHLIGHT_COLOR}
+      fontSize={65}
+      opacity={0}
+    />
+  ) as Latex;
+  view.add(fromLeft);
+  fromLeft.absolutePosition(examineFromLeft.absolutePosition());
+  fromLeft.y(fromLeft.y() - 80);
+  fromLeft.x(fromLeft.x() - 100);
+  yield* all(
+    examineFromLeftAnim,
+    delay(0.2, all(
+      fromLeft.opacity(1, 0.8),
+      fromLeft.x(fromLeft.x() + 50, 0.8),
+    )),
+  );
+  yield* matrix.writeTextAt(2, 2, "-5", 1.2);
+  yield* waitFor(0.5);
+
+  yield* all(
+    // eslint-disable-next-line @stylistic/max-len
+    examineMax.tex("{{ \\text{max} }} {{ \\bigl\\{ }} {{ 0 }}, {{-5}}, {{-5}} {{ \\bigr\\} }}", 1.3),
+    examineMax.x(examineMax.x() + 80, 1.3),
+    examineFromLeft.start(1, 1.3),
+    examineFromLeft.opacity(0, 1.3),
+    fromLeft.opacity(0, 1.3),
+    examineRect.fill(null, 1.3),
+    (examineRect.children()[0] as Latex).opacity(0, 1.3),
+  );
+  examineRect.children().forEach(child => child.remove());
+  yield* waitFor(1.0);
+
+  // finally
+  yield* all(
+    examineMax.x(examineMax.x() - 150, 1.3),
+    examineMax.opacity(0, 1.3),
+    delay(0.2, matrix.writeTextAt(2, 2, "0", 1.3)),
+  );
+  yield* waitFor(1);
+
+  // 🎈 Entire matrix
+  duration = 1.9;
+  yield* all(
+    matrix.layout().width(1100, 1.5 * duration),
+    matrix.layout().gap(20, 1.5 * duration),
+    matrixContainer().x(0, 1.3 * duration),
+    matrixContainer().y(0, 1.3 * duration),
+    delay(0.2,
+      sequence(0.06,
+        ...matrix.layout().children().map((child) => {
+          return child.opacity(1.0, 0.9);
+        },
+        ),
+      ),
+    ),
+    delay(0.7, all(
+      examineRect.fill(null, 1.7),
+      (examineRect.children()[0] as Latex).fill(TEXT_FILL, 1.7),
+    )),
+  );
+  yield* waitFor(1.5); // 3,2,1 countdown
+
+  duration = 1.2;
+  const matrixReveal = [
+    matrix.writeTextAt(1, 3, "-5", duration, false),
+    matrix.writeTextAt(1, 4, "-7", duration, false),
+    matrix.writeTextAt(2, 3, "-2", duration, false),
+    matrix.writeTextAt(2, 4, "-4", duration, false),
+    matrix.writeTextAt(3, 1, "-5", duration, false),
+    matrix.writeTextAt(3, 2, "-2", duration, false),
+    matrix.writeTextAt(3, 3, "-1", duration, false),
+    matrix.writeTextAt(3, 4, "-3", duration, false),
+    matrix.writeTextAt(4, 1, "-7", duration, false),
+    matrix.writeTextAt(4, 2, "-4", duration, false),
+    matrix.writeTextAt(4, 3, "-3", duration, false),
+    matrix.writeTextAt(4, 4, "0", duration, false),
+    matrix.writeTextAt(5, 1, "-9", duration, false),
+    matrix.writeTextAt(5, 2, "-6", duration, false),
+    matrix.writeTextAt(5, 3, "-3", duration, false),
+    matrix.writeTextAt(5, 4, "-2", duration, false),
+    matrix.writeTextAt(6, 1, "-11", duration, false),
+    matrix.writeTextAt(6, 2, "-8", duration, false),
+    matrix.writeTextAt(6, 3, "-5", duration, false),
+    matrix.writeTextAt(6, 4, "-2", duration, false),
+  ];
+  const desaturate = matrix.layout()
+    .children().map(child => (child as Txt).stroke(matrix.BASE_COLOR, duration));
+  yield* all(
+    sequence(0.06, ...matrixReveal),
+    // delay(0.5, sequence(0.04, ...desaturate)),
+  );
   yield* waitFor(5);
 });
