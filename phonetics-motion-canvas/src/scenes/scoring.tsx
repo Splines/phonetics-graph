@@ -1534,9 +1534,12 @@ export default makeScene2D(function* (view) {
   yield* all(
     highlightBestDirections.highlight(1.5),
     highlightBestDirections.rect().stroke(HIGHLIGHT_COLOR_2, 1.5),
+    arrowLastDiag.stroke(HIGHLIGHT_COLOR_2, 1.5),
+    arrowLastRight.stroke(HIGHLIGHT_COLOR_2, 1.5),
     arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
     arrowLastRightClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
     // fade out
+    arrowLastDown.opacity(0, 1.5),
     arrowLastDownClone.stroke(HIGHLIGHT_COLOR_FADED, 1.5),
     lastRewardDown.fill(TEXT_FILL_FADED, 1.5),
   );
