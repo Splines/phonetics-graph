@@ -39,4 +39,8 @@ export class Highlight extends Rect {
       ),
     );
   }
+
+  public rect(): Rect {
+    return this.highlightRect;
+  }
 }

@@ -13,7 +13,8 @@ import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
   HIGHLIGHT_COLOR_2,
-  TEXT_FILL, TEXT_FILL_DARK, TEXT_FONT,
+  HIGHLIGHT_COLOR_FADED,
+  TEXT_FILL, TEXT_FILL_DARK, TEXT_FILL_FADED, TEXT_FONT,
 } from "./globals";
 import { Highlight } from "./Highlight";
 import { LetterTxt } from "./LetterTxt";
@@ -1370,18 +1371,18 @@ export default makeScene2D(function* (view) {
 
   let offset = -22;
   const [arrowLastDiagAnim, arrowLastDiag] = matrix.stepAndArrowStay(2, 3, 3, 4, 1.0, offset);
-  const [arrowLastDownAnim, arrowLastDown] = matrix.stepAndArrowStay(3, 3, 3, 4, 1.0, offset);
-  const [arrowLastRightAnim, arrowLastRight] = matrix.stepAndArrowStay(2, 4, 3, 4, 1.0, offset);
-  yield* sequence(0.32, arrowLastDiagAnim, arrowLastDownAnim, arrowLastRightAnim);
+  const [arrowLastRightAnim, arrowLastRight] = matrix.stepAndArrowStay(3, 3, 3, 4, 1.0, offset);
+  const [arrowLastDownAnim, arrowLastDown] = matrix.stepAndArrowStay(2, 4, 3, 4, 1.0, offset);
+  yield* sequence(0.32, arrowLastDiagAnim, arrowLastRightAnim, arrowLastDownAnim);
   yield* waitFor(0.5);
 
   const arrowLastDiagClone = arrowLastDiag.snapshotClone();
-  const arrowLastDownClone = arrowLastDown.snapshotClone();
   const arrowLastRightClone = arrowLastRight.snapshotClone();
-  view.add([arrowLastDiagClone, arrowLastDownClone, arrowLastRightClone]);
+  const arrowLastDownClone = arrowLastDown.snapshotClone();
+  view.add([arrowLastDiagClone, arrowLastRightClone, arrowLastDownClone]);
   arrowLastDiagClone.absolutePosition(arrowLastDiag.absolutePosition());
-  arrowLastDownClone.absolutePosition(arrowLastDown.absolutePosition());
   arrowLastRightClone.absolutePosition(arrowLastRight.absolutePosition());
+  arrowLastDownClone.absolutePosition(arrowLastDown.absolutePosition());
 
   const textPropsRewards = {
     fill: TEXT_FILL,
@@ -1396,7 +1397,7 @@ export default makeScene2D(function* (view) {
       {...textPropsRewards}
     />
   ) as Latex;
-  const lastRewardDown = (
+  const lastRewardRight = (
     <Latex
       tex="(-1) + (-2) = -3"
       x={580}
@@ -1404,7 +1405,7 @@ export default makeScene2D(function* (view) {
       {...textPropsRewards}
     />
   ) as Latex;
-  const lastRewardRight = (
+  const lastRewardDown = (
     <Latex
       tex="(-4) + (-2) = -6"
       x={580}
@@ -1412,18 +1413,18 @@ export default makeScene2D(function* (view) {
       {...textPropsRewards}
     />
   ) as Latex;
-  view.add([lastRewardDiag, lastRewardDown, lastRewardRight]);
+  view.add([lastRewardDiag, lastRewardRight, lastRewardDown]);
 
   duration = 1.5;
   yield* all(
     positionAtCenterOfMass(arrowLastDiagClone, 180, -100, duration),
-    positionAtCenterOfMass(arrowLastDownClone, 180, 0, duration),
-    positionAtCenterOfMass(arrowLastRightClone, 180, 100, duration),
+    positionAtCenterOfMass(arrowLastRightClone, 180, 0, duration),
+    positionAtCenterOfMass(arrowLastDownClone, 180, 100, duration),
   );
   duration = 0.9;
   yield* lastRewardDiag.opacity(1, duration);
-  yield* lastRewardDown.opacity(1, duration);
   yield* lastRewardRight.opacity(1, duration);
+  yield* lastRewardDown.opacity(1, duration);
   yield* waitFor(1);
 
   const sameRewardHighlight = (
@@ -1478,18 +1479,16 @@ export default makeScene2D(function* (view) {
     // fade out other elements
     delay(0.2, all(
       arrowLastDiag.opacity(0, duration),
-      arrowLastDown.opacity(0, duration),
       arrowLastRight.opacity(0, duration),
+      arrowLastDown.opacity(0, duration),
       arrowLastDiagClone.opacity(0, duration),
-      arrowLastDownClone.opacity(0, duration),
       arrowLastRightClone.opacity(0, duration),
+      arrowLastDownClone.opacity(0, duration),
       lastRewardDiag.opacity(0, duration),
       lastRewardDown.opacity(0, duration),
       lastRewardRight.opacity(0, duration),
     )),
   );
-
-  yield* waitFor(2);
 
   const finalRectAgain = matrix.getRectAt(6, 4);
   const finalRectTextAgain = finalRect.children()[0] as Txt;
@@ -1498,5 +1497,49 @@ export default makeScene2D(function* (view) {
     finalRectAgain.fill(null, 2.0),
     finalRectTextAgain.fill(TEXT_FILL, 2.0),
   );
+
+  // 🎈 Traceback (cut here)
+  // maybe random alignment animation beforehand
+
+  yield* all(
+    recapField.stroke(HIGHLIGHT_COLOR_2, 1.0),
+    recapField.fill(HIGHLIGHT_COLOR_2, 1.0),
+  );
+
+  yield* waitFor(0.5);
+
+  duration = 1.0;
+  yield* all(
+    arrowLastDiag.opacity(1, duration),
+    arrowLastRight.opacity(1, duration),
+    arrowLastDown.opacity(1, duration),
+    arrowLastDiagClone.opacity(1, duration),
+    arrowLastRightClone.opacity(1, duration),
+    arrowLastDownClone.opacity(1, duration),
+    lastRewardDiag.opacity(1, duration),
+    lastRewardDown.opacity(1, duration),
+    lastRewardRight.opacity(1, duration),
+  );
+
+  yield* waitFor(1);
+
+  const highlightBestDirections = (
+    <Highlight
+      width={800}
+      height={200}
+      x={510 / 2}
+      y={-30}
+    />) as Highlight;
+  view.add(highlightBestDirections);
+  yield* all(
+    highlightBestDirections.highlight(1.5),
+    highlightBestDirections.rect().stroke(HIGHLIGHT_COLOR_2, 1.5),
+    arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
+    arrowLastRightClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
+    // fade out
+    arrowLastDownClone.stroke(HIGHLIGHT_COLOR_FADED, 1.5),
+    lastRewardDown.fill(TEXT_FILL_FADED, 1.5),
+  );
+
   yield* waitFor(2);
 });
