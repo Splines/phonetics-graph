@@ -5,6 +5,7 @@ import {
   createRef, delay,
   sequence, Spring,
   spring,
+  ThreadGenerator,
   waitFor,
 } from "@motion-canvas/core";
 import { positionAtCenterOfMass } from "../utility";
@@ -1447,17 +1448,55 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(2);
 
-  const finalRectAgain = matrix.getRectAt(6, 4);
-  const finalRectTextAgain = finalRect.children()[0] as Txt;
+  // 🎈 ... did the same for every cell
+
+  const cellHighlights: ThreadGenerator[] = [];
+  for (let i = 0; i < 7; i++) {
+    for (let j = 0; j < 5; j++) {
+      const cell = matrix.getRectAt(i, j);
+      const cellText = cell.children()[0] as Txt;
+      let resetAnim = delay(1.0, all(
+        cell.fill(null, 0.8),
+        cellText.fill(TEXT_FILL, 0.8),
+      ));
+      // dont reset final cell
+      if (i === 6 && j === 4) {
+        resetAnim = null;
+      }
+      cellHighlights.push(
+        all(
+          matrix.highlight(i, j, 0.8),
+          cellText.fill(TEXT_FILL_DARK, 0.8,
+          ),
+          resetAnim,
+        ));
+    }
+  }
+  duration = 2.8;
   yield* all(
-    finalRectTextAgain.fill(TEXT_FILL_DARK, 0.8),
-    matrix.highlight(6, 4, 0.8),
-  );
-  yield* waitFor(2);
-  yield* all(
-    finalRectAgain.fill(null, 1.0),
-    finalRectTextAgain.fill(TEXT_FILL, 1.0),
+    sequence(0.07, ...cellHighlights),
+    // fade out other elements
+    delay(0.2, all(
+      arrowLastDiag.opacity(0, duration),
+      arrowLastDown.opacity(0, duration),
+      arrowLastRight.opacity(0, duration),
+      arrowLastDiagClone.opacity(0, duration),
+      arrowLastDownClone.opacity(0, duration),
+      arrowLastRightClone.opacity(0, duration),
+      lastRewardDiag.opacity(0, duration),
+      lastRewardDown.opacity(0, duration),
+      lastRewardRight.opacity(0, duration),
+    )),
   );
 
+  yield* waitFor(2);
+
+  const finalRectAgain = matrix.getRectAt(6, 4);
+  const finalRectTextAgain = finalRect.children()[0] as Txt;
+  yield* waitFor(2);
+  yield* all(
+    finalRectAgain.fill(null, 2.0),
+    finalRectTextAgain.fill(TEXT_FILL, 2.0),
+  );
   yield* waitFor(2);
 });
