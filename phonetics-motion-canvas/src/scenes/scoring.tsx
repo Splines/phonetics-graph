@@ -1240,5 +1240,95 @@ export default makeScene2D(function* (view) {
     sequence(0.06, ...matrixReveal),
     // delay(0.5, sequence(0.04, ...desaturate)),
   );
-  yield* waitFor(5);
+  yield waitFor(1);
+
+  // 🎈 Summary Texts
+  const textPropsSummary = {
+    fill: TEXT_FILL,
+    fontFamily: TEXT_FONT,
+    fontSize: 80,
+    letterSpacing: 4,
+  };
+  const textPropsSummaryLatex = {
+    fill: TEXT_FILL,
+    fontSize: 72,
+    opacity: 0,
+  };
+
+  const summaryGapPenalty = (
+    <LetterTxt
+      {...textPropsSummary}
+      x={120}
+      y={0}
+    >
+      Gap Penalty
+    </LetterTxt>
+  ) as LetterTxt;
+  const summaryGapLatex = (
+    <Latex
+      tex="p = -2"
+      {...textPropsSummaryLatex}
+      x={715}
+      y={0}
+    />
+  ) as Latex;
+  view.add([summaryGapPenalty, summaryGapLatex]);
+  yield* all(
+    matrixContainer().x(matrixContainer().x() - 500, 1.8),
+    delay(0.5, all(
+      summaryGapPenalty.flyIn(1.0, 0.02),
+      delay(0.5, summaryGapLatex.opacity(1, 1.0)),
+    )),
+  );
+  yield* waitFor(0.5);
+
+  const summaryMatchScore = (
+    <LetterTxt
+      {...textPropsSummary}
+      x={120}
+      y={20}
+    >
+      🤩 Match Score
+    </LetterTxt>
+  ) as LetterTxt;
+  const summaryMatchLatex = (
+    <Latex
+      tex="1"
+      {...textPropsSummaryLatex}
+      x={770}
+      y={12}
+    />
+  ) as Latex;
+  view.add([summaryMatchScore, summaryMatchLatex]);
+  yield* all(
+    summaryGapPenalty.y(summaryGapPenalty.y() - 110, 1.0),
+    summaryGapLatex.y(summaryGapLatex.y() - 110, 1.0),
+    summaryMatchScore.flyIn(1.0, 0.02),
+    delay(0.5, summaryMatchLatex.opacity(1, 1.0)),
+  );
+  yield* waitFor(0.5);
+
+  const summaryMismatchScore = (
+    <LetterTxt
+      {...textPropsSummary}
+      x={120}
+      y={140}
+    >
+      😕 Mismatch Score
+    </LetterTxt>
+  ) as LetterTxt;
+  const summaryMismatchLatex = (
+    <Latex
+      tex="-1"
+      {...textPropsSummaryLatex}
+      x={915}
+      y={135}
+    />
+  ) as Latex;
+  view.add([summaryMismatchScore, summaryMismatchLatex]);
+  yield* all(
+    summaryMismatchScore.flyIn(1.0, 0.02),
+    delay(0.5, summaryMismatchLatex.opacity(1, 1.0)),
+  );
+  yield* waitFor(1.5);
 });

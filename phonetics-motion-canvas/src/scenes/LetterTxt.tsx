@@ -5,6 +5,7 @@ import {
 } from "@motion-canvas/core";
 
 export class LetterTxt extends Node {
+  private Y_OFFSET = 80;
   private txtObjects: Txt[] = [];
 
   public constructor({ children, ...props }: TxtProps) {
@@ -63,7 +64,7 @@ export class LetterTxt extends Node {
       <Txt
         {...props}
         x={cursorX}
-        y={80}
+        y={this.Y_OFFSET}
         opacity={0}
         offsetX={-1}
       >
