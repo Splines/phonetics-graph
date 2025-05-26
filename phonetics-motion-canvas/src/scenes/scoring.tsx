@@ -1541,5 +1541,14 @@ export default makeScene2D(function* (view) {
     lastRewardDown.fill(TEXT_FILL_FADED, 1.5),
   );
 
+  yield* waitFor(0.8);
+
+  sameRewardHighlight.rect().stroke(HIGHLIGHT_COLOR_2);
+  sameRewardHighlight2.rect().stroke(HIGHLIGHT_COLOR_2);
+  yield* sequence(0.4,
+    sameRewardHighlight.highlight(0.8),
+    sameRewardHighlight2.highlight(0.8),
+  );
+
   yield* waitFor(2);
 });

@@ -27,8 +27,9 @@ export class Highlight extends Rect {
   }
 
   * highlight(duration: number): ThreadGenerator {
-    yield*
-    all(
+    this.reset();
+
+    yield* all(
       this.highlightRect.opacity(1, 0.2 * duration),
       this.highlightRect.end(1, duration),
       chain(
@@ -38,9 +39,17 @@ export class Highlight extends Rect {
         ),
       ),
     );
+
+    this.reset();
   }
 
   public rect(): Rect {
     return this.highlightRect;
+  }
+
+  private reset() {
+    this.highlightRect.opacity(0);
+    this.highlightRect.start(0);
+    this.highlightRect.end(0);
   }
 }

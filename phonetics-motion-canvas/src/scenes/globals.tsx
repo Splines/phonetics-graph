@@ -8,7 +8,7 @@ export const PHONETIC_FAMILY = "Charis";
  * Colors
  */
 export const TEXT_FILL = "#FFFFFF";
-export const TEXT_FILL_FADED = "#BFBFBF";
+export const TEXT_FILL_FADED = "#8E8E8E";
 export const TEXT_FILL_DARK = "#21201e";
 export const HIGHLIGHT_COLOR = "#FFEB6C";
 export const HIGHLIGHT_COLOR_FADED = "#888143";
