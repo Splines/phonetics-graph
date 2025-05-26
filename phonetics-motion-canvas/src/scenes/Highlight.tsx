@@ -1,9 +1,8 @@
 import { Rect, RectProps } from "@motion-canvas/2d";
 import { all, chain, ThreadGenerator, waitFor } from "@motion-canvas/core";
+import { HIGHLIGHT_COLOR } from "./globals";
 
 export class Highlight extends Rect {
-  private HIGHLIGHT_COLOR = "#FFEB6C";
-
   private highlightRect: Rect;
 
   public constructor({ children, ...props }: RectProps) {
@@ -14,7 +13,7 @@ export class Highlight extends Rect {
       <Rect
         width={200}
         height={100}
-        stroke={this.HIGHLIGHT_COLOR}
+        stroke={HIGHLIGHT_COLOR}
         lineWidth={5}
         {...props}
         opacity={0}

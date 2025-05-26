@@ -162,11 +162,17 @@ export class Matrix {
     );
   }
 
+  /**
+   * Steps from the source cell to the target cell and keeps the arrow visible.
+   *
+   * Note that this is used for the enlarged matrix grid (with lots of padding),
+   * so you should probably use a different offset value than the default if not
+   * working in that context.
+   */
   public stepAndArrowStay(iSource: number, jSource: number,
-    iTarget: number, jTarget: number, duration: number): [ThreadGenerator, Line] {
+    iTarget: number, jTarget: number, duration: number, offset = 45): [ThreadGenerator, Line] {
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
-    const offset = 45;
 
     const arrowStart = new Vector2(
       sourceRect.x() + (jSource !== jTarget ? sourceRect.width() / 2 + offset : 0),

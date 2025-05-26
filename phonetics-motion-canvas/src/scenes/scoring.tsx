@@ -4,8 +4,10 @@ import {
   chain,
   createRef, delay,
   sequence, Spring,
-  spring, waitFor,
+  spring,
+  waitFor,
 } from "@motion-canvas/core";
+import { positionAtCenterOfMass } from "../utility";
 import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
@@ -1330,5 +1332,132 @@ export default makeScene2D(function* (view) {
     summaryMismatchScore.flyIn(1.0, 0.02),
     delay(0.5, summaryMismatchLatex.opacity(1, 1.0)),
   );
-  yield* waitFor(1.5);
+  yield* waitFor(3);
+
+  // 🎈 Final matrix highlight
+
+  const finalRect = matrix.getRectAt(6, 4);
+  const finalRectText = finalRect.children()[0] as Txt;
+  yield* all(
+    finalRectText.fill(TEXT_FILL_DARK, 0.8),
+    matrix.highlight(6, 4, 0.8),
+  );
+  yield* waitFor(2);
+
+  // 🎈 Recap optimal step
+
+  duration = 1.5;
+  yield* all(
+    finalRect.fill(null, duration),
+    finalRectText.fill(TEXT_FILL, duration),
+    // hide summary texts
+    summaryGapPenalty.opacity(0, duration),
+    summaryGapLatex.opacity(0, duration),
+    summaryMatchScore.opacity(0, duration),
+    summaryMatchLatex.opacity(0, duration),
+    summaryMismatchScore.opacity(0, duration),
+    summaryMismatchLatex.opacity(0, duration),
+  );
+
+  const recapField = matrix.getRectAt(3, 4);
+  yield* all(
+    recapField.stroke(HIGHLIGHT_COLOR_2, 1.0),
+    recapField.fill(HIGHLIGHT_COLOR_2, 1.0),
+  );
+
+  yield* waitFor(2);
+
+  let offset = -22;
+  const [arrowLastDiagAnim, arrowLastDiag] = matrix.stepAndArrowStay(2, 3, 3, 4, 1.0, offset);
+  const [arrowLastDownAnim, arrowLastDown] = matrix.stepAndArrowStay(3, 3, 3, 4, 1.0, offset);
+  const [arrowLastRightAnim, arrowLastRight] = matrix.stepAndArrowStay(2, 4, 3, 4, 1.0, offset);
+  yield* sequence(0.32, arrowLastDiagAnim, arrowLastDownAnim, arrowLastRightAnim);
+  yield* waitFor(0.5);
+
+  const arrowLastDiagClone = arrowLastDiag.snapshotClone();
+  const arrowLastDownClone = arrowLastDown.snapshotClone();
+  const arrowLastRightClone = arrowLastRight.snapshotClone();
+  view.add([arrowLastDiagClone, arrowLastDownClone, arrowLastRightClone]);
+  arrowLastDiagClone.absolutePosition(arrowLastDiag.absolutePosition());
+  arrowLastDownClone.absolutePosition(arrowLastDown.absolutePosition());
+  arrowLastRightClone.absolutePosition(arrowLastRight.absolutePosition());
+
+  const textPropsRewards = {
+    fill: TEXT_FILL,
+    fontSize: 60,
+    opacity: 0,
+  };
+  const lastRewardDiag = (
+    <Latex
+      tex="(-2) + (-1) = -3"
+      x={580}
+      y={-100}
+      {...textPropsRewards}
+    />
+  ) as Latex;
+  const lastRewardDown = (
+    <Latex
+      tex="(-1) + (-2) = -3"
+      x={580}
+      y={0}
+      {...textPropsRewards}
+    />
+  ) as Latex;
+  const lastRewardRight = (
+    <Latex
+      tex="(-4) + (-2) = -6"
+      x={580}
+      y={100}
+      {...textPropsRewards}
+    />
+  ) as Latex;
+  view.add([lastRewardDiag, lastRewardDown, lastRewardRight]);
+
+  duration = 1.5;
+  yield* all(
+    positionAtCenterOfMass(arrowLastDiagClone, 180, -100, duration),
+    positionAtCenterOfMass(arrowLastDownClone, 180, 0, duration),
+    positionAtCenterOfMass(arrowLastRightClone, 180, 100, duration),
+  );
+  duration = 0.9;
+  yield* lastRewardDiag.opacity(1, duration);
+  yield* lastRewardDown.opacity(1, duration);
+  yield* lastRewardRight.opacity(1, duration);
+  yield* waitFor(1);
+
+  const sameRewardHighlight = (
+    <Highlight
+      width={100}
+      height={80}
+      x={830 / 2 - 5}
+      y={-100 / 2}
+    />) as Highlight;
+  const sameRewardHighlight2 = (
+    <Highlight
+      width={100}
+      height={80}
+      x={830 / 2 - 5}
+      y={0}
+    />) as Highlight;
+  view.add([sameRewardHighlight, sameRewardHighlight2]);
+  yield* sequence(0.4,
+    sameRewardHighlight.highlight(0.8),
+    sameRewardHighlight2.highlight(0.8),
+  );
+
+  yield* waitFor(2);
+
+  const finalRectAgain = matrix.getRectAt(6, 4);
+  const finalRectTextAgain = finalRect.children()[0] as Txt;
+  yield* all(
+    finalRectTextAgain.fill(TEXT_FILL_DARK, 0.8),
+    matrix.highlight(6, 4, 0.8),
+  );
+  yield* waitFor(2);
+  yield* all(
+    finalRectAgain.fill(null, 1.0),
+    finalRectTextAgain.fill(TEXT_FILL, 1.0),
+  );
+
+  yield* waitFor(2);
 });
