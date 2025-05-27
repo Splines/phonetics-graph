@@ -3,7 +3,8 @@ import {
   all,
   chain,
   createRef, delay,
-  sequence, Spring,
+  sequence,
+  Spring,
   spring,
   ThreadGenerator,
   waitFor,
@@ -1717,17 +1718,20 @@ export default makeScene2D(function* (view) {
   yield* waitFor(1);
 
   // wiggle optimal path arrows
-  const wiggle = (node: Node, duration: number, amplitude = 1.0) => {
-    const wiggle = function* (angle: number) {
-      const prevRotation = node.rotation();
-      yield* node.rotation(prevRotation + angle, duration);
-    };
+  const RotateSpring = {
+    mass: 0.03,
+    stiffness: 8.0,
+    damping: 0.15,
+    initialVelocity: 20.0,
+  };
+  const wiggle = (node: Node, angle: number) => {
+    const rotationPrior = node.rotation();
     return chain(
-      wiggle(-5 * amplitude),
-      wiggle(2 * 5 * amplitude),
-      wiggle((-5 - 3) * amplitude),
-      wiggle(2 * 3 * amplitude),
-      wiggle(-3 * amplitude),
+      node.rotation(rotationPrior - angle, 0.2),
+      waitFor(0.05),
+      spring(RotateSpring, rotationPrior - angle, rotationPrior, 1, (value) => {
+        node.rotation(value);
+      }),
     );
   };
 
@@ -1735,7 +1739,7 @@ export default makeScene2D(function* (view) {
   yield* sequence(0.12,
     ...optimalPathArrows.map((arrowIndex) => {
       const arrow = tracebackArrows[arrowIndex];
-      return wiggle(arrow, 0.2, 4);
+      return wiggle(arrow, 30);
     }),
   );
 
