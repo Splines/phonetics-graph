@@ -8,7 +8,7 @@ import {
   ThreadGenerator,
   waitFor,
 } from "@motion-canvas/core";
-import { moveLineGeometryToCenter, positionAtCenterOfMass } from "../utility";
+import { positionAtCenterOfMass } from "../utility";
 import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
@@ -1617,7 +1617,7 @@ export default makeScene2D(function* (view) {
     [6, 4, 5, 3],
   ];
   const tracebackAnims = [];
-  const tracebackArrows = [];
+  const tracebackArrows: Line[] = [];
   for (const [iSource, jSource, iTarget, jTarget] of tracebacks) {
     const [anim, arrow] = matrix.stepAndArrowStay(
       iSource, jSource, iTarget, jTarget, 0.9, -130, true, HIGHLIGHT_COLOR_2);
@@ -1645,14 +1645,73 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
-  /// Reverse arrows by rotating them around their center 180°
+  /* // Reverse arrows by rotating them around their center 180°
   for (const arrow of tracebackArrows) {
     moveLineGeometryToCenter(arrow);
   }
   duration = 0.8;
   yield* sequence(0.02, ...tracebackArrows.map((arrow) => {
     return arrow.rotation(180, duration);
-  }));
+  })); */
+
+  // 🎈 Traceback (step by step)
+
+  const matrixHighlightAndText = (i: number, j: number, duration: number) => {
+    const rect = matrix.getRectAt(i, j);
+    const text = rect.children()[0] as Txt;
+    return all(
+      matrix.highlight(i, j, duration),
+      text.fill(TEXT_FILL_DARK, duration),
+    );
+  };
+
+  const matrixStepOptimal
+  = (i: number, j: number, tracebackArrowIndex: number, duration: number) => {
+    const arrow = tracebackArrows[tracebackArrowIndex];
+    return all(
+      arrow.stroke(HIGHLIGHT_COLOR, duration),
+      arrow.shadowColor("#00000097", duration),
+      arrow.shadowBlur(15, duration),
+      delay(0.5, matrixHighlightAndText(i, j, duration)),
+    );
+  };
+
+  duration = 1.2;
+  yield* matrixHighlightAndText(6, 4, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(5, 3, 43, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(4, 2, 36, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(3, 2, 28, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(2, 2, 21, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(1, 1, 15, duration);
+  yield* waitFor(0.5);
+  yield* matrixStepOptimal(0, 0, 5, duration);
+  yield* waitFor(0.5);
+
+  // highlight path
+  const optimalPath = [
+    [0, 0],
+    [1, 1],
+    [2, 2],
+    [3, 2],
+    [4, 2],
+    [5, 3],
+    [6, 4],
+  ];
+  duration = 1.0;
+  yield* all(
+    ...optimalPath.map(([i, j]) => {
+      const rect = matrix.getRectAt(i, j);
+      return all(
+        rect.shadowColor(HIGHLIGHT_COLOR, duration),
+        rect.shadowBlur(20, duration),
+      );
+    }),
+  );
 
   yield* waitFor(2);
 });
