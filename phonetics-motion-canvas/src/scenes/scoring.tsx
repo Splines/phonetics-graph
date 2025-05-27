@@ -8,7 +8,7 @@ import {
   ThreadGenerator,
   waitFor,
 } from "@motion-canvas/core";
-import { positionAtCenterOfMass } from "../utility";
+import { moveLineGeometryToCenter, positionAtCenterOfMass } from "../utility";
 import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
@@ -1539,18 +1539,20 @@ export default makeScene2D(function* (view) {
     arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
     arrowLastRightClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
     // remove arrow heads
-    arrowLastDiag.arrowSize(0, 1.5),
-    arrowLastRight.arrowSize(0, 1.5),
+    // arrowLastDiag.arrowSize(0, 1.5),
+    // arrowLastRight.arrowSize(0, 1.5),
     // fade out
     arrowLastDown.opacity(0, 1.5),
     arrowLastDownClone.stroke(HIGHLIGHT_COLOR_FADED, 1.5),
     lastRewardDown.fill(TEXT_FILL_FADED, 1.5),
+    recapField.fill(null, duration),
   );
 
   yield* waitFor(0.8);
 
   sameRewardHighlight.rect().stroke(HIGHLIGHT_COLOR_2);
   sameRewardHighlight2.rect().stroke(HIGHLIGHT_COLOR_2);
+
   yield* sequence(0.4,
     sameRewardHighlight.highlight(0.8),
     sameRewardHighlight2.highlight(0.8),
@@ -1615,9 +1617,13 @@ export default makeScene2D(function* (view) {
     [6, 4, 5, 3],
   ];
   const tracebackAnims = [];
+  const tracebackArrows = [];
   for (const [iSource, jSource, iTarget, jTarget] of tracebacks) {
-    const [anim, _arrow] = matrix.stepAndArrowStay(
-      iSource, jSource, iTarget, jTarget, 0.8, -130, false, HIGHLIGHT_COLOR_2);
+    const [anim, arrow] = matrix.stepAndArrowStay(
+      iSource, jSource, iTarget, jTarget, 0.9, -130, true, HIGHLIGHT_COLOR_2);
+    arrow.startArrow(true);
+    arrow.endArrow(false);
+    tracebackArrows.push(arrow);
     tracebackAnims.push(anim);
   }
 
@@ -1634,11 +1640,19 @@ export default makeScene2D(function* (view) {
     lastRewardDiag.opacity(0, duration),
     lastRewardRight.opacity(0, duration),
     lastRewardDown.opacity(0, duration),
-    // field itself
-    recapField.fill(null, duration),
-    recapField.stroke(HIGHLIGHT_COLOR, duration),
     all(...resetMatrixRects(2.5)),
   );
+
+  yield* waitFor(1);
+
+  /// Reverse arrows by rotating them around their center 180°
+  for (const arrow of tracebackArrows) {
+    moveLineGeometryToCenter(arrow);
+  }
+  duration = 0.8;
+  yield* sequence(0.02, ...tracebackArrows.map((arrow) => {
+    return arrow.rotation(180, duration);
+  }));
 
   yield* waitFor(2);
 });
