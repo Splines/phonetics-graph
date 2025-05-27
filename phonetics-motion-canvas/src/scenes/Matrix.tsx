@@ -170,7 +170,8 @@ export class Matrix {
    * working in that context.
    */
   public stepAndArrowStay(iSource: number, jSource: number,
-    iTarget: number, jTarget: number, duration: number, offset = 45): [ThreadGenerator, Line] {
+    iTarget: number, jTarget: number, duration: number, offset = 45,
+    endArrow = true, color = HIGHLIGHT_COLOR): [ThreadGenerator, Line] {
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
 
@@ -189,8 +190,8 @@ export class Matrix {
           arrowEnd,
         ]}
         lineWidth={18}
-        stroke={HIGHLIGHT_COLOR}
-        endArrow
+        stroke={color}
+        endArrow={endArrow}
         lineCap="round"
         opacity={0}
         end={0}

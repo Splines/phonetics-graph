@@ -1499,7 +1499,7 @@ export default makeScene2D(function* (view) {
   );
 
   // 🎈 Traceback (cut here)
-  // maybe random alignment animation beforehand
+  // maybe random alignment animation beforehand (TODO)
 
   yield* all(
     recapField.stroke(HIGHLIGHT_COLOR_2, 1.0),
@@ -1538,6 +1538,9 @@ export default makeScene2D(function* (view) {
     arrowLastRight.stroke(HIGHLIGHT_COLOR_2, 1.5),
     arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
     arrowLastRightClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
+    // remove arrow heads
+    arrowLastDiag.arrowSize(0, 1.5),
+    arrowLastRight.arrowSize(0, 1.5),
     // fade out
     arrowLastDown.opacity(0, 1.5),
     arrowLastDownClone.stroke(HIGHLIGHT_COLOR_FADED, 1.5),
@@ -1551,6 +1554,90 @@ export default makeScene2D(function* (view) {
   yield* sequence(0.4,
     sameRewardHighlight.highlight(0.8),
     sameRewardHighlight2.highlight(0.8),
+  );
+
+  yield* waitFor(1);
+
+  // 🎈 Traceback (whole matrix)
+
+  // iSource,jSource,iTarget,jTarget
+  const tracebacks = [
+    // row 0
+    [0, 1, 0, 0],
+    [0, 2, 0, 1],
+    [0, 3, 0, 2],
+    [0, 4, 0, 3],
+    // row 1
+    [1, 0, 0, 0],
+    [1, 1, 0, 0],
+    [1, 2, 1, 1],
+    [1, 2, 0, 1],
+    [1, 3, 1, 2],
+    [1, 3, 0, 2],
+    [1, 4, 1, 3],
+    [1, 4, 0, 3],
+    // row 2
+    [2, 0, 1, 0],
+    [2, 1, 1, 0],
+    [2, 1, 1, 1],
+    [2, 2, 1, 1],
+    [2, 3, 2, 2],
+    [2, 4, 2, 3],
+    // row 3
+    [3, 0, 2, 0],
+    [3, 1, 2, 0],
+    [3, 1, 2, 1],
+    [3, 2, 2, 2],
+    [3, 3, 2, 2],
+    [3, 4, 3, 3],
+    [3, 4, 2, 3],
+    // row 4
+    [4, 0, 3, 0],
+    [4, 1, 3, 0],
+    [4, 1, 3, 1],
+    [4, 2, 3, 2],
+    [4, 3, 3, 2],
+    [4, 3, 3, 3],
+    [4, 4, 3, 3],
+    // row 5
+    [5, 0, 4, 0],
+    [5, 1, 4, 0],
+    [5, 1, 4, 1],
+    [5, 2, 4, 2],
+    [5, 3, 4, 2],
+    [5, 4, 4, 4],
+    // row 6
+    [6, 0, 5, 0],
+    [6, 1, 5, 0],
+    [6, 1, 5, 1],
+    [6, 2, 5, 2],
+    [6, 3, 5, 3],
+    [6, 4, 5, 3],
+  ];
+  const tracebackAnims = [];
+  for (const [iSource, jSource, iTarget, jTarget] of tracebacks) {
+    const [anim, _arrow] = matrix.stepAndArrowStay(
+      iSource, jSource, iTarget, jTarget, 0.8, -130, false, HIGHLIGHT_COLOR_2);
+    tracebackAnims.push(anim);
+  }
+
+  duration = 1.5;
+  yield* all(
+    sequence(0.04, ...tracebackAnims),
+    // remove remnants
+    arrowLastDiag.opacity(0, duration),
+    arrowLastRight.opacity(0, duration),
+    arrowLastDown.opacity(0, duration),
+    arrowLastDiagClone.opacity(0, duration),
+    arrowLastRightClone.opacity(0, duration),
+    arrowLastDownClone.opacity(0, duration),
+    lastRewardDiag.opacity(0, duration),
+    lastRewardRight.opacity(0, duration),
+    lastRewardDown.opacity(0, duration),
+    // field itself
+    recapField.fill(null, duration),
+    recapField.stroke(HIGHLIGHT_COLOR, duration),
+    all(...resetMatrixRects(2.5)),
   );
 
   yield* waitFor(2);
