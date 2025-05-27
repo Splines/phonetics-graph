@@ -8,7 +8,7 @@ import {
   ThreadGenerator,
   waitFor,
 } from "@motion-canvas/core";
-import { positionAtCenterOfMass } from "../utility";
+import { moveLineGeometryToCenter, positionAtCenterOfMass } from "../utility";
 import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
@@ -1645,15 +1645,6 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(1);
 
-  /* // Reverse arrows by rotating them around their center 180°
-  for (const arrow of tracebackArrows) {
-    moveLineGeometryToCenter(arrow);
-  }
-  duration = 0.8;
-  yield* sequence(0.02, ...tracebackArrows.map((arrow) => {
-    return arrow.rotation(180, duration);
-  })); */
-
   // 🎈 Traceback (step by step)
 
   const matrixHighlightAndText = (i: number, j: number, duration: number) => {
@@ -1710,6 +1701,41 @@ export default makeScene2D(function* (view) {
         rect.shadowColor(HIGHLIGHT_COLOR, duration),
         rect.shadowBlur(20, duration),
       );
+    }),
+  );
+
+  yield* waitFor(1);
+
+  // Reverse arrows by rotating them around their center 180°
+  for (const arrow of tracebackArrows) {
+    moveLineGeometryToCenter(arrow);
+  }
+  yield* sequence(0.02, ...tracebackArrows.map((arrow) => {
+    return arrow.rotation(180, 1.1);
+  }));
+
+  yield* waitFor(1);
+
+  // wiggle optimal path arrows
+  const wiggle = (node: Node, duration: number, amplitude = 1.0) => {
+    const wiggle = function* (angle: number) {
+      const prevRotation = node.rotation();
+      yield* node.rotation(prevRotation + angle, duration);
+    };
+    return chain(
+      wiggle(-5 * amplitude),
+      wiggle(2 * 5 * amplitude),
+      wiggle((-5 - 3) * amplitude),
+      wiggle(2 * 3 * amplitude),
+      wiggle(-3 * amplitude),
+    );
+  };
+
+  const optimalPathArrows = [43, 36, 28, 21, 15, 5];
+  yield* sequence(0.12,
+    ...optimalPathArrows.map((arrowIndex) => {
+      const arrow = tracebackArrows[arrowIndex];
+      return wiggle(arrow, 0.2, 4);
     }),
   );
 
