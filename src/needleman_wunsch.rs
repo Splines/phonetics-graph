@@ -1,7 +1,7 @@
 type SimilarityMatrix = Vec<Vec<i8>>;
 
 pub fn calculate_score(
-    a: &Vec<u8>, 
+    a: &Vec<u8>,
     b: &Vec<u8>,
     similarity_matrix: &SimilarityMatrix,
     gap_penalty: i8,
