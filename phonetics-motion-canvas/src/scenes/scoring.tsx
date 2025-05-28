@@ -1745,6 +1745,13 @@ export default makeScene2D(function* (view) {
     }),
   );
 
+  yield* waitFor(0.5);
+
+  // reverse arrows back
+  yield* sequence(0.02, ...tracebackArrows.slice().reverse().map((arrow) => {
+    return arrow.rotation(0, 1.1);
+  }));
+
   yield* waitFor(2);
 
   // 🎈 Translate back to optimal alignment
@@ -1755,6 +1762,28 @@ export default makeScene2D(function* (view) {
       return arrow.opacity(0, 1.8);
     }),
     matrixContainer().x(matrixContainer().x() + 500, 2.0),
+    // reset matrix
+    ...matrix.rects.map((rect, i) => {
+      if (i === matrix.rects.length - 1) {
+        return null;
+      }
+      const text = rect.children()[0] as Txt;
+      return all(
+        rect.stroke(matrix.BASE_COLOR, 1.8),
+        rect.fill(null, 1.8),
+        rect.shadowBlur(0, 1.8),
+        text.fill(TEXT_FILL, 1.8),
+      );
+    }),
+    // reset arrow colors
+    ...tracebackArrows.map((arrow, i) => {
+      if (i === tracebackArrows.length - 1) {
+        return null;
+      }
+      return all(
+        arrow.stroke(matrix.BASE_COLOR, 1.8),
+      );
+    }),
   );
 
   alignmentString = "..--..";
@@ -1780,7 +1809,9 @@ export default makeScene2D(function* (view) {
     matrix.word2Texts[3].fill(HIGHLIGHT_COLOR, duration),
   );
 
-  let resetPrevious = (text1: number, text2: number, matrix1: number, matrix2: number) => {
+  yield* waitFor(0.5);
+
+  const resetPrevious = (text1: number, text2: number, matrix1: number, matrix2: number) => {
     return all(
       texts[text1].fill(TEXT_FILL, duration),
       texts[text2].fill(TEXT_FILL, duration),
@@ -1789,43 +1820,89 @@ export default makeScene2D(function* (view) {
     );
   };
 
+  const matrixHighlightFinal = (i: number, j: number, arrowIdx: number) => {
+    const rect = matrix.getRectAt(i, j);
+    const arrowAnim = arrowIdx === -1
+      ? null
+      : tracebackArrows[optimalPathArrows[arrowIdx]].stroke(HIGHLIGHT_COLOR, duration);
+    return all(
+      rect.stroke(HIGHLIGHT_COLOR, duration),
+      rect.fill(HIGHLIGHT_COLOR, duration),
+      rect.shadowBlur(20, duration),
+      (rect.children()[0] as Txt).fill(TEXT_FILL_DARK, duration),
+      arrowAnim,
+    );
+  };
+
+  const matrixUnhighlightFinal = (i: number, j: number, arrowIdx: number) => {
+    const rect = matrix.getRectAt(i, j);
+    return all(
+      // rect.stroke(matrix.BASE_COLOR, duration),
+      // rect.fill(null, duration),
+      rect.shadowBlur(0, duration),
+      tracebackArrows[optimalPathArrows[arrowIdx]].stroke(matrix.BASE_COLOR, duration),
+      // tracebackArrows[optimalPathArrows[arrowIdx]].shadowBlur(0, duration),
+      // (rect.children()[0] as Txt).fill(TEXT_FILL, duration),
+    );
+  };
+
   yield* all(
+    // reset old
     resetPrevious(10, 11, 5, 3),
+    matrixUnhighlightFinal(6, 4, 0),
+    // new
+    matrixHighlightFinal(5, 3, 1),
     texts[8].opacity(1, duration),
     texts[9].opacity(1, duration),
     matrix.word1Texts[4].fill(HIGHLIGHT_COLOR, duration),
     matrix.word2Texts[2].fill(HIGHLIGHT_COLOR, duration),
   );
 
+  yield* waitFor(0.8);
+
   yield* all(
+    // reset old
     resetPrevious(8, 9, 4, 2),
+    matrixUnhighlightFinal(5, 3, 1),
+    // new
+    matrixHighlightFinal(4, 2, 2),
     texts[6].opacity(1, duration),
     gapsOptimal[1].opacity(1, duration),
     matrix.word1Texts[3].fill(HIGHLIGHT_COLOR, duration),
     matrix.word2Texts[1].fill(HIGHLIGHT_COLOR, duration),
   );
 
+  yield* waitFor(0.8);
+
   yield* all(
     // reset old
     texts[6].fill(TEXT_FILL, duration),
     gapsOptimal[1].fill(TEXT_FILL, duration),
     matrix.word1Texts[3].fill(TEXT_FILL, duration),
+    matrixUnhighlightFinal(4, 2, 2),
     // new
+    matrixHighlightFinal(3, 2, 3),
     texts[4].opacity(1, duration),
     gapsOptimal[0].opacity(1, duration),
     matrix.word1Texts[2].fill(HIGHLIGHT_COLOR, duration),
   );
+
+  yield* waitFor(0.8);
 
   yield* all(
     // reset old
     texts[4].fill(TEXT_FILL, duration),
     gapsOptimal[0].fill(TEXT_FILL, duration),
     matrix.word1Texts[2].fill(TEXT_FILL, duration),
+    matrixUnhighlightFinal(3, 2, 3),
     // new
+    matrixHighlightFinal(2, 2, 4),
     texts[2].opacity(1, duration),
     texts[3].opacity(1, duration),
     matrix.word1Texts[1].fill(HIGHLIGHT_COLOR, duration),
   );
+
+  yield* waitFor(0.8);
 
   yield* all(
     // reset old
@@ -1833,11 +1910,26 @@ export default makeScene2D(function* (view) {
     texts[3].fill(TEXT_FILL, duration),
     matrix.word1Texts[1].fill(TEXT_FILL, duration),
     matrix.word2Texts[1].fill(TEXT_FILL, duration),
+    matrixUnhighlightFinal(2, 2, 4),
     // new
+    matrixHighlightFinal(1, 1, 5),
     texts[0].opacity(1, duration),
     texts[1].opacity(1, duration),
     matrix.word1Texts[0].fill(HIGHLIGHT_COLOR, duration),
     matrix.word2Texts[0].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  yield* waitFor(0.8);
+
+  yield* all(
+    // reset old
+    texts[0].fill(TEXT_FILL, duration),
+    texts[1].fill(TEXT_FILL, duration),
+    matrix.word1Texts[0].fill(TEXT_FILL, duration),
+    matrix.word2Texts[0].fill(TEXT_FILL, duration),
+    matrixUnhighlightFinal(1, 1, 5),
+    // new
+    matrixHighlightFinal(0, 0, -1),
   );
 
   yield* waitFor(2);
