@@ -1631,6 +1631,8 @@ export default makeScene2D(function* (view) {
   duration = 1.5;
   yield* all(
     sequence(0.04, ...tracebackAnims),
+    // move matrix
+    matrixContainer().x(0, duration * 2),
     // remove remnants
     arrowLastDiag.opacity(0, duration),
     arrowLastRight.opacity(0, duration),
@@ -1741,6 +1743,101 @@ export default makeScene2D(function* (view) {
       const arrow = tracebackArrows[arrowIndex];
       return wiggle(arrow, 30);
     }),
+  );
+
+  yield* waitFor(2);
+
+  // 🎈 Translate back to optimal alignment
+
+  const nonOptimalArrows = tracebackArrows.filter((_, i) => !optimalPathArrows.includes(i));
+  yield* all(
+    ...nonOptimalArrows.map((arrow) => {
+      return arrow.opacity(0, 1.8);
+    }),
+    matrixContainer().x(matrixContainer().x() + 500, 2.0),
+  );
+
+  alignmentString = "..--..";
+  yield* alignment.animateToState(alignmentString, 0.0);
+  for (const txt of texts) {
+    txt.fill(HIGHLIGHT_COLOR);
+    txt.opacity(0);
+  }
+  const gapsOptimal = view.findAll(is(Txt)).filter(txt => txt.text() === "–");
+  for (const gap of gapsOptimal) {
+    gap.fill(HIGHLIGHT_COLOR);
+    gap.opacity(0);
+  }
+  alignmentContainer().opacity(1);
+
+  // trace alignment from back to front
+
+  duration = 1.0;
+  yield* all(
+    texts[10].opacity(1, duration),
+    texts[11].opacity(1, duration),
+    matrix.word1Texts[5].fill(HIGHLIGHT_COLOR, duration),
+    matrix.word2Texts[3].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  let resetPrevious = (text1: number, text2: number, matrix1: number, matrix2: number) => {
+    return all(
+      texts[text1].fill(TEXT_FILL, duration),
+      texts[text2].fill(TEXT_FILL, duration),
+      matrix.word1Texts[matrix1].fill(TEXT_FILL, duration),
+      matrix.word2Texts[matrix2].fill(TEXT_FILL, duration),
+    );
+  };
+
+  yield* all(
+    resetPrevious(10, 11, 5, 3),
+    texts[8].opacity(1, duration),
+    texts[9].opacity(1, duration),
+    matrix.word1Texts[4].fill(HIGHLIGHT_COLOR, duration),
+    matrix.word2Texts[2].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  yield* all(
+    resetPrevious(8, 9, 4, 2),
+    texts[6].opacity(1, duration),
+    gapsOptimal[1].opacity(1, duration),
+    matrix.word1Texts[3].fill(HIGHLIGHT_COLOR, duration),
+    matrix.word2Texts[1].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  yield* all(
+    // reset old
+    texts[6].fill(TEXT_FILL, duration),
+    gapsOptimal[1].fill(TEXT_FILL, duration),
+    matrix.word1Texts[3].fill(TEXT_FILL, duration),
+    // new
+    texts[4].opacity(1, duration),
+    gapsOptimal[0].opacity(1, duration),
+    matrix.word1Texts[2].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  yield* all(
+    // reset old
+    texts[4].fill(TEXT_FILL, duration),
+    gapsOptimal[0].fill(TEXT_FILL, duration),
+    matrix.word1Texts[2].fill(TEXT_FILL, duration),
+    // new
+    texts[2].opacity(1, duration),
+    texts[3].opacity(1, duration),
+    matrix.word1Texts[1].fill(HIGHLIGHT_COLOR, duration),
+  );
+
+  yield* all(
+    // reset old
+    texts[2].fill(TEXT_FILL, duration),
+    texts[3].fill(TEXT_FILL, duration),
+    matrix.word1Texts[1].fill(TEXT_FILL, duration),
+    matrix.word2Texts[1].fill(TEXT_FILL, duration),
+    // new
+    texts[0].opacity(1, duration),
+    texts[1].opacity(1, duration),
+    matrix.word1Texts[0].fill(HIGHLIGHT_COLOR, duration),
+    matrix.word2Texts[0].fill(HIGHLIGHT_COLOR, duration),
   );
 
   yield* waitFor(2);
