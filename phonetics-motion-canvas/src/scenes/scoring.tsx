@@ -14,6 +14,7 @@ import { AlignState } from "./AlignState";
 import {
   HIGHLIGHT_COLOR,
   HIGHLIGHT_COLOR_2,
+  HIGHLIGHT_COLOR_3,
   HIGHLIGHT_COLOR_FADED,
   TEXT_FILL, TEXT_FILL_DARK, TEXT_FILL_FADED, TEXT_FONT,
 } from "./globals";
@@ -1364,8 +1365,8 @@ export default makeScene2D(function* (view) {
 
   const recapField = matrix.getRectAt(3, 4);
   yield* all(
-    recapField.stroke(HIGHLIGHT_COLOR_2, 1.0),
-    recapField.fill(HIGHLIGHT_COLOR_2, 1.0),
+    recapField.stroke(HIGHLIGHT_COLOR_3, 1.0),
+    recapField.fill(HIGHLIGHT_COLOR_3, 1.0),
   );
 
   yield* waitFor(2);
@@ -1503,8 +1504,8 @@ export default makeScene2D(function* (view) {
   // maybe random alignment animation beforehand (TODO)
 
   yield* all(
-    recapField.stroke(HIGHLIGHT_COLOR_2, 1.0),
-    recapField.fill(HIGHLIGHT_COLOR_2, 1.0),
+    recapField.stroke(HIGHLIGHT_COLOR_3, 1.0),
+    recapField.fill(HIGHLIGHT_COLOR_3, 1.0),
   );
 
   yield* waitFor(0.5);
@@ -1534,11 +1535,11 @@ export default makeScene2D(function* (view) {
   view.add(highlightBestDirections);
   yield* all(
     highlightBestDirections.highlight(1.5),
-    highlightBestDirections.rect().stroke(HIGHLIGHT_COLOR_2, 1.5),
-    arrowLastDiag.stroke(HIGHLIGHT_COLOR_2, 1.5),
-    arrowLastRight.stroke(HIGHLIGHT_COLOR_2, 1.5),
-    arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
-    arrowLastRightClone.stroke(HIGHLIGHT_COLOR_2, 1.5),
+    highlightBestDirections.rect().stroke(HIGHLIGHT_COLOR_3, 1.5),
+    arrowLastDiag.stroke(HIGHLIGHT_COLOR_3, 1.5),
+    arrowLastRight.stroke(HIGHLIGHT_COLOR_3, 1.5),
+    arrowLastDiagClone.stroke(HIGHLIGHT_COLOR_3, 1.5),
+    arrowLastRightClone.stroke(HIGHLIGHT_COLOR_3, 1.5),
     // remove arrow heads
     // arrowLastDiag.arrowSize(0, 1.5),
     // arrowLastRight.arrowSize(0, 1.5),
@@ -1551,8 +1552,8 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(0.8);
 
-  sameRewardHighlight.rect().stroke(HIGHLIGHT_COLOR_2);
-  sameRewardHighlight2.rect().stroke(HIGHLIGHT_COLOR_2);
+  sameRewardHighlight.rect().stroke(HIGHLIGHT_COLOR_3);
+  sameRewardHighlight2.rect().stroke(HIGHLIGHT_COLOR_3);
 
   yield* sequence(0.4,
     sameRewardHighlight.highlight(0.8),
@@ -1621,7 +1622,7 @@ export default makeScene2D(function* (view) {
   const tracebackArrows: Line[] = [];
   for (const [iSource, jSource, iTarget, jTarget] of tracebacks) {
     const [anim, arrow] = matrix.stepAndArrowStay(
-      iSource, jSource, iTarget, jTarget, 0.9, -130, true, HIGHLIGHT_COLOR_2);
+      iSource, jSource, iTarget, jTarget, 0.9, -130, true, HIGHLIGHT_COLOR_3);
     arrow.startArrow(true);
     arrow.endArrow(false);
     tracebackArrows.push(arrow);
@@ -1836,13 +1837,12 @@ export default makeScene2D(function* (view) {
 
   const matrixUnhighlightFinal = (i: number, j: number, arrowIdx: number) => {
     const rect = matrix.getRectAt(i, j);
+    const arrowAnim = arrowIdx === -1
+      ? null
+      : tracebackArrows[optimalPathArrows[arrowIdx]].stroke(matrix.BASE_COLOR, duration);
     return all(
-      // rect.stroke(matrix.BASE_COLOR, duration),
-      // rect.fill(null, duration),
       rect.shadowBlur(0, duration),
-      tracebackArrows[optimalPathArrows[arrowIdx]].stroke(matrix.BASE_COLOR, duration),
-      // tracebackArrows[optimalPathArrows[arrowIdx]].shadowBlur(0, duration),
-      // (rect.children()[0] as Txt).fill(TEXT_FILL, duration),
+      arrowAnim,
     );
   };
 
@@ -1930,6 +1930,14 @@ export default makeScene2D(function* (view) {
     matrixUnhighlightFinal(1, 1, 5),
     // new
     matrixHighlightFinal(0, 0, -1),
+  );
+
+  yield* all(
+    matrixUnhighlightFinal(0, 0, -1),
+    // hide all arrows
+    ...tracebackArrows.map((arrow) => {
+      return arrow.opacity(0, 1.5);
+    }),
   );
 
   yield* waitFor(2);
