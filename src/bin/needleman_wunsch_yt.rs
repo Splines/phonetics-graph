@@ -26,8 +26,8 @@ fn main() {
     // Here just a simple example by hand since Unicode characters like ɑ̃ need
     // special treatment such that they are not split into multiple chars.
     // Of course, this is autoamted in the real code.
-    let a = Vec::from([0, 1, 2, 3, 4, 5]); // "pɥisɑ̃s"
-    let b = Vec::from([6, 1, 4, 5]); // "nɥɑ̃s"
+    let a = Vec::from([0, 1, 2, 3, 4, 3]); // "pɥisɑ̃s"
+    let b = Vec::from([5, 1, 4, 3]); // "nɥɑ̃s"
 
     let gap_penalty = -2;
     let score = calculate_score(&a, &b, gap_penalty);
