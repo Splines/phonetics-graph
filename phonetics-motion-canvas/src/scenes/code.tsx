@@ -3,7 +3,10 @@ import {
   all, chain, createRef, delay, sequence, spring,
   ThreadGenerator, waitFor,
 } from "@motion-canvas/core";
-import { HIGHLIGHT_COLOR_3, TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
+import {
+  HIGHLIGHT_COLOR_3, TEXT_FILL, TEXT_FILL_DARK,
+  TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT,
+} from "./globals";
 import { Highlight } from "./Highlight";
 import { Matrix } from "./Matrix";
 
@@ -289,7 +292,21 @@ export default makeScene2D(function* (view) {
     arrowFromTop.opacity(0, duration),
     arrowFromLeft.opacity(0, duration),
     arrowFromDiagonal.opacity(0, duration),
+    aVars[0].shadowBlur(0, duration),
+    bVars[0].shadowBlur(0, duration),
     sequence(0.09, ...highlightFinalAnims),
+  );
+
+  yield* waitFor(0.5);
+
+  // 🎈 Final score
+
+  const finalRect = matrix.getRectAt(word1.length, word2.length);
+  duration = 1.0;
+  yield* all(
+    finalRect.fill(HIGHLIGHT_COLOR_3, duration),
+    finalRect.stroke(HIGHLIGHT_COLOR_3, duration),
+    (finalRect.children()[0] as Txt).fill(TEXT_FILL_DARK, duration),
   );
 
   yield* waitFor(2);
