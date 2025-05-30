@@ -1,5 +1,8 @@
 import { Latex, makeScene2D, Node, Rect, Txt, TxtProps } from "@motion-canvas/2d";
-import { all, chain, createRef, delay, sequence, spring, ThreadGenerator, waitFor } from "@motion-canvas/core";
+import {
+  all, chain, createRef, delay, sequence, spring,
+  ThreadGenerator, waitFor,
+} from "@motion-canvas/core";
 import { TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
 import { Matrix } from "./Matrix";
 
