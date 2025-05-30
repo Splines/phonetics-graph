@@ -297,12 +297,12 @@ export class Matrix {
   }
 
   public writeTextAt(row: number, col: number, text: string, duration: number,
-    withHighlight = true): ThreadGenerator {
+    withHighlight = true, fontSize = 61): ThreadGenerator {
     const rect = this.getRectAt(row, col);
     const txt = (
       <Latex
         tex={text}
-        fontSize={61}
+        fontSize={fontSize}
         fill={withHighlight ? TEXT_FILL_DARK : TEXT_FILL}
         opacity={0}
       >

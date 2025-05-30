@@ -81,7 +81,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Rect
       ref={matrixContainer}
-      x={0}
+      x={-60}
       y={450}
     />,
   );
@@ -90,7 +90,7 @@ export default makeScene2D(function* (view) {
   yield* all(
     wordsContainer.scale(0.8, 1.5),
     wordsContainer.y(-700, 1.5),
-    matrixContainer().y(matrixContainer().y() - 200, 1.5),
+    matrixContainer().y(matrixContainer().y() - 250, 1.5),
     delay(0.18,
       sequence(0.025, ...matrix.rects.map(rect => rect.opacity(1, 1))),
     ),
@@ -128,7 +128,9 @@ export default makeScene2D(function* (view) {
     latex.fill(TEXT_FILL_FADED_SLIGHTLY);
   }
 
-  let duration = 1.0;
+  yield* waitFor(0.5);
+
+  let duration = 1.3;
   yield* all(
     ...[...aVars, ...bVars].map((latex) => {
       return all(
@@ -145,6 +147,33 @@ export default makeScene2D(function* (view) {
         text.scale(0.7, duration),
       );
     }),
+  );
+
+  // 🎈 Padding & first row/column (gap penalties)
+
+  yield* matrix.highlight(0, 0, 1.0);
+  yield* waitFor(0.5);
+  const firstRect = matrix.getRectAt(0, 0);
+
+  duration = 1.0;
+  const fontSize = 53;
+  yield* all(
+    firstRect.fill(null, duration),
+    matrix.writeTextAt(0, 0, "0", duration, false, fontSize),
+    sequence(0.15,
+      matrix.writeTextAt(0, 1, "-2", duration, false, fontSize),
+      matrix.writeTextAt(0, 2, "-4", duration, false, fontSize),
+      matrix.writeTextAt(0, 3, "-6", duration, false, fontSize),
+      matrix.writeTextAt(0, 4, "-8", duration, false, fontSize),
+    ),
+    sequence(0.15,
+      matrix.writeTextAt(1, 0, "-2", duration, false, fontSize),
+      matrix.writeTextAt(2, 0, "-4", duration, false, fontSize),
+      matrix.writeTextAt(3, 0, "-6", duration, false, fontSize),
+      matrix.writeTextAt(4, 0, "-8", duration, false, fontSize),
+      matrix.writeTextAt(5, 0, "-10", duration, false, fontSize),
+      matrix.writeTextAt(6, 0, "-12", duration, false, fontSize),
+    ),
   );
 
   yield* waitFor(2);
