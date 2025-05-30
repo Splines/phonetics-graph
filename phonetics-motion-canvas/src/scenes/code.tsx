@@ -1,4 +1,5 @@
 import { Latex, makeScene2D, Node, Txt, TxtProps } from "@motion-canvas/2d";
+import { all, SmoothSpring, spring } from "@motion-canvas/core";
 import { TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
 
 const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -17,7 +18,7 @@ export default makeScene2D(function* (view) {
   `;
 
   const wordsContainer = (
-    <Node />
+    <Node opacity={0} />
   ) as Node;
   view.add(wordsContainer);
 
@@ -56,4 +57,12 @@ export default makeScene2D(function* (view) {
     </Txt>) as Txt,
   );
   wordsContainer.add([...word1Symbols, ...word2Symbols]);
+
+  const springAnim = spring(SmoothSpring, -800, 0, (value) => {
+    wordsContainer.x(value);
+  });
+  yield* all(
+    springAnim,
+    wordsContainer.opacity(1, 0.5),
+  );
 });
