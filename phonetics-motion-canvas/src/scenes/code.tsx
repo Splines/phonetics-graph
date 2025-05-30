@@ -1,5 +1,5 @@
 import { Latex, makeScene2D, Node, Rect, Txt, TxtProps } from "@motion-canvas/2d";
-import { all, createRef, delay, sequence, spring, waitFor } from "@motion-canvas/core";
+import { all, chain, createRef, delay, sequence, spring, ThreadGenerator, waitFor } from "@motion-canvas/core";
 import { TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
 import { Matrix } from "./Matrix";
 
@@ -130,7 +130,7 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(0.5);
 
-  let duration = 1.3;
+  let duration = 1.1;
   yield* all(
     ...[...aVars, ...bVars].map((latex) => {
       return all(
@@ -175,6 +175,25 @@ export default makeScene2D(function* (view) {
       matrix.writeTextAt(6, 0, "-12", duration, false, fontSize),
     ),
   );
+
+  // 🎈 Highlight all remaining matrix fields (nested for-loop)
+
+  const highlightAnims: ThreadGenerator[] = [];
+
+  const unfill = (i: number, j: number, duration: number) => {
+    return matrix.getRectAt(i, j).fill(null, duration);
+  };
+
+  duration = 0.6;
+  for (let i = 1; i <= word1.length; i++) {
+    for (let j = 1; j <= word2.length; j++) {
+      highlightAnims.push(chain(
+        matrix.highlight(i, j, duration),
+        unfill(i, j, duration),
+      ));
+    }
+  }
+  yield* sequence(0.07, ...highlightAnims);
 
   yield* waitFor(2);
 });
