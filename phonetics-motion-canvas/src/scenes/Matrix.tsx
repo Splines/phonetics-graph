@@ -171,7 +171,7 @@ export class Matrix {
    */
   public stepAndArrowStay(iSource: number, jSource: number,
     iTarget: number, jTarget: number, duration: number, offset = 45,
-    endArrow = true, color = HIGHLIGHT_COLOR): [ThreadGenerator, Line] {
+    endArrow = true, color = HIGHLIGHT_COLOR, withDropShadow = false): [ThreadGenerator, Line] {
     const sourceRect = this.getRectAt(iSource, jSource);
     const targetRect = this.getRectAt(iTarget, jTarget);
 
@@ -198,6 +198,10 @@ export class Matrix {
       />
     ) as Line;
     this.container().add(arrow);
+    if (withDropShadow) {
+      arrow.shadowColor(color);
+      arrow.shadowBlur(30);
+    }
 
     return [all(
       arrow.opacity(1, 0.2 * duration),
@@ -297,7 +301,7 @@ export class Matrix {
   }
 
   public writeTextAt(row: number, col: number, text: string, duration: number,
-    withHighlight = true, fontSize = 61): ThreadGenerator {
+    withHighlight = true, fontSize = 61, withStrokeHighlight = true): ThreadGenerator {
     const rect = this.getRectAt(row, col);
     const txt = (
       <Latex
@@ -319,9 +323,15 @@ export class Matrix {
         txt.opacity(1, duration),
       );
     }
+    if (withStrokeHighlight) {
+      return all(
+        txt.opacity(1, duration),
+        rect.stroke(HIGHLIGHT_COLOR, duration),
+      );
+    }
+
     return all(
       txt.opacity(1, duration),
-      rect.stroke(HIGHLIGHT_COLOR, duration),
     );
   }
 

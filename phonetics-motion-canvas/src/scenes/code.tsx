@@ -3,7 +3,8 @@ import {
   all, chain, createRef, delay, sequence, spring,
   ThreadGenerator, waitFor,
 } from "@motion-canvas/core";
-import { TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
+import { HIGHLIGHT_COLOR_3, TEXT_FILL, TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT } from "./globals";
+import { Highlight } from "./Highlight";
 import { Matrix } from "./Matrix";
 
 const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -179,6 +180,8 @@ export default makeScene2D(function* (view) {
     ),
   );
 
+  yield* waitFor(0.5);
+
   // 🎈 Highlight all remaining matrix fields (nested for-loop)
 
   const highlightAnims: ThreadGenerator[] = [];
@@ -197,6 +200,97 @@ export default makeScene2D(function* (view) {
     }
   }
   yield* sequence(0.07, ...highlightAnims);
+
+  yield* waitFor(0.5);
+
+  // 🎈 Consider directions for one field (local maximization)
+
+  const theField = matrix.getRectAt(1, 1);
+  yield* theField.stroke(HIGHLIGHT_COLOR_3, 0.8);
+
+  duration = 0.9;
+  const [arrowFromLeftAnim, arrowFromLeft] = matrix.stepAndArrowStay(
+    1, 0, 1, 1, duration, -18, true, HIGHLIGHT_COLOR_3, true);
+  yield* arrowFromLeftAnim;
+
+  yield* waitFor(0.5);
+
+  const [arrowFromTopAnim, arrowFromTop] = matrix.stepAndArrowStay(
+    0, 1, 1, 1, duration, -18, true, HIGHLIGHT_COLOR_3, true);
+  yield* arrowFromTopAnim;
+
+  yield* waitFor(0.5);
+
+  const [arrowFromDiagonalAnim, arrowFromDiagonal] = matrix.stepAndArrowStay(
+    0, 0, 1, 1, duration, -18, true, HIGHLIGHT_COLOR_3, true);
+  yield* arrowFromDiagonalAnim;
+
+  yield* waitFor(0.5);
+
+  // 🎈 Match/Mismatch score
+  const highlightA0 = (
+    <Highlight
+      stroke={HIGHLIGHT_COLOR_3}
+      width={110}
+      height={110}
+      x={-450 / 2}
+      y={-30 / 2}
+    />
+  ) as Highlight;
+  const highlightB0 = (
+    <Highlight
+      stroke={HIGHLIGHT_COLOR_3}
+      width={110}
+      height={110}
+      x={-140 / 2}
+      y={-330 / 2}
+    />
+  ) as Highlight;
+  view.add([highlightA0, highlightB0]);
+  duration = 1.2;
+  aVars[0].shadowColor(HIGHLIGHT_COLOR_3);
+  bVars[0].shadowColor(HIGHLIGHT_COLOR_3);
+  yield* all(
+    highlightA0.highlight(duration),
+    highlightB0.highlight(duration),
+    aVars[0].shadowBlur(30, duration * 2),
+    bVars[0].shadowBlur(30, duration * 2),
+  );
+
+  // 🎈 One last time every field again
+  const highlightFinalAnims: ThreadGenerator[] = [];
+  duration = 0.6;
+  const fieldScores = [
+    -1, -3, -5, -7,
+    -3, 0, -2, -4,
+    -5, -2, -1, -3,
+    -7, -4, -3, 0,
+    -9, -6, -3, -2,
+    -11, -8, -5, -2,
+  ];
+  let counter = 0;
+  for (let i = 1; i <= word1.length; i++) {
+    for (let j = 1; j <= word2.length; j++) {
+      const rect = matrix.getRectAt(i, j);
+      highlightFinalAnims.push(chain(
+        all(
+          rect.fill(HIGHLIGHT_COLOR_3, duration),
+          rect.stroke(HIGHLIGHT_COLOR_3, duration),
+          matrix.writeTextAt(i, j, fieldScores[counter].toString(),
+            duration, false, fontSize, false),
+        ),
+        unfill(i, j, duration),
+      ));
+      counter++;
+    }
+  }
+  duration = 1.5;
+  yield* all(
+    arrowFromTop.opacity(0, duration),
+    arrowFromLeft.opacity(0, duration),
+    arrowFromDiagonal.opacity(0, duration),
+    sequence(0.09, ...highlightFinalAnims),
+  );
 
   yield* waitFor(2);
 });
