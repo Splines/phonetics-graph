@@ -11,11 +11,12 @@ pub fn calculate_score(a: &Vec<u8>, b: &Vec<u8>, gap_penalty: i8) -> i8 {
 
     for i in 1..a.len() + 1 {
         for j in 1..b.len() + 1 {
-            let diag_score_delta = if a[i - 1] == b[j - 1] { 1 } else { -1 };
-            let from_diagonal_score = score_matrix[i - 1][j - 1] + diag_score_delta;
+            let diagonal_delta = if a[i - 1] == b[j - 1] { 1 } else { -1 };
+            let from_diagonal_score = score_matrix[i - 1][j - 1] + diagonal_delta;
             let from_left_score = score_matrix[i][j - 1] + gap_penalty;
             let from_top_score = score_matrix[i - 1][j] + gap_penalty;
-            score_matrix[i][j] = from_diagonal_score.max(from_left_score).max(from_top_score);
+            score_matrix[i][j] =
+                from_diagonal_score.max(from_left_score).max(from_top_score);
         }
     }
 

@@ -116,16 +116,16 @@
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 100, // toggle via Alt + Z shortcut
     "editor.mouseWheelZoom": true,
-    "editor.rulers": [
-        {
-            "column": 80, // soft limit
-            "color": "#e5e5e5"
-        },
-        {
-            "column": 100, // hard limit
-            "color": "#c9c9c9"
-        }
-    ],
+    // "editor.rulers": [
+    //     {
+    //         "column": 80, // soft limit
+    //         "color": "#e5e5e5"
+    //     },
+    //     {
+    //         "column": 100, // hard limit
+    //         "color": "#c9c9c9"
+    //     }
+    // ],
     //////////////////////////////////////
     // Git
     //////////////////////////////////////
@@ -164,5 +164,25 @@
     //////////////////////////////////////
     // C++
     //////////////////////////////////////
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    //////////////////////////////////////
+    // Code presentation mode for video
+    //////////////////////////////////////
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "editor.quickSuggestions": {
+        "other": false,
+        "comments": false,
+        "strings": false
+    },
+    "editor.wordBasedSuggestions": "off",
+    "editor.suggestOnTriggerCharacters": false,
+    "inlineChat.lineNaturalLanguageHint": false,
+    "workbench.colorCustomizations": {
+        "editorError.background": "#ffffff00",
+        "editorError.border": "#ffffff00",
+        "editorError.foreground": "#ffffff00",
+        "editorWarning.background": "#ffffff00",
+        "editorWarning.border": "#ffffff00",
+        "editorWarning.foreground": "#ffffff00",
+    }
 }
