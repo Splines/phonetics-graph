@@ -26,7 +26,7 @@ pub fn calculate_score(a: &Vec<u8>, b: &Vec<u8>, gap_penalty: i8) -> i8 {
 fn main() {
     // Here just a simple example by hand since Unicode characters like ɑ̃ need
     // special treatment such that they are not split into multiple chars.
-    // Of course, this is autoamted in the real code.
+    // Of course, this is automated in the real code.
     let a = Vec::from([0, 1, 2, 3, 4, 3]); // "pɥisɑ̃s"
     let b = Vec::from([5, 1, 4, 3]); // "nɥɑ̃s"
 
