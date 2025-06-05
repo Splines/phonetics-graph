@@ -188,4 +188,5 @@
     // "editor.inlayHints.enabled": "off",
     // "editor.parameterHints.enabled": false,
     // "editor.stickyScroll.enabled": false,
+    // "editor.lightbulb.enabled": "off",
 }
