@@ -340,10 +340,11 @@ export default makeScene2D(function* (view) {
   yield* waitFor(2);
 
   // 🎈 Finish all first gap steps (horizontal, then vertical)
-  yield* all(
-    matrix.step(0, 1, 0, 2, 0.7),
-    delay(0.8, matrix.writeTextAt(0, 2, "-4", 0.6)),
-  );
+  yield* matrix.step(0, 1, 0, 2, 0.7),
+  yield* waitFor(0.5);
+  yield* matrix.writeTextAt(0, 2, "-4", 0.6);
+  yield* waitFor(0.5);
+
   yield* all(
     matrix.step(0, 2, 0, 3, 0.7),
     delay(0.8, matrix.writeTextAt(0, 3, "-6", 0.6)),
