@@ -4,7 +4,9 @@ import {
   ThreadGenerator, waitFor,
 } from "@motion-canvas/core";
 import {
-  HIGHLIGHT_COLOR_3, TEXT_FILL, TEXT_FILL_DARK,
+  HIGHLIGHT_COLOR,
+  HIGHLIGHT_COLOR_3, TEXT_FILL,
+  TEXT_FILL_DARK,
   TEXT_FILL_FADED_SLIGHTLY, TEXT_FONT,
 } from "./globals";
 import { Highlight } from "./Highlight";
@@ -260,6 +262,24 @@ export default makeScene2D(function* (view) {
     bVars[0].shadowBlur(30, duration * 2),
   );
 
+  // 🎈 Highlight last field (return value)
+  const finalRect = matrix.getRectAt(word1.length, word2.length);
+  duration = 1.5;
+  yield* all(
+    arrowFromTop.start(1, duration),
+    arrowFromLeft.start(1, duration),
+    arrowFromDiagonal.start(1, duration),
+    arrowFromTop.opacity(0, duration),
+    arrowFromLeft.opacity(0, duration),
+    arrowFromDiagonal.opacity(0, duration),
+    aVars[0].shadowBlur(0, duration),
+    bVars[0].shadowBlur(0, duration),
+    matrix.getRectAt(1, 1).stroke(HIGHLIGHT_COLOR, duration),
+    finalRect.fill(HIGHLIGHT_COLOR_3, duration),
+    finalRect.stroke(HIGHLIGHT_COLOR_3, duration),
+  );
+  yield* waitFor(1.0);
+
   // 🎈 One last time every field again
   const highlightFinalAnims: ThreadGenerator[] = [];
   duration = 0.6;
@@ -300,14 +320,10 @@ export default makeScene2D(function* (view) {
   yield* waitFor(0.5);
 
   // 🎈 Final score
-
-  const finalRect = matrix.getRectAt(word1.length, word2.length);
-  duration = 1.0;
   yield* all(
     finalRect.fill(HIGHLIGHT_COLOR_3, duration),
     finalRect.stroke(HIGHLIGHT_COLOR_3, duration),
     (finalRect.children()[0] as Txt).fill(TEXT_FILL_DARK, duration),
   );
-
   yield* waitFor(2);
 });
