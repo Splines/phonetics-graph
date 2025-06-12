@@ -1,8 +1,8 @@
-\section{Needleman-Wunsch}
+\section{Needleman–Wunsch}
 \label{sec:needleman-wunsch}
 \newcommand{\lenn}{\text{len}}
 
-The Needleman-Wunsch algorithm calculates the global alignment of two strings and was originally used in bio-informatics to compare amino acid sequences of two proteins \cite{nw}. For our purposes, the alphabet will instead consist of the phonetic \gls{ipa} symbols. Out of all possible alignments of two words (including gaps), the Needleman-Wunsch algorithm finds the one with the smallest distance, \ie the alignment with the highest \q{score}. The algorithm is based on dynamic programming and has a time complexity of $\mathcal{O}(\lenn(A) \cdot \lenn(B))$, where $A$ and $B$ are the two words to be compared.
+The Needleman–Wunsch algorithm calculates the global alignment of two strings and was originally used in bio-informatics to compare amino acid sequences of two proteins \cite{nw}. For our purposes, the alphabet will instead consist of the phonetic \gls{ipa} symbols. Out of all possible alignments of two words (including gaps), the Needleman–Wunsch algorithm finds the one with the smallest distance, \ie the alignment with the highest \q{score}. The algorithm is based on dynamic programming and has a time complexity of $\mathcal{O}(\lenn(A) \cdot \lenn(B))$, where $A$ and $B$ are the two words to be compared.
 
 \autoref{alg:needleman-wunsch} features the pseudo-code of the score computation\footnote{The respective \href{https://en.wikipedia.org/wiki/Needleman\%E2\%80\%93Wunsch_algorithm}{Wikipedia page} also provides a good introduction. Furthermore, the score matrix is interactively explained in \cite{nw_demo}.}. In \autoref{fig:matrix-nuance-puissance-optimal}, we see the resulting score matrix that the algorithm constructed for the French words \textit{puissance} and \textit{nuance}. Follow the indicated path (red tiles) from the bottom right to the top left to find the (reversed) optimal alignment (see \autoref{tab:nuance-puissance-alignment-optimal}).
 
@@ -24,7 +24,7 @@ The Needleman-Wunsch algorithm calculates the global alignment of two strings an
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.77\linewidth]{assets/illustrator/matrix-nuance-puissance-optimal.pdf}
-    \caption{Needleman-Wunsch score matrix for the words $A\coloneqq\textit{puissance}$ \textipa{/p\textturnh is\~As/} (power, strength) and $B\coloneqq\textit{nuance}$ \textipa{/n\textturnh\~As/} (nuance, shade). The arrows indicate which steps locally maximize the score. The red tiles trace the path of the optimal alignment. Match Score: $1$, Mismatch Score: $-1$, Gap Penalty: $p=-2$.}
+    \caption{Needleman–Wunsch score matrix for the words $A\coloneqq\textit{puissance}$ \textipa{/p\textturnh is\~As/} (power, strength) and $B\coloneqq\textit{nuance}$ \textipa{/n\textturnh\~As/} (nuance, shade). The arrows indicate which steps locally maximize the score. The red tiles trace the path of the optimal alignment. Match Score: $1$, Mismatch Score: $-1$, Gap Penalty: $p=-2$.}
     \label{fig:matrix-nuance-puissance-optimal}
 \end{figure}
 
@@ -45,7 +45,7 @@ To find the score matrix for given input words $A$ and $B$, we follow \autoref{a
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\linewidth]{assets/illustrator/matrix-nuance-puissance-subcalc.pdf}
-    \caption{Calculations for one element of the Needleman-Wunsch score matrix.}
+    \caption{Calculations for one element of the Needleman–Wunsch score matrix.}
     \label{fig:matrix-nuance-puissance-subcalc}
 \end{figure}
 
@@ -135,7 +135,7 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.87\linewidth]{assets/illustrator/matrix-nuance-puissance-non-optimal.pdf}
-    \caption{Needleman-Wunsch score matrix and the path (in red) for a non-optimal alignment. Orange strokes indicate non-optimal steps. Parameters as in \autoref{fig:matrix-nuance-puissance-optimal}.}
+    \caption{Needleman–Wunsch score matrix and the path (in red) for a non-optimal alignment. Orange strokes indicate non-optimal steps. Parameters as in \autoref{fig:matrix-nuance-puissance-optimal}.}
     \label{fig:matrix-nuance-puissance-non-optimal}
 \end{figure}
 
@@ -156,7 +156,7 @@ In the nested loops (lines~\ref{algstep:nested1} and~\ref{algstep:nested2}), we 
 
 The new value of the current field is assigned the maximum of these values (\autoref{algstep:max}), such that we locally maximize the score: $\max(-1, -4, -4) = -1$. In \autoref{fig:matrix-nuance-puissance-optimal}, we additionally kept track of the steps that led to the optimal alignment by means of the rose arrows (sometimes multiple optimal steps are possible). For our purposes, we don't want to reconstruct the exact alignment that led to the optimal score, but only the score itself. Thus, we can omit the backtracking step and don't need to store the rose arrows.
 
-By construction, \textbf{the bottom-right field of the score matrix contains the score of the optimal alignment}. This is ensured by the Principle of Optimality \cite{dp}, which states that an optimal solution to a problem can be constructed from optimal solutions to its subproblems. In the context of the Needleman-Wunsch algorithm, this means that the optimal alignment score for two sequences (words) can be derived by considering the optimal alignment scores of progressively smaller subsequences. Each cell in the score matrix represents the optimal score for the corresponding prefixes of the two words up to that point, since we take the maximum of the three possible steps (match, delete, insert) at each cell. This ensures that the final cell (in the bottom right) contains the optimal score for the entire sequences.
+By construction, \textbf{the bottom-right field of the score matrix contains the score of the optimal alignment}. This is ensured by the Principle of Optimality \cite{dp}, which states that an optimal solution to a problem can be constructed from optimal solutions to its subproblems. In the context of the Needleman–Wunsch algorithm, this means that the optimal alignment score for two sequences (words) can be derived by considering the optimal alignment scores of progressively smaller subsequences. Each cell in the score matrix represents the optimal score for the corresponding prefixes of the two words up to that point, since we take the maximum of the three possible steps (match, delete, insert) at each cell. This ensures that the final cell (in the bottom right) contains the optimal score for the entire sequences.
 
 \autoref{tab:nuance-puissance-alignment-non-optimal} shows an example of a non-optimal alignment of the two words, yielding a score of $-15$ (compared to $-2$ for the optimal path). \autoref{fig:matrix-nuance-puissance-non-optimal} depicts the corresponding score matrix. Note how the indicated path includes 4 non-optimal choices (orange strokes).
 

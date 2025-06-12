@@ -6,7 +6,7 @@ typedef unsigned long long int u64;
 static const i8 GAP_PENALTY = -1;
 
 /**
- * Calculates the alignment score between two words using the Needleman-Wunsch algorithm.
+ * Calculates the alignment score between two words using the Needleman–Wunsch algorithm.
  */
 __device__ i8 calculateScore(u8 *a, u8 a_length, u8 *b, u8 b_length, i8 *score_matrix)
 {
