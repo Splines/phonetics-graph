@@ -27,7 +27,7 @@ We implement the algorithm in the CUDA framework and consult the \tcboxverb{cuda
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{assets/illustrator/sum-example.pdf}
+    \includegraphics[width=0.45\linewidth]{assets/illustrator/sum-example.pdf}
     \caption{Example of \text{idx} (black) for $n=4$. $S_r$ is the number of elements traversed up to the end of row $r$ (blue).}
     \label{fig:sum-example}
 \end{figure}
@@ -42,7 +42,7 @@ We implement the algorithm in the CUDA framework and consult the \tcboxverb{cuda
     &= -\frac{1}{2}r^2 + r \left(n- \frac{3}{2}\right) + (n-1)
     \label{eq:sum-r}
 \end{align}
-For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. Thus we require $S_{r-1} \overset{!}{=} \text{idx}$ and solve for $r$. After some algebraic manipulations, we obtain:
+For a given row $r$, we have $\text{idx} \in [S_{r-1}, S_r)$. Thus we require $S_{r-1} \overset{!}{=} \text{idx}$ and solve for $r$. After some simple algebraic manipulations, we obtain:
 \begin{align}
     0 &= -\frac{1}{2} r^2 + r \underbrace{\left(n - \frac{1}{2}\right)}_z - \text{idx}\\
     \iff 0 &= r^2 + r (-2z) + 2 \cdot \text{idx}\\
@@ -63,12 +63,12 @@ Finally, note that $S_{n-1}$ conveniently gives us the number of elements in the
     \label{eq:num-edges}
 \end{align}
 
-With \eqref{eq:row-index} and \eqref{eq:col-index}, we determine the respective row and column in the adjacency matrix for a given index \eqref{eq:idx}. During this row and column calculation, one should use 64-bit floating point numbers to mitigate precision errors that yield to wrong indices. Furthermore, we deal with graphs of more than $2^{32}$ edges and thus need to store the \tcboxverb{idx} as an 64-bit unsigned integer. The \tcboxverb{blockIdx.x} has to be statically cast to \tcboxverb{u64} (unsigned long long int), otherwise it is assumed to be \tcboxverb{u32} leading to incorrect indices and hard-to-debug errors for big graphs.
+With \eqref{eq:row-index} and \eqref{eq:col-index}, we determine the respective row and column in the adjacency matrix for a given index \eqref{eq:idx}. We use 64-bit floating point numbers to mitigate precision errors during row and column calculations on big graphs.
 
 % \vspace{-0.3em}
 
-\textbf{Memory.} In the first version of our CUDA kernel, for every thread we allocate an array of arrays on the heap inside global GPU memory for the score matrix.  We deallocate it after the alignment score is computed. This is very costly and immensely slows down the kernel execution. Instead, we want to use \textit{shared memory} for all threads in a block and let them share one big score matrix as to minimize the number of allocations needed. However, the score matrix dimensions differ in size depending on the word lengths of $A$ and $B$. Our solution is to look up the \underline{maximum word length $q$} before the kernel is launched, and allocate enough shared memory, \ie for every thread, we assume the worst-case scenario of a $(q+1)\times(q+1)$ matrix and allocate $(q+1)^2 \cdot \text{blockDim.x}$ chars (\tcboxverb{i8}) as linear shared memory. Then, inside each thread, we retrieve a pointer to the start of the memory reserved for this thread by adding $\text{threadIdx.x} \cdot (q+1)^2$ to the base pointer. To finally access element $(i,j)$ in the score matrix, we calculate $i\cdot \bigl(\lenn(B) + 1\bigr) + j$. This may not use all allocated memory, but it is a trade-off between memory usage and performance; with our approach we avoid bank conflicts.
+\textbf{Memory.} For every thread, one could allocate an array of arrays on the heap inside \textit{global} GPU memory to store the score matrix. However, this is very costly and immensely slows down the kernel execution. Instead, we rely on \textit{shared memory} for all threads in a block and let them share one big score matrix as to minimize the number of allocations needed. However, the score matrix dimensions differ in size depending on the word lengths of $A$ and $B$. Our solution is to look up the \underline{maximum word length $q$} before the kernel is launched, and allocate enough shared memory, \ie for every thread, we assume the worst-case scenario of a $(q+1)\times(q+1)$ matrix and allocate $(q+1)^2 \cdot \text{blockDim.x}$ chars (\tcboxverb{i8}) as linear shared memory. Then, inside each thread, we retrieve a pointer to the start of the memory reserved for this thread by adding $\text{threadIdx.x} \cdot (q+1)^2$ to the base pointer. To finally access element $(i,j)$ in the score matrix, we calculate $i\cdot \bigl(\lenn(B) + 1\bigr) + j$. This may not use all allocated memory, but it is a trade-off between memory usage and performance; with our approach we avoid bank conflicts.
 
 % \vspace{-0.3em}
 
-\textbf{Block dimension.} This dimension specifies the number of threads inside a block and is limited to 1024. We want to maximize shared memory available per block in order to minimize the number of memory allocations. Before the kernel is launched, for each $u\in [1,1024]$, the resulting shared memory size for one block ($u\cdot (q+1)^2$~bytes) is calculated. The greatest $u$ is chosen such that the maximum available shared memory per block (retrieved from CUDA device properties) is not exceeded.
+\textbf{Block dimension.} This dimension specifies the number of threads inside a block and is limited to 1024. We want to maximize shared memory available per block in order to minimize the number of memory allocations. Before kernel launch, for each $u\in [1,1024]$, the shared memory size for one block ($u\cdot (q+1)^2$~bytes) is computed. The greatest $u$ is chosen such that the maximum available shared memory per block is not exceeded.
