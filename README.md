@@ -1,7 +1,7 @@
 # Parallel Needleman–Wunsch on CUDA to measure word similarity based on phonetic transcriptions
 
 > [!warning]
-> This is a repository accompanying a research paper on arxiv. The code might have evolved since the paper was published on September 1, 2025. Furthermore, I don't plan to maintain this repository in the long-term. Use at your own risk.
+> This is a repository accompanying a research paper on arxiv, which was published on September 1, 2025. I don't plan to maintain this repository in the long-term. Use at your own risk.
 
 
 ## 📜 Abstract
