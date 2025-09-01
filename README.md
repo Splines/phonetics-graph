@@ -3,7 +3,7 @@
 > [!warning]
 > This is a repository accompanying a research paper on arxiv, which was published on September 1, 2025. I don't plan to maintain this repository in the long-term. Use at your own risk.
 
-| [Read Paper](./paper/main.pdf) | [Watch video on YouTube](https://youtu.be/xbcpnItE3_4) |
+| [Read Paper](./paper/main.pdf) (soon on arXiv) | [Watch video on YouTube](https://youtu.be/xbcpnItE3_4) |
 :---------------------|------------------------:
 | <img src="https://github.com/user-attachments/assets/2263d1ad-4aec-42f6-bcf3-af48674b2ccc" height="300" /> | <img src="https://github.com/user-attachments/assets/a3e7d647-480f-44cd-b6b8-2191a31a3feb" height="300" />  |
 
