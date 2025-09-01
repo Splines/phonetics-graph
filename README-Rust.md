@@ -1,7 +1,14 @@
+> [!warning]
+> This includes preliminary results and various notes for myself. Not necesarilly well structured or explained.
+
+Fully-connected graphs with undirected edges.
+
+$$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
+
 ## Rust Cuda libraries
 - [Rust Cuda Reboot](https://rust-gpu.github.io/blog/2025/01/27/rust-cuda-reboot) (Blog Post) & [Issue](https://github.com/Rust-GPU/Rust-CUDA/issues/130)
 - [Rust-GPU Getting Started](https://rust-gpu.github.io/Rust-CUDA/guide/getting_started.html)
-- [**cudarc**](https://github.com/coreylowman/cudarc?tab=readme-ov-file)
+- [**cudarc**](https://github.com/coreylowman/cudarc) (used here)
 
 ## Cuda in general
 - [Cuda C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#)
@@ -10,7 +17,7 @@
 ## Run
 
 ```bash
-RUST_BACKTRACE=full cargo run --bin edges --profile release
+$ RUST_BACKTRACE=full cargo run --bin edges --profile release
 ```
 
 ## Expected results
@@ -23,11 +30,9 @@ last 20: [-5, -4, -5, -5, -2, -4, -6, -4, -4, -4, 8, -8, -5, -8, -4, -4, -4, 7, 
 ```
 
 
-## Timing (Preliminary results)
+## Timing
 
-Fully-connected graphs with undirected edges.
-
-$$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
+These are preliminary results. See the paper for the official results.
 
 **CPU**:
 
@@ -53,7 +58,7 @@ $$\text{num edges} = \binom{n}{2} = \frac{n(n-1)}{2}$$
 - 500,000 nodes: 2.21s
 - 611,786 nodes: 1.38s
 
-1 to 46: 30 runs each
+1 to 46: 30 runs each<br>
 47 to 51: 12 runs each
 
 ## Other useful stuff
@@ -75,13 +80,16 @@ head -c 100 ../data/graph/edges-new-gpu.bin | od -t d1
 
 ## Graphs
 
-We consider different ranges of edge weights.
+We consider different ranges of edge weights. See the paper for more details.
 
-- [60,100]: puissant ego
-- [40,49]:  étirer ego
-- [8,10], 30,185 nodes (30.19%),  306,473 edges (big view)
+- $[60,100]$: puissant ego
+- $[40,49]$:  étirer ego
+- $[8,10]$, 30,185 nodes (30.19%),  306,473 edges (big view)
 - only -35: does not give any good results
-- [60, 100]: emporter ego (based on 458,529 edges, small graph: 449 nodes, 5921 edges)
+- $[60, 100]$: emporter ego (based on 458,529 edges, small graph: 449 nodes, 5921 edges)
 
-node opacity: 20
-edges opacity: 30
+
+Gephi rendering:
+
+- node opacity: 20
+- edges opacity: 30
