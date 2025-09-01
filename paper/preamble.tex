@@ -1,26 +1,26 @@
-% adjust the page sizes to your likings
+\usepackage{abstract}
+\usepackage{multicol}
+
+% Phonetics
+\usepackage{tipa}
+
 \usepackage[left=2.7cm,right=2.7cm,top=2cm,bottom=2cm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[USenglish]{babel}
-\usepackage[T1]{fontenc} % allow west-european symbols (also umlauts: ä, ö, ü)
-\usepackage{csquotes} % for \enquote{}
-\usepackage{float} % for floating images
+\usepackage[T1]{fontenc}
+\usepackage{csquotes}
+\usepackage{float}
 \usepackage[bottom]{footmisc} % keep footnotes at the bottom of the page
 \usepackage{setspace} % to have the \setstretch{baselinestrech} command available
 \usepackage{ragged2e} % text alignment
 \usepackage[parfill]{parskip} % no indentation for paragraphs, instead add spacing
 \usepackage{pdfpages} %for including pdf
 
-\usepackage{tipa} % for phonetic symbols
-
 % Easy tables, e.g. for coloring columns as seen here.
 % https://tex.stackexchange.com/a/613906/
 % \usepackage{tabularray}
 \usepackage{subfigure}
 \usepackage{booktabs}
-
-\usepackage{abstract}
-\usepackage{multicol}
 
 % Graphics & Color
 \usepackage{xcolor}
@@ -76,20 +76,15 @@
 \setlist{leftmargin=*}
 
 % ---- Algorithms ----
-% using algorithm2e, the third algorithm typesetting environment
-%\usepackage{algorithm}                  % Für Algorithmen-Umgebung (ähnlich wie lstlistings Umgebung)
-%\usepackage{algpseudocode}              % Für Pseudocode. Füge "[noend]" hinzu, wenn du kein "endif",
-% etc. haben willst.
 \usepackage{float}
-\usepackage{setspace}
 % http://tug.ctan.org/macros/latex/contrib/algorithm2e/doc/algorithm2e.pdf
 \usepackage[ruled, algosection, lined, scleft, linesnumbered, noend]{algorithm2e}
 \renewcommand{\algorithmautorefname}{Algorithm}
 
 % Algorithm comments
 \newcommand\mycommentsfont[1]{\footnotesize\ttfamily{#1}}
-\SetCommentSty{mycommentsfont} % https://tex.stackexchange.com/a/162208/249769
-\SetKwComment{Comment}{$\triangleright$\ }{} % https://tex.stackexchange.com/a/200736/249769
+\SetCommentSty{mycommentsfont} % https://tex.stackexchange.com/a/162208/
+\SetKwComment{Comment}{$\triangleright$\ }{} % https://tex.stackexchange.com/a/200736/
 \SetKwRepeat{DoWhile}{do}{while}
 
 % Function/Procedure
@@ -97,7 +92,7 @@
 \SetArgSty{textnormal}
 
 % Keywords
-\SetKw{Continue}{continue} % https://tex.stackexchange.com/a/298503/249769
+\SetKw{Continue}{continue} % https://tex.stackexchange.com/a/298503/
 \SetKw{Break}{break}
 
 % Code

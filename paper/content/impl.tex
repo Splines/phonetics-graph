@@ -3,6 +3,7 @@
 
 In the following, for simplicity we always use a similarity matrix with $1$ on its diagonal (symbols match) and $-1$ elsewhere (symbols do not match). The gap penalty is set to $p=-1$ (instead of $-2$ beforehand in the examples in \autoref{sec:needleman-wunsch}).
 
+
 \subsection{On the CPU}
 
 A first and slow Python implementation serves as a reference to confirm correctness of the Rust implementation. The latter is parallelized on the CPU by employing the \tcboxverb{rayon} library on the outer for-loop (\autoref{algstep:nested1}): for every word $A$, we consider all other words $B$ and calculate the similarity between $A$ and $B$. Since words lengths differ, the core calculation takes different times for different word pairs. Therefore, every thread appends its result to a vector that is wrapped in a \tcboxverb{Mutex} (avoid data races by mutual exclusion) and an \tcboxverb{Arc} (thread-safe reference pointer to deallocate data at the end).
@@ -65,10 +66,6 @@ Finally, note that $S_{n-1}$ conveniently gives us the number of elements in the
 
 With \eqref{eq:row-index} and \eqref{eq:col-index}, we determine the respective row and column in the adjacency matrix for a given index \eqref{eq:idx}. We use 64-bit floating point numbers to mitigate precision errors during row and column calculations on big graphs.
 
-% \vspace{-0.3em}
-
 \textbf{Memory.} For every thread, one could allocate an array of arrays on the heap inside \textit{global} GPU memory to store the score matrix. However, this is very costly and immensely slows down the kernel execution. Instead, we rely on \textit{shared memory} for all threads in a block and let them share one big score matrix as to minimize the number of allocations needed. However, the score matrix dimensions differ in size depending on the word lengths of $A$ and $B$. Our solution is to look up the \underline{maximum word length $q$} before the kernel is launched, and allocate enough shared memory, \ie for every thread, we assume the worst-case scenario of a $(q+1)\times(q+1)$ matrix and allocate $(q+1)^2 \cdot \text{blockDim.x}$ chars (\tcboxverb{i8}) as linear shared memory. Then, inside each thread, we retrieve a pointer to the start of the memory reserved for this thread by adding $\text{threadIdx.x} \cdot (q+1)^2$ to the base pointer. To finally access element $(i,j)$ in the score matrix, we calculate $i\cdot \bigl(\lenn(B) + 1\bigr) + j$. This may not use all allocated memory, but it is a trade-off between memory usage and performance; with our approach we avoid bank conflicts.
-
-% \vspace{-0.3em}
 
 \textbf{Block dimension.} This dimension specifies the number of threads inside a block and is limited to 1024. We want to maximize shared memory available per block in order to minimize the number of memory allocations. Before kernel launch, for each $u\in [1,1024]$, the shared memory size for one block ($u\cdot (q+1)^2$~bytes) is computed. The greatest $u$ is chosen such that the maximum available shared memory per block is not exceeded.
