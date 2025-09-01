@@ -13,29 +13,40 @@ We validate our approach by constructing a fully-connected graph where nodes rep
 
 ## 🎈 Run
 
-**Preprocess data**. See the data section in this Readme for more details.
+**Preprocess data**. See the data section in this Readme for more details. Also see the Python virual env section below.
 
 ```bash
-python3 python/0-data-preparation/<script-up-to-number-2>.py
+$ python3 python/0-data-preparation/<script-up-to-number-2>.py
 ```
 
 Run the parallelized **Rust GPU** implementation. The code was tested on a consumer NVIDIA GeForce GTX 1060 6GB. It might not work as intended on other GPUs, although the algorithms were designed to be general enough.
 
 ```bash
-cargo run --bin gpu --release
-cargo run --bin make_graph --release
+$ cargo run --bin gpu --release
+$ cargo run --bin make_graph --release
 ```
 
 Run the parallelized, but slow Rust CPU implementation.
 
 ```bash
-cargo run --release
+$ cargo run --release
 ```
 
 Plot some outputs. Create a top-level `eval/` folder first for the scripts to work.
 
 ```bash
-python3 python/evaluation/<script>.py
+$ python3 python/evaluation/<script>.py
+```
+
+
+## Python virtual env
+
+It is advised to run the Python scripts in a virtual environment.
+
+```bash
+python -m venv projectname
+source projectname/bin/activate
+(venv) $ pip install -r requirements.txt
 ```
 
 
