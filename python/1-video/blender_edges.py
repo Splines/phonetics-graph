@@ -19,6 +19,8 @@ PARTICLE_SYSTEM_OBJECTS = [
     "Words5",
 ]
 
+NUM_PARTICLES = 20
+
 
 def ensure_collection(collection_name: str) -> bpy.types.Collection:
     """Ensures the collection exists and returns it."""
@@ -30,39 +32,38 @@ def ensure_collection(collection_name: str) -> bpy.types.Collection:
     return new_collection
 
 
+def get_particle_systems() -> list[bpy.types.ParticleSystem]:
+    """Gets a list of particle systems from the specified objects."""
+    particle_systems = []
+    for obj in D.objects:
+        if not obj.name in PARTICLE_SYSTEM_OBJECTS or not obj.particle_systems:
+            continue
+
+        deps_graph = C.evaluated_depsgraph_get()
+        evaluated_obj = obj.evaluated_get(deps_graph)
+        particle_system = evaluated_obj.particle_systems[0]
+        particle_systems.append(particle_system)
+
+    assert len(particle_systems) == len(PARTICLE_SYSTEM_OBJECTS)
+    return particle_systems
+
+
 def main():
     """Main function to add edges between every two words in the collection."""
     # Ensure the "Edges" collection exists
     edges_collection = ensure_collection("Edges")
+    particle_systems = get_particle_systems()
 
-    particle_system_objs = [obj for obj in D.objects if obj.name in PARTICLE_SYSTEM_OBJECTS]
-    assert len(particle_system_objs) == len(PARTICLE_SYSTEM_OBJECTS)
-
-    deps_graph = C.evaluated_depsgraph_get()
-
-    particle_systems = []
-    for obj in particle_system_objs:
-        if not obj.particle_systems:
-            print(f"Object {obj.name} has no particle systems. Aborting.")
-            return
-
-        particle_system = obj.evaluated_get(deps_graph).particle_systems[0]
-        particle_systems.append(particle_system)
-        print(f"Object: {obj.name}, Particle System: {particle_system.settings.name}")
-
-    # Store edge objects for updating positions later
-    edge_objects = []
-
-    # Iterate over all particle systems to create edges
     for num_system, system in enumerate(particle_systems):
-        particles = system.particles[:5]
+        particles = system.particles[:NUM_PARTICLES]
+
+        subcollection = D.collections.new(f"Edges_{num_system + 1}")
+        edges_collection.children.link(subcollection)
 
         print(f"Creating edges for particle system: {system.settings.name}")
-
         for i, p1 in enumerate(particles):
             for j, p2 in enumerate(particles[i + 1 :]):
-                print(f"Creating edge: {i} -- {j}")
-                edge_name = f"particle_system{num_system + 1} Edge_{i}_{j}"
+                edge_name = f"ps{num_system + 1} Edge_{i}_{j}"
 
                 curve_data = D.curves.new(name=f"{edge_name}-curve", type="CURVE")
                 curve_data.dimensions = "3D"
@@ -72,24 +73,31 @@ def main():
                 spline.points[1].co = (*p2.location, 1.0)
 
                 curve_obj = D.objects.new(name=edge_name, object_data=curve_data)
-                edges_collection.objects.link(curve_obj)
-                edge_objects.append((curve_obj, spline))
+                subcollection.objects.link(curve_obj)
 
     print("Edges created and constrained to particle locations successfully.")
 
-    # Update edges for every frame
+
+def keyframe_edges():
+    """Keyframe edges to follow particle locations."""
+    particle_systems = get_particle_systems()
+
+    print("Updating edges for every frame...")
     scene = C.scene
-    for frame in range(scene.frame_start, scene.frame_end + 1):
+    for frame in range(2000, 2600):
         scene.frame_set(frame)
-        print(f"Frame {frame}:")
-        for (curve_obj, spline), system in zip(edge_objects, particle_systems):
-            particles = system.particles[:5]
-            idx = 0
+        for num_system, system in enumerate(particle_systems):
+            particles = system.particles[:NUM_PARTICLES]
             for i, p1 in enumerate(particles):
                 for j, p2 in enumerate(particles[i + 1 :]):
-                    spline.points[idx].co = (*p1.location, 1.0)
-                    spline.points[idx + 1].co = (*p2.location, 1.0)
-                    idx += 2
+                    spline = D.objects[f"ps{num_system + 1} Edge_{i}_{j}"].data.splines[0]
+                    spline.points[0].co = (*p1.location, 1.0)
+                    spline.points[0].keyframe_insert(data_path="co", frame=frame)
+                    spline.points[1].co = (*p2.location, 1.0)
+                    spline.points[1].keyframe_insert(data_path="co", frame=frame)
+
+    print("Edges updated for every frame successfully.")
 
 
-main()
+# main()
+keyframe_edges()
