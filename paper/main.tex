@@ -1,7 +1,7 @@
 \documentclass[10pt,a4paper,english]{article}
-\input{preamble}
-\input{defs}
-\input{prettify-math}
+\input{meta/preamble}
+\input{meta/defs}
+\input{meta/prettify-math}
 
 \renewcommand{\abstractnamefont}{\normalfont\bfseries}
 \renewcommand{\abstracttextfont}{\normalfont\small\itshape}
@@ -47,8 +47,6 @@ word similarity based on phonetic transcriptions}
 \newcolumn
 \input{content/needleman-wunsch.tex}
 \input{content/data.tex}
-% \vfill\null
-% \columnbreak
 \input{content/impl.tex}
 \input{content/eval.tex}
 \input{content/conclusion.tex}
