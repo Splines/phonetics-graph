@@ -52,22 +52,22 @@ export default makeScene2D(function* (view) {
   const riseAround = alignmentStrings.length * 0.999;
   const c = 0.13;
 
-  // for (let i = 0; i < alignmentStrings.length; i++) {
-  //   const fall = Math.exp(-0.04 * i);
-  //   const exp = Math.exp(c * (i - riseAround));
-  //   const rise = exp / (1 + exp);
-  //   const stretch = Math.max(fall + rise, 0.006);
+  for (let i = 0; i < alignmentStrings.length; i++) {
+    const fall = Math.exp(-0.04 * i);
+    const exp = Math.exp(c * (i - riseAround));
+    const rise = exp / (1 + exp);
+    const stretch = Math.max(fall + rise, 0.006);
 
-  //   if (i === 0) {
-  //     yield* all(
-  //       alignState.animateToState(alignmentStrings[i], 0.5 * stretch),
-  //       all(...texts.map(txt => txt.fill(TEXT_FILL, 0.5))),
-  //     );
-  //   } else {
-  //     yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
-  //   }
-  //   yield* waitFor(0.3 * stretch);
-  // }
+    if (i === 0) {
+      yield* all(
+        alignState.animateToState(alignmentStrings[i], 0.5 * stretch),
+        all(...texts.map(txt => txt.fill(TEXT_FILL, 0.5))),
+      );
+    } else {
+      yield* alignState.animateToState(alignmentStrings[i], 0.5 * stretch);
+    }
+    yield* waitFor(0.3 * stretch);
+  }
 
   yield* waitFor(0.2);
   yield* alignState.animateToState("....--", 1);
